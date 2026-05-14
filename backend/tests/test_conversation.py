@@ -195,8 +195,11 @@ async def test_pipeline_process_sends_transcript_and_turn_complete() -> None:
     fake_stt = AsyncMock()
     fake_stt.transcribe = AsyncMock(return_value="Hello")
 
-    fake_tts = AsyncMock()
-    fake_tts.synthesize = AsyncMock(return_value=b"mp3data")
+    async def _fake_synthesize_stream(text: str, voice: str | None = None):
+        yield b"mp3data"
+
+    fake_tts = MagicMock()
+    fake_tts.synthesize_stream = _fake_synthesize_stream
 
     from app.services.conversation_pipeline import ConversationPipeline
 

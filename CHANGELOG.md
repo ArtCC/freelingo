@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.15] - 2026-05-14
+
+### Changed
+- **Voice conversation — TTS streaming**: the backend now streams MP3 audio in chunks over the WebSocket instead of waiting for the full synthesis to complete. The new protocol emits `tts_stream_start` (JSON) → N binary MP3 frames → `tts_stream_end` (JSON) per sentence, allowing the frontend to begin playback as soon as the first chunk arrives.
+- **Voice conversation — chunked audio player**: `ConversationMode` now uses a dedicated `ConvStreamPlayer` backed by the MediaSource Extensions (MSE) API. Chunks are appended to a `SourceBuffer` incrementally, removing the previous wait-for-full-blob step. A Web Audio fallback is retained for browsers without MSE support.
+- **Text-chat TTS — streaming response**: the REST `/api/tts` endpoint returns a `StreamingResponse` rather than a buffered byte payload. The Next.js proxy route passes the response body through without buffering, and `AudioPlayer` uses MSE to start playback on the first chunk.
+- **TTS service — LRU cache**: synthesised audio is cached in a 128-entry in-memory LRU cache keyed by `(text, voice, speed)`. Repeated phrases (greetings, common corrections) are served instantly without a new API call.
+- **TTS / STT services — HTTP connection pooling**: both services now share persistent `httpx.AsyncClient` instances (keepalive 5 connections, max 10) and are shut down cleanly on application shutdown.
+- **STT service — reduced timeout**: the per-request timeout for speech-to-text was lowered from 60 s to 25 s to surface failures faster.
+- **Conversation pipeline — earlier sentence flushing**: `MAX_BUFFER_CHARS` reduced from 150 to 80 characters and the clause-break set extended to include `;`, `:`, and `—` (with a 35-character minimum guard), so sentences are dispatched to TTS sooner.
+- **Conversation pipeline — warmup**: the WebSocket endpoint sends a realistic warm-up phrase (`"Hello! Let's practice your English together."`) on first connection to pre-heat the TTS connection and reduce latency on the first real turn.
+
 ## [1.4.14] - 2026-05-14
 
 ### Added

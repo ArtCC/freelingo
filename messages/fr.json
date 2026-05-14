@@ -907,19 +907,23 @@
   },
   "whatsNew": {
     "title": "Nouveautés",
-    "version": "v1.4.14",
+    "version": "v1.4.15",
     "cta": "Compris",
     "entry1": {
       "label": "Nouvelle voix",
       "desc": "La conversation vocale en temps réel utilise désormais une nouvelle voix pour une expérience plus naturelle et engageante."
     },
     "entry2": {
-      "label": "Corrections",
-      "desc": "Diverses corrections de bugs mineurs et améliorations de stabilité sur toute la plateforme."
-    },
-    "entry3": {
       "label": "Suggestions de conversation",
       "desc": "La section de conversation vocale affiche désormais six suggestions de sujets pour démarrer une session. Les sujets sont tirés au hasard d'un catalogue de 30 et disparaissent dès que la session commence."
+    },
+    "entry3": {
+      "label": "Conversation vocale plus rapide",
+      "desc": "L'audio est désormais diffusé progressivement pendant les sessions vocales — la lecture démarre dès que les premiers fragments arrivent, réduisant la latence. La mise en commun des connexions accélère aussi la reconnaissance vocale."
+    },
+    "entry4": {
+      "label": "Corrections",
+      "desc": "Diverses corrections de bugs mineurs et améliorations de stabilité sur toute la plateforme."
     }
   },
   "contact": {

@@ -907,19 +907,23 @@
   },
   "whatsNew": {
     "title": "Novidades",
-    "version": "v1.4.14",
+    "version": "v1.4.15",
     "cta": "Entendido",
     "entry1": {
       "label": "Nova voz",
       "desc": "A conversa de voz em tempo real utiliza agora uma nova voz para uma experiência mais natural e envolvente."
     },
     "entry2": {
-      "label": "Correções",
-      "desc": "Várias correções de bugs menores e melhorias de estabilidade em toda a plataforma."
-    },
-    "entry3": {
       "label": "Sugestões de conversa",
       "desc": "A secção de conversa de voz mostra agora seis chips de tópicos para te ajudar a iniciar uma sessão. Os tópicos são escolhidos aleatoriamente de um banco de 30 e desaparecem assim que a sessão começa."
+    },
+    "entry3": {
+      "label": "Conversa de voz mais rápida",
+      "desc": "O áudio é agora transmitido de forma progressiva durante as sessões de voz — a reprodução começa assim que chegam os primeiros fragmentos, reduzindo a latência. A reutilização de conexões também acelera o reconhecimento de voz."
+    },
+    "entry4": {
+      "label": "Correções",
+      "desc": "Várias correções de bugs menores e melhorias de estabilidade em toda a plataforma."
     }
   },
   "contact": {

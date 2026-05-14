@@ -67,7 +67,9 @@ async def conversation_warmup(
 
 async def _warmup_tts(tts_service: object) -> None:
     try:
-        await tts_service.synthesize("ready")  # type: ignore[union-attr]
+        # Use a realistic sentence to warm up TTS model weights properly.
+        # Caching it also speeds up the very first greeting in sessions.
+        await tts_service.synthesize("Hello! Let's practice your English together.")  # type: ignore[union-attr]
         logger.info("[warmup] TTS ready")
     except Exception as exc:
         logger.warning("[warmup] TTS warmup error: %s", exc)

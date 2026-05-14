@@ -56,12 +56,22 @@ export interface ErrorMessage {
   message?: string
 }
 
+export interface TtsStreamStartMessage {
+  type: 'tts_stream_start'
+}
+
+export interface TtsStreamEndMessage {
+  type: 'tts_stream_end'
+}
+
 export type WsMessage =
   | TranscriptMessage
   | BargeInMessage
   | SessionWarningMessage
   | SessionEndMessage
   | ErrorMessage
+  | TtsStreamStartMessage
+  | TtsStreamEndMessage
 
 // ─── Chat context passed from tutor chat to voice session ────────────────────
 

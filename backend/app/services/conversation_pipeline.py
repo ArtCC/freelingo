@@ -17,7 +17,10 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 SENTENCE_END = re.compile(r'[.!?]["\'\)\]]?\s*$')
-MAX_BUFFER_CHARS = 150
+# Secondary clause boundaries — flush only when buffer is long enough
+CLAUSE_END = re.compile(r'[;:]\s*$|—\s*$')
+MAX_BUFFER_CHARS = 80   # hard flush limit (was 150) — lower = earlier first audio
+MIN_CLAUSE_CHARS = 35   # min chars before breaking on a clause boundary
 
 CONVERSATION_SYSTEM_PROMPT = """\
 You are an encouraging and patient English conversation partner named FreeLingo.
@@ -123,28 +126,48 @@ class ConversationPipeline:
         trigger = {"role": "user", "content": "[Session started. Greet the student warmly and naturally — one or two sentences max — and invite them to speak.]"}
         messages = [{"role": "system", "content": self.system_prompt}] + self.history[-20:] + [trigger]
 
-        tts_queue: asyncio.Queue[asyncio.Future[bytes] | None] = asyncio.Queue()
-        tts_futures: list[asyncio.Future[bytes]] = []
+        # Outer queue: holds per-sentence chunk queues; None = all sentences done.
+        tts_queue: asyncio.Queue[asyncio.Queue[bytes | None] | None] = asyncio.Queue()
+        streaming_tasks: list[asyncio.Task] = []
+
+        async def _stream_sentence(text: str, sentence_q: asyncio.Queue[bytes | None]) -> None:
+            try:
+                async for chunk in self.tts.synthesize_stream(text):
+                    await sentence_q.put(chunk)
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                logger.error("[pipeline] TTS greeting stream failed: %s", exc)
+            finally:
+                await sentence_q.put(None)
 
         async def _tts_sender() -> None:
+            stream_started = False
             while True:
-                item = await tts_queue.get()
-                if item is None:
+                sentence_q = await tts_queue.get()
+                if sentence_q is None:
                     break
-                try:
-                    audio = await item
-                    await ws.send_bytes(audio)
-                except asyncio.CancelledError:
-                    raise
-                except Exception as exc:
-                    logger.error("[pipeline] TTS greeting failed: %s", exc)
+                while True:
+                    chunk = await sentence_q.get()
+                    if chunk is None:
+                        break
+                    if not stream_started:
+                        await ws.send_json({"type": "tts_stream_start"})
+                        stream_started = True
+                    try:
+                        await ws.send_bytes(chunk)
+                    except Exception as exc:
+                        logger.error("[pipeline] TTS greeting send failed: %s", exc)
+            if stream_started:
+                await ws.send_json({"type": "tts_stream_end"})
 
         sender_task = asyncio.create_task(_tts_sender())
 
         def _enqueue_tts(text: str) -> None:
-            future: asyncio.Future[bytes] = asyncio.ensure_future(self.tts.synthesize(text))
-            tts_futures.append(future)
-            tts_queue.put_nowait(future)
+            sentence_q: asyncio.Queue[bytes | None] = asyncio.Queue()
+            tts_queue.put_nowait(sentence_q)
+            task = asyncio.ensure_future(_stream_sentence(text, sentence_q))
+            streaming_tasks.append(task)
 
         try:
             full_response = ""
@@ -154,8 +177,13 @@ class ConversationPipeline:
                 token = chunk.choices[0].delta.content or ""
                 full_response += token
                 sentence_buffer += token
-                if SENTENCE_END.search(sentence_buffer.strip()) or len(sentence_buffer) > MAX_BUFFER_CHARS:
-                    sentence = sentence_buffer.strip()
+                buf_stripped = sentence_buffer.strip()
+                if (
+                    SENTENCE_END.search(buf_stripped)
+                    or len(sentence_buffer) > MAX_BUFFER_CHARS
+                    or (CLAUSE_END.search(buf_stripped) and len(sentence_buffer) >= MIN_CLAUSE_CHARS)
+                ):
+                    sentence = buf_stripped
                     sentence_buffer = ""
                     await ws.send_json({"type": "transcript", "role": "assistant", "text": full_response.strip(), "final": False})
                     _enqueue_tts(sentence)
@@ -172,13 +200,13 @@ class ConversationPipeline:
                 await ws.send_json({"type": "turn_complete"})
         except asyncio.CancelledError:
             sender_task.cancel()
-            for f in tts_futures:
-                f.cancel()
+            for t in streaming_tasks:
+                t.cancel()
             raise
         except Exception as exc:
             sender_task.cancel()
-            for f in tts_futures:
-                f.cancel()
+            for t in streaming_tasks:
+                t.cancel()
             logger.error("[pipeline] Greeting failed: %s", exc)
 
     async def run(self, ws: "WebSocket") -> None:
@@ -235,33 +263,52 @@ class ConversationPipeline:
         self.history.append({"role": "user", "content": user_text})
         messages = [{"role": "system", "content": self.system_prompt}] + self.history[-20:]
 
-        # Pipeline: TTS futures fire immediately as each sentence is ready;
-        # a dedicated sender task awaits them in order so audio arrives gapless.
-        tts_queue: asyncio.Queue[asyncio.Future[bytes] | None] = asyncio.Queue()
-        tts_futures: list[asyncio.Future[bytes]] = []
+        # Pipeline: per-sentence streaming — each sentence gets its own chunk queue
+        # filled by a concurrent synthesize_stream() task.  A dedicated sender
+        # task drains sentence queues in FIFO order so audio arrives gapless.
+        tts_queue: asyncio.Queue[asyncio.Queue[bytes | None] | None] = asyncio.Queue()
+        streaming_tasks: list[asyncio.Task] = []
+
+        async def _stream_sentence(text: str, sentence_q: asyncio.Queue[bytes | None]) -> None:
+            try:
+                async for chunk in self.tts.synthesize_stream(text):
+                    await sentence_q.put(chunk)
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                logger.error("[pipeline] TTS stream error: %s", exc)
+            finally:
+                await sentence_q.put(None)
 
         async def _tts_sender() -> None:
+            stream_started = False
             while True:
-                item = await tts_queue.get()
-                if item is None:  # sentinel — all sentences dispatched
+                sentence_q = await tts_queue.get()
+                if sentence_q is None:  # sentinel — all sentences dispatched
                     break
-                try:
-                    audio = await item
-                    logger.debug("[pipeline] TTS audio chunk: %d bytes", len(audio))
-                    await ws.send_bytes(audio)
-                except asyncio.CancelledError:
-                    raise
-                except Exception as exc:
-                    logger.error("[pipeline] TTS failed: %s", exc)
-                    await ws.send_json({"type": "error", "code": "tts_failed", "message": str(exc)})
+                while True:
+                    chunk = await sentence_q.get()
+                    if chunk is None:
+                        break
+                    if not stream_started:
+                        await ws.send_json({"type": "tts_stream_start"})
+                        stream_started = True
+                    try:
+                        logger.debug("[pipeline] TTS chunk: %d bytes", len(chunk))
+                        await ws.send_bytes(chunk)
+                    except Exception as exc:
+                        logger.error("[pipeline] TTS send failed: %s", exc)
+            if stream_started:
+                await ws.send_json({"type": "tts_stream_end"})
 
         sender_task = asyncio.create_task(_tts_sender())
 
         def _enqueue_tts(text: str) -> None:
-            """Start TTS synthesis immediately and enqueue the future in order."""
-            future: asyncio.Future[bytes] = asyncio.ensure_future(self.tts.synthesize(text))
-            tts_futures.append(future)
-            tts_queue.put_nowait(future)
+            """Start TTS synthesis stream immediately and enqueue chunk queue in order."""
+            sentence_q: asyncio.Queue[bytes | None] = asyncio.Queue()
+            tts_queue.put_nowait(sentence_q)
+            task = asyncio.ensure_future(_stream_sentence(text, sentence_q))
+            streaming_tasks.append(task)
 
         try:
             await ws.send_json({"type": "status", "value": "thinking"})
@@ -275,8 +322,13 @@ class ConversationPipeline:
                 sentence_buffer += token
 
                 # 3. Flush complete sentence — fire TTS immediately (non-blocking)
-                if SENTENCE_END.search(sentence_buffer.strip()) or len(sentence_buffer) > MAX_BUFFER_CHARS:
-                    sentence = sentence_buffer.strip()
+                buf_stripped = sentence_buffer.strip()
+                if (
+                    SENTENCE_END.search(buf_stripped)
+                    or len(sentence_buffer) > MAX_BUFFER_CHARS
+                    or (CLAUSE_END.search(buf_stripped) and len(sentence_buffer) >= MIN_CLAUSE_CHARS)
+                ):
+                    sentence = buf_stripped
                     sentence_buffer = ""
                     await ws.send_json({"type": "transcript", "role": "assistant", "text": full_response.strip(), "final": False})
                     _enqueue_tts(sentence)
@@ -295,14 +347,14 @@ class ConversationPipeline:
 
         except asyncio.CancelledError:
             sender_task.cancel()
-            for f in tts_futures:
-                f.cancel()
+            for t in streaming_tasks:
+                t.cancel()
             raise
         except (LLMTimeoutError, LLMUnavailableError, LLMError) as exc:
             logger.error("[pipeline] LLM failed: %s", exc)
             sender_task.cancel()
-            for f in tts_futures:
-                f.cancel()
+            for t in streaming_tasks:
+                t.cancel()
             await ws.send_json({"type": "error", "code": "llm_failed", "message": str(exc)})
             if self.history and self.history[-1]["role"] == "user":
                 self.history.pop()
