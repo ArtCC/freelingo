@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.17] - 2026-05-14
+
+### Added
+- **Develop image channel in CI/CD**: new workflow `.github/workflows/docker-publish-develop.yml` publishes isolated pre-production images on pushes to `develop`:
+  - `ghcr.io/artcc/freelingo-backend-develop:latest`
+  - `ghcr.io/artcc/freelingo-frontend-develop:latest`
+  This keeps production images (`main`) untouched while enabling local/staging validation from develop.
+
+### Fixed
+- **Voice conversation — interruption protocol regression after latency improvements**: backend and frontend are now aligned on barge-in flow. The frontend sends `interrupt` on speech start, the backend cancels the active turn, and emits `barge_in` consistently so UI/audio state resets correctly.
+- **Voice conversation — invalid session start when mic/VAD fails**: the conversation flow now requires `vad.start()` to succeed before opening the WebSocket. If microphone permission or VAD init fails, startup is aborted cleanly and no broken live session is created.
+- **Voice conversation — startup/teardown state consistency**: on `session_end` and error frames the client now cancels active stream playback, clears streaming transcript state, and pauses VAD to avoid lingering "speaking" or stale stream artifacts.
+
 ## [1.4.16] - 2026-05-14
 
 ### Fixed

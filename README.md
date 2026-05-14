@@ -157,6 +157,19 @@ The first registered user becomes admin automatically.
 - `TTS_PROVIDER` and `STT_PROVIDER` are independent: `local` (Kokoro / faster-whisper) or `openai` (OpenAI API).
 - The target language is always **English** (`en-US` American English or `en-GB` British English). The variant is chosen on the `/onboarding` screen immediately after registration. The user's native language is asked during registration and is used only for flashcard translations and tutor feedback.
 
+### CI/CD image channels
+
+Docker images are published to two separate GHCR channels:
+
+- Stable (production): pushes to `main`
+  - `ghcr.io/artcc/freelingo-backend:latest`
+  - `ghcr.io/artcc/freelingo-frontend:latest`
+- Develop (pre-production tests): pushes to `develop`
+  - `ghcr.io/artcc/freelingo-backend-develop:latest`
+  - `ghcr.io/artcc/freelingo-frontend-develop:latest`
+
+Use the `-develop` images for local or staging validation without touching production deployments.
+
 ## Reverse proxy requirement (real-time conversation)
 
 The real-time voice conversation feature uses a WebSocket connection (`/ws/conversation`). Next.js does not proxy WebSocket upgrades natively, so **a reverse proxy is required in any production deployment** to route `/ws/*` traffic to the backend container.

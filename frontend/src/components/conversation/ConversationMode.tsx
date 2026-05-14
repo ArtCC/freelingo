@@ -229,6 +229,10 @@ export default function ConversationMode({
         convPlayerRef.current.cancel()
         setAssistantSpeaking(false)
       }
+      const ws = wsRef.current
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'interrupt' }))
+      }
       setUserSpeaking(true)
     },
     onSpeechEnd: (audio: Float32Array) => {
@@ -337,6 +341,7 @@ export default function ConversationMode({
               break
 
             case 'barge_in':
+            case 'interrupted':
               convPlayerRef.current?.cancel()
               setAssistantSpeaking(false)
               setStreamingText(null)
@@ -350,6 +355,9 @@ export default function ConversationMode({
               cleanEndRef.current = true
               setStatus('ended')
               setSessionActive(false)
+              convPlayerRef.current?.cancel()
+              setAssistantSpeaking(false)
+              setStreamingText(null)
               vad.pause()
               ws.close(1000, 'session_end')
               break
@@ -368,6 +376,11 @@ export default function ConversationMode({
                         : (msg.message ?? t('errorConnection')),
               )
               setStatus('error')
+              setSessionActive(false)
+              convPlayerRef.current?.cancel()
+              setAssistantSpeaking(false)
+              setStreamingText(null)
+              vad.pause()
               ws.close()
               break
           }
@@ -446,11 +459,18 @@ export default function ConversationMode({
     const warmupPromise = apiFetch('/api/conversation/warmup', { method: 'POST' }).catch(() => undefined)
 
     // Start mic (requests permission if not already granted)
-    vad.start().catch((e: unknown) => {
+    try {
+      await vad.start()
+    } catch (e: unknown) {
       setErrorMsg(e instanceof Error ? e.message : t('errorMic'))
       setStatus('error')
       setSessionActive(false)
-    })
+      convPlayerRef.current?.cancel()
+      convPlayerRef.current = null
+      wsRef.current = null
+      await warmupPromise
+      return
+    }
 
     await warmupPromise
     connectWs(accessToken, topicContext ?? initialContext)

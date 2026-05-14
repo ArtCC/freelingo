@@ -98,8 +98,13 @@ async def conversation_ws(
         initial_context_raw = auth_msg.get("context")  # optional chat history
         payload = decode_access_token(token)
         user_id = int(payload["sub"])
-    except (asyncio.TimeoutError, PyJWTError, KeyError, ValueError, Exception):
+    except (asyncio.TimeoutError, PyJWTError, KeyError, ValueError):
         logger.warning("[conversation] Auth failed — closing WS 1008")
+        await websocket.send_json({"type": "error", "code": "auth_failed", "message": "Authentication failed"})
+        await websocket.close(code=1008)
+        return
+    except Exception as exc:
+        logger.exception("[conversation] Unexpected error during WS auth handshake: %s", exc)
         await websocket.send_json({"type": "error", "code": "auth_failed", "message": "Authentication failed"})
         await websocket.close(code=1008)
         return

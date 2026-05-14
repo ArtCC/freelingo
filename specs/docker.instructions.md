@@ -206,6 +206,19 @@ docker compose pull kokoro whisper
 docker compose up -d kokoro whisper
 ```
 
+### CI/CD image channels (main vs develop)
+
+Backend and frontend images are published by GitHub Actions to two independent GHCR channels:
+
+- Stable channel (production): push to `main` via `.github/workflows/docker-publish.yml`
+  - `ghcr.io/artcc/freelingo-backend:latest`
+  - `ghcr.io/artcc/freelingo-frontend:latest`
+- Develop channel (pre-production): push to `develop` via `.github/workflows/docker-publish-develop.yml`
+  - `ghcr.io/artcc/freelingo-backend-develop:latest`
+  - `ghcr.io/artcc/freelingo-frontend-develop:latest`
+
+This separation allows testing deploys from `develop` without affecting production images.
+
 ---
 
 ## GPU vs CPU

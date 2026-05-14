@@ -157,17 +157,23 @@ Full-duplex voice conversation pipeline.
 | Type | Payload | Description |
 |------|---------|-------------|
 | `auth` | `{"token": "<jwt>"}` | First message — authenticates the session |
+| `interrupt` | `{}` | Optional control message sent on speech-start to cancel the current assistant turn immediately |
 | binary frame | raw audio bytes | WAV audio chunk from VAD |
 
 **Server → Client message types:**
 
 | Type | Payload | Description |
 |------|---------|-------------|
-| `transcript` | `{"text": "..."}` | STT result for the user's speech |
-| `text_chunk` | `{"text": "..."}` | Streamed LLM response fragment |
-| `audio_chunk` | binary | MP3 audio for a TTS sentence |
-| `timeout_warning` | `{"seconds_remaining": N, "type": "inactivity"|"max_duration"}` | Timeout warning at 60 s |
+| `status` | `{"value": "transcribing"|"thinking"}` | Pipeline stage update |
+| `transcript` | `{"role": "user"|"assistant", "text": "...", "final": true|false}` | User final transcript or assistant partial/final transcript |
+| `tts_stream_start` | `{}` | Start of assistant audio stream for current turn |
+| binary frame | binary | MP3 audio chunks for assistant turn |
+| `tts_stream_end` | `{}` | End of assistant audio stream for current turn |
+| `barge_in` | `{}` | Current response cancelled because of new user input |
+| `turn_complete` | `{}` | Assistant turn fully completed (text + audio queued/sent) |
+| `session_warning` | `{"reason": "inactivity"|"max_duration", "remaining_seconds": N}` | Timeout warning at 60 s (or remaining inactivity seconds) |
 | `session_end` | `{"reason": "..."}` | Session closed by server |
+| `error` | `{"code": "...", "message": "..."}` | Pipeline/auth/quota/service error |
 
 **Features:**
 - **Barge-in**: new audio input cancels ongoing TTS playback
@@ -176,3 +182,4 @@ Full-duplex voice conversation pipeline.
 - **Session timeouts**: max duration (default 30 min) and inactivity (default 3 min), each with 60 s warning
 - **In-memory history**: last 20 messages kept for LLM context during session (not persisted to DB)
 - **Warmup**: `POST /api/conversation/warmup` pre-heats TTS and STT models before opening the WebSocket
+- **Start safety**: frontend only opens the WebSocket after VAD/mic startup succeeds; if mic permission/init fails, session start is aborted

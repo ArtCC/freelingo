@@ -40,6 +40,10 @@ export interface BargeInMessage {
   type: 'barge_in'
 }
 
+export interface InterruptedMessage {
+  type: 'interrupted'
+}
+
 export interface SessionWarningMessage {
   type: 'session_warning'
   remaining_seconds: number
@@ -67,6 +71,7 @@ export interface TtsStreamEndMessage {
 export type WsMessage =
   | TranscriptMessage
   | BargeInMessage
+  | InterruptedMessage
   | SessionWarningMessage
   | SessionEndMessage
   | ErrorMessage

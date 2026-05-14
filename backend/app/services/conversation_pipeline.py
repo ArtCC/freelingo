@@ -232,7 +232,7 @@ class ConversationPipeline:
                     msg = json.loads(data["text"])
                     if msg.get("type") == "interrupt":
                         await self.cancel_current()
-                        await ws.send_json({"type": "interrupted"})
+                        await ws.send_json({"type": "barge_in"})
         finally:
             for t in self._timer_tasks:
                 t.cancel()
@@ -245,7 +245,7 @@ class ConversationPipeline:
         if self.current_task and not self.current_task.done():
             self.current_task.cancel()
             logger.info("[pipeline] Barge-in: previous turn cancelled")
-            await ws.send_json({"type": "interrupted"})
+            await ws.send_json({"type": "barge_in"})
         self.current_task = asyncio.create_task(self._process(audio_bytes, ws))
 
     async def _process(self, audio_bytes: bytes, ws: "WebSocket") -> None:

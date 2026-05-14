@@ -73,6 +73,7 @@ These describe what was built — they are the reference documentation:
 
 - **No Docker locally.** The development machine does not have Docker installed. Never suggest `docker` or `docker compose` commands to run locally.
 - **Not deployed locally.** The application runs in a remote server; the dev machine is used only for editing and pushing code. CI/CD (GitHub Actions) builds and publishes the Docker images.
+- **Image channels are separated by branch.** `main` publishes stable images (`ghcr.io/artcc/freelingo-backend` and `ghcr.io/artcc/freelingo-frontend`), while `develop` publishes test images with `-develop` suffix (`ghcr.io/artcc/freelingo-backend-develop` and `ghcr.io/artcc/freelingo-frontend-develop`).
 - **Cannot test the running app locally.** Validation is limited to static checks: `npx tsc --noEmit` (frontend) and `python3 -m compileall app/ alembic/ -q` (backend).
 - **package-lock.json must be generated with npm 11** (the version installed locally). The Dockerfile upgrades npm to v11 before `npm ci` to stay in sync.
 

@@ -44,26 +44,32 @@ async def _create_user_and_token(db_session) -> tuple:
 
 @pytest.mark.asyncio
 async def test_ws_rejects_invalid_token(client: AsyncClient) -> None:
-    """WebSocket must close with 1008 when the JWT is invalid."""
+    """WebSocket must close when auth message contains an invalid JWT."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         try:
-            async with aconnect_ws("/ws/conversation?token=notavalidjwt", ac):
-                pass
+            async with aconnect_ws("/ws/conversation", ac) as ws:
+                await ws.send_json({"type": "auth", "token": "notavalidjwt"})
+                msg = await ws.receive_json()
+                assert msg["type"] == "error"
+                assert msg["code"] == "auth_failed"
         except Exception:
             pass  # connection closed is expected
 
 
 @pytest.mark.asyncio
 async def test_ws_rejects_missing_token(client: AsyncClient) -> None:
-    """WebSocket without token query param must fail."""
+    """WebSocket auth message without token must fail."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         try:
-            async with aconnect_ws("/ws/conversation", ac):
-                pass
+            async with aconnect_ws("/ws/conversation", ac) as ws:
+                await ws.send_json({"type": "auth"})
+                msg = await ws.receive_json()
+                assert msg["type"] == "error"
+                assert msg["code"] == "auth_failed"
         except Exception:
-            pass  # 422 or connection refused is expected
+            pass  # connection closed is expected
 
 
 @pytest.mark.asyncio
@@ -85,7 +91,8 @@ async def test_ws_services_disabled_sends_error(db_session) -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         try:
-            async with aconnect_ws(f"/ws/conversation?token={token}", ac) as ws:
+            async with aconnect_ws("/ws/conversation", ac) as ws:
+                await ws.send_json({"type": "auth", "token": token})
                 msg = await ws.receive_json()
                 assert msg["type"] == "error"
                 assert msg["code"] == "services_disabled"

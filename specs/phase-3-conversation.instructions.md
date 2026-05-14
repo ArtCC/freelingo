@@ -68,11 +68,13 @@ These are set globally in `next.config.ts` via the `headers()` function.
 ### Barge-in support
 
 If the user starts speaking while the AI is still generating/playing a response:
-1. VAD detects new speech → fires `onSpeechEnd`
-2. Frontend sends new audio chunks to WebSocket
-3. Backend detects new audio input → cancels current LLM streaming → cancels pending TTS sentences → sends `barge_in` message to frontend
+1. VAD detects speech start (`onSpeechStart`) → frontend cancels local playback and sends `{"type":"interrupt"}` for immediate server-side cancellation
+2. VAD detects speech end (`onSpeechEnd`) → frontend sends WAV audio chunk(s) to WebSocket
+3. Backend detects interruption/new audio input → cancels current LLM streaming and pending TTS sentence streams → sends `barge_in` message to frontend
 4. Frontend `AudioQueue.cancel()` stops all pending audio playback
 5. Pipeline restarts with new user input
+
+This dual-path interrupt (`interrupt` control message + fresh audio) avoids stale assistant output and keeps turn switching low-latency.
 
 ### Transcript bubbles
 
@@ -99,16 +101,22 @@ At T-60 seconds, a `SessionTimeoutBanner` appears with a countdown. When the tim
 - **Auth**: After the WebSocket handshake is accepted, the client sends a JSON message `{"type": "auth", "token": "<access_token>"}` within 10 seconds. Sending the token in the URL is intentionally avoided to prevent it from appearing in server access logs.
 - **Guard**: rejects connection with code 1008 if the auth message is missing/invalid, or with code 1011 if `TTS_ENABLED=false` or `STT_ENABLED=false`
 - **Database**: uses an async session context manager for the user lookup (reads `conversation_max_duration` and `conversation_inactivity_timeout` from User model)
+- **Start order**: frontend warms up STT/TTS and requires successful `vad.start()` before opening WebSocket; when VAD/mic init fails, startup aborts and no session is created
 
 ### Message types
 
 | Direction | Type | Description |
 |-----------|------|-------------|
+| Client → Server | `auth` | First JSON message with JWT token |
+| Client → Server | `interrupt` | Optional control message to cancel current assistant turn on speech start |
 | Client → Server | binary | WAV audio frame (float32 PCM, 16kHz mono) |
-| Server → Client | `transcript` | User's speech transcribed to text |
-| Server → Client | `assistant_text` | Streaming AI response text (for display) |
+| Server → Client | `status` | Pipeline stage (`transcribing` or `thinking`) |
+| Server → Client | `transcript` | User final transcript and assistant partial/final text (`role`, `text`, `final`) |
+| Server → Client | `tts_stream_start` | Start marker for assistant audio stream |
 | Server → Client | binary | MP3 audio chunk (one sentence of TTS) |
+| Server → Client | `tts_stream_end` | End marker for assistant audio stream |
 | Server → Client | `barge_in` | Current response cancelled, new input being processed |
+| Server → Client | `turn_complete` | Assistant turn fully completed |
 | Server → Client | `session_warning` | Timeout warning (60 s remaining) |
 | Server → Client | `session_end` | Session terminated by timeout |
 | Server → Client | `error` | Pipeline error with message |
@@ -135,7 +143,7 @@ On WebSocket connect:
 6. **Sentence splitting**: accumulate characters into a buffer (max 150 chars). On sentence end detection (period, question mark, exclamation mark followed by space/end), flush the completed sentence to TTS
 7. **TTS per sentence**: send each sentence to Kokoro → send MP3 binary to client
 8. **Loop**: continue streaming until LLM response ends or barge-in occurs
-9. **Send transcript**: send the complete AI text as `assistant_text` for the transcript display
+9. **Send transcript**: assistant transcript is streamed as `transcript` with `final=false` and finalized with `final=true`
 10. **Append to history**: store the user+assistant exchange in the in-memory buffer (limited to 20 messages)
 
 ### Sentence boundary detection
