@@ -21,7 +21,7 @@ SENTENCE_END = re.compile(r'[.!?]["\'\)\]]?\s*$')
 CLAUSE_END = re.compile(r'[;:]\s*$|—\s*$')
 MAX_BUFFER_CHARS = 80   # hard flush limit (was 150) — lower = earlier first audio
 MIN_CLAUSE_CHARS = 35   # min chars before breaking on a clause boundary
-
+TTS_STREAM_TIMEOUT = 25  # seconds — max wait for TTS to produce the first/next chunk
 CONVERSATION_SYSTEM_PROMPT = """\
 You are an encouraging and patient English conversation partner named FreeLingo.
 You are talking with {student_name}.
@@ -132,8 +132,9 @@ class ConversationPipeline:
 
         async def _stream_sentence(text: str, sentence_q: asyncio.Queue[bytes | None]) -> None:
             try:
-                async for chunk in self.tts.synthesize_stream(text):
-                    await sentence_q.put(chunk)
+                async with asyncio.timeout(TTS_STREAM_TIMEOUT):
+                    async for chunk in self.tts.synthesize_stream(text):
+                        await sentence_q.put(chunk)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
@@ -271,8 +272,9 @@ class ConversationPipeline:
 
         async def _stream_sentence(text: str, sentence_q: asyncio.Queue[bytes | None]) -> None:
             try:
-                async for chunk in self.tts.synthesize_stream(text):
-                    await sentence_q.put(chunk)
+                async with asyncio.timeout(TTS_STREAM_TIMEOUT):
+                    async for chunk in self.tts.synthesize_stream(text):
+                        await sentence_q.put(chunk)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:

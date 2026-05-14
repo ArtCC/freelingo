@@ -83,7 +83,16 @@ function _createMSEPlayer(): ConvStreamPlayer {
 
     audio.addEventListener(
       'canplay',
-      () => { if (!cancelled && audio) audio.play().catch(() => { /* autoplay policy */ }) },
+      () => {
+        if (!cancelled && audio) {
+          audio.play().catch((err: unknown) => {
+            // play() was blocked (autoplay policy, codec issue, etc.).
+            // Notify the caller so the UI does not get stuck in "speaking" state.
+            console.warn('[audio] play() rejected — no audio output:', err)
+            onEndedCb?.()
+          })
+        }
+      },
       { once: true },
     )
     audio.addEventListener('ended', () => { onEndedCb?.() }, { once: true })

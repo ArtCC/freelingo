@@ -118,7 +118,13 @@ class KokoroTTSService:
 
 class OpenAITTSService:
     def __init__(self, api_key: str, model: str, voice: str, speed: float = 1.0) -> None:
-        self._client = openai.AsyncOpenAI(api_key=api_key)
+        self._client = openai.AsyncOpenAI(
+            api_key=api_key,
+            # Hard cap: avoids the 600-second default wait when api.openai.com is
+            # unreachable or slow.  The pipeline layer (asyncio.timeout) provides
+            # a tighter per-sentence deadline; this is the absolute safety net.
+            timeout=httpx.Timeout(30.0, connect=5.0),
+        )
         self.model = model
         self.voice = voice
         self.speed = speed
