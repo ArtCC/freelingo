@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.16] - 2026-05-14
+
+### Fixed
+- **Voice conversation — production silent hang**: when using `TTS_PROVIDER=openai`, the `openai.AsyncOpenAI` client defaulted to a 600-second read timeout. A network hiccup between the VPS and `api.openai.com` would block the TTS pipeline indefinitely with no error logs, making the conversation appear frozen. The `OpenAITTSService` client now uses `httpx.Timeout(30.0, connect=5.0)` as a hard cap, and both `_stream_sentence` coroutines in the greeting and interactive turns are wrapped with `asyncio.timeout(25)` so a `TimeoutError` is logged and the turn recovers gracefully instead of hanging.
+- **Voice conversation — audio not playing on strict autoplay browsers**: `audio.play()` in the MSE streaming player was called from a `canplay` event handler, which fires asynchronously after the first audio chunk arrives (1–2 s with OpenAI TTS). On iOS Safari and some desktop browsers with strict autoplay policies the gesture context had expired by then, causing `play()` to reject silently and leave the UI stuck in the "speaking" state. `handleStart` now plays a 1-sample silent `AudioBuffer` during the user-gesture context (before any `await`) to unlock audio for the page lifetime. `audio.play()` rejections are also no longer silently swallowed: the fallback calls `onEndedCb()` so the speaking indicator resets and the user can retry.
+
 ## [1.4.15] - 2026-05-14
 
 ### Changed

@@ -121,8 +121,8 @@ function QuotaPill({ quota, t }: { quota: QuotaStatus; t: (k: string) => string 
       <button
         onClick={() => setOpen((v) => !v)}
         className={`w-full flex items-center justify-between px-3 py-1.5 border font-mono text-fl-hint tracking-widest uppercase transition-colors ${alert
-            ? 'border-fl-error/50 text-fl-error hover:border-fl-error'
-            : 'border-fl-border text-fl-muted-3 hover:border-fl-border-2 hover:text-fl-muted-1'
+          ? 'border-fl-error/50 text-fl-error hover:border-fl-error'
+          : 'border-fl-border text-fl-muted-3 hover:border-fl-border-2 hover:text-fl-muted-1'
           }`}
       >
         <span>● {text}</span>
@@ -404,6 +404,24 @@ export default function ConversationMode({
   // ─── Session lifecycle ────────────────────────────────────────────────────
   async function handleStart(topicContext?: ChatContextItem[]) {
     if (!accessToken || vad.loading || vad.errored) return
+
+    // Unlock audio for this page during the user-gesture context.
+    // On iOS Safari and browsers with strict autoplay policies, audio.play() and
+    // new AudioContext().resume() are only allowed synchronously during a user
+    // gesture.  Playing a 1-sample silent buffer here marks the page as
+    // "user has interacted" so subsequent play() calls in event handlers succeed.
+    try {
+      const unlockCtx = new AudioContext()
+      const silentBuf = unlockCtx.createBuffer(1, 1, 22050)
+      const src = unlockCtx.createBufferSource()
+      src.buffer = silentBuf
+      src.connect(unlockCtx.destination)
+      src.start(0)
+      // Close after a short delay so the gesture context is fully registered
+      setTimeout(() => unlockCtx.close().catch(() => undefined), 500)
+    } catch {
+      // Some environments don't support AudioContext — proceed without unlock
+    }
 
     // Create the streaming TTS player (must be during user gesture so autoplay
     // is unlocked; the player itself defers HTMLAudioElement creation to start())
