@@ -907,19 +907,23 @@
   },
   "whatsNew": {
     "title": "Novità",
-    "version": "v1.4.14",
+    "version": "v1.4.15",
     "cta": "Capito",
     "entry1": {
       "label": "Nuova voce",
       "desc": "La conversazione vocale in tempo reale utilizza ora una nuova voce per un'esperienza più naturale e coinvolgente."
     },
     "entry2": {
-      "label": "Correzioni",
-      "desc": "Varie correzioni di bug minori e miglioramenti della stabilità su tutta la piattaforma."
-    },
-    "entry3": {
       "label": "Suggerimenti per la conversazione",
       "desc": "La sezione di conversazione vocale mostra ora sei chip con argomenti per aiutarti a iniziare una sessione. Gli argomenti vengono scelti casualmente da un banco di 30 e scompaiono non appena la sessione inizia."
+    },
+    "entry3": {
+      "label": "Conversazione vocale più veloce",
+      "desc": "L'audio ora viene trasmesso progressivamente durante le sessioni vocali — la riproduzione inizia non appena arrivano i primi frammenti, riducendo la latenza. Il connection pooling accelera anche il riconoscimento vocale."
+    },
+    "entry4": {
+      "label": "Correzioni",
+      "desc": "Varie correzioni di bug minori e miglioramenti della stabilità su tutta la piattaforma."
     }
   },
   "contact": {

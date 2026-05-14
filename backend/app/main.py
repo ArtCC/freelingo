@@ -71,6 +71,14 @@ async def lifespan(app: FastAPI):  # noqa: ANN201
 
     yield
 
+    # Shutdown: close persistent HTTP clients to release connections cleanly
+    tts_svc = getattr(app.state, "tts_service", None)
+    if tts_svc is not None and hasattr(tts_svc, "close"):
+        await tts_svc.close()
+    stt_svc = getattr(app.state, "stt_service", None)
+    if stt_svc is not None and hasattr(stt_svc, "close"):
+        await stt_svc.close()
+
 
 app = FastAPI(title="FreeLingo API", version="0.1.0", lifespan=lifespan)
 app.state.limiter = limiter

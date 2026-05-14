@@ -907,19 +907,23 @@
   },
   "whatsNew": {
     "title": "Co nowego",
-    "version": "v1.4.14",
+    "version": "v1.4.15",
     "cta": "Rozumiem",
     "entry1": {
       "label": "Nowy głos",
       "desc": "Rozmowy głosowe w czasie rzeczywistym korzystają teraz z nowego głosu, zapewniając bardziej naturalną i angażującą rozmowę."
     },
     "entry2": {
-      "label": "Poprawki",
-      "desc": "Różne drobne poprawki błędów i ulepszenia stabilności na całej platformie."
-    },
-    "entry3": {
       "label": "Tematy rozmów",
       "desc": "Sekcja rozmów głosowych wyświetla teraz sześć kart tematycznych, które pomagają rozpocząć sesję. Tematy są losowo wybierane z banku 30 propozycji i znikają po rozpoczęciu sesji."
+    },
+    "entry3": {
+      "label": "Szybsza rozmowa głosowa",
+      "desc": "Audio jest teraz strumieniowane stopniowo podczas sesji głosowych — odtwarzanie rozpoczyna się, gdy tylko dotrą pierwsze fragmenty, zmniejszając opóźnienia. Pula połączeń przyspiesza też rozpoznawanie mowy."
+    },
+    "entry4": {
+      "label": "Poprawki",
+      "desc": "Różne drobne poprawki błędów i ulepszenia stabilności na całej platformie."
     }
   },
   "contact": {

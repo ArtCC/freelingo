@@ -5,7 +5,7 @@ import { useMicVAD } from '@ricky0123/vad-react'
 import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@/store/auth'
 import { apiFetch } from '@/lib/api'
-import { float32ToWav, createAudioQueue, type AudioQueue } from '@/lib/audio'
+import { float32ToWav, createConvStreamPlayer, type ConvStreamPlayer } from '@/lib/audio'
 import { buildConversationWsUrl, type WsMessage, type ChatContextItem } from '@/lib/conversation-ws'
 import StatusIndicator, { type ConvStatus } from './StatusIndicator'
 import TranscriptBubble from './TranscriptBubble'
@@ -204,8 +204,7 @@ export default function ConversationMode({
 
   // ─── Refs ─────────────────────────────────────────────────────────────────
   const wsRef = useRef<WebSocket | null>(null)
-  const audioCtxRef = useRef<AudioContext | null>(null)
-  const audioQueueRef = useRef<AudioQueue | null>(null)
+  const convPlayerRef = useRef<ConvStreamPlayer | null>(null)
   const transcriptIdRef = useRef(0)
   const transcriptEndRef = useRef<HTMLDivElement | null>(null)
   // Tracks whether the session ended cleanly so ws.onclose doesn't overwrite state
@@ -226,8 +225,8 @@ export default function ConversationMode({
     },
     onSpeechStart: () => {
       // Barge-in: immediately cancel any in-progress TTS playback
-      if (audioQueueRef.current) {
-        audioQueueRef.current.cancel()
+      if (convPlayerRef.current) {
+        convPlayerRef.current.cancel()
         setAssistantSpeaking(false)
       }
       setUserSpeaking(true)
@@ -296,10 +295,9 @@ export default function ConversationMode({
       }
 
       ws.onmessage = async (event) => {
-        // Binary → TTS audio chunk
+        // Binary → raw MP3 chunk; forward to the streaming player
         if (event.data instanceof ArrayBuffer) {
-          setAssistantSpeaking(true)
-          await audioQueueRef.current?.enqueue(event.data)
+          convPlayerRef.current?.appendChunk(event.data)
           return
         }
 
@@ -307,6 +305,15 @@ export default function ConversationMode({
         try {
           const msg = JSON.parse(event.data as string) as WsMessage
           switch (msg.type) {
+            case 'tts_stream_start':
+              setAssistantSpeaking(true)
+              convPlayerRef.current?.start(() => setAssistantSpeaking(false))
+              break
+
+            case 'tts_stream_end':
+              convPlayerRef.current?.end()
+              break
+
             case 'transcript':
               if (msg.role === 'user') {
                 // STT result — always final
@@ -330,7 +337,7 @@ export default function ConversationMode({
               break
 
             case 'barge_in':
-              audioQueueRef.current?.cancel()
+              convPlayerRef.current?.cancel()
               setAssistantSpeaking(false)
               setStreamingText(null)
               break
@@ -398,10 +405,9 @@ export default function ConversationMode({
   async function handleStart(topicContext?: ChatContextItem[]) {
     if (!accessToken || vad.loading || vad.errored) return
 
-    // AudioContext MUST be created during a user-gesture (this click handler)
-    const ctx = new AudioContext()
-    audioCtxRef.current = ctx
-    audioQueueRef.current = createAudioQueue(ctx)
+    // Create the streaming TTS player (must be during user gesture so autoplay
+    // is unlocked; the player itself defers HTMLAudioElement creation to start())
+    convPlayerRef.current = createConvStreamPlayer()
 
     cleanEndRef.current = false
     setStatus('connecting')
@@ -437,10 +443,8 @@ export default function ConversationMode({
     wsRef.current?.close(1000, 'user_stopped')
     wsRef.current = null
     vad.pause()
-    audioQueueRef.current?.cancel()
-    audioCtxRef.current?.close()
-    audioCtxRef.current = null
-    audioQueueRef.current = null
+    convPlayerRef.current?.cancel()
+    convPlayerRef.current = null
     setSessionActive(false)
     setStatus('ended')
     // Allow a moment for the backend to record session seconds, then refresh
@@ -452,7 +456,7 @@ export default function ConversationMode({
     return () => {
       cleanEndRef.current = true
       wsRef.current?.close()
-      audioCtxRef.current?.close()
+      convPlayerRef.current?.cancel()
     }
   }, [])
 

@@ -907,19 +907,23 @@
   },
   "whatsNew": {
     "title": "Noutăți",
-    "version": "v1.4.14",
+    "version": "v1.4.15",
     "cta": "Am înțeles",
     "entry1": {
       "label": "Voce nouă",
       "desc": "Conversația vocală în timp real folosește acum o voce nouă pentru o experiență mai naturală și mai captivantă."
     },
     "entry2": {
-      "label": "Corecții",
-      "desc": "Diverse corecții de erori minore și îmbunătățiri de stabilitate pe întreaga platformă."
-    },
-    "entry3": {
       "label": "Subiecte de conversație",
       "desc": "Secțiunea de conversație vocală afișează acum șase carduri cu subiecte pentru a te ajuta să începi o sesiune. Subiectele sunt alese aleatoriu dintr-un catalog de 30 și dispar odată ce sesiunea pornește."
+    },
+    "entry3": {
+      "label": "Conversație vocală mai rapidă",
+      "desc": "Fișierele audio sunt acum transmise progresiv în sesiunile vocale — redarea începe de îndată ce sosesc primele fragmente, reducând latența. Pool-ul de conexiuni accelerează și recunoașterea vocii."
+    },
+    "entry4": {
+      "label": "Corecții",
+      "desc": "Diverse corecții de erori minore și îmbunătățiri de stabilitate pe întreaga platformă."
     }
   },
   "contact": {

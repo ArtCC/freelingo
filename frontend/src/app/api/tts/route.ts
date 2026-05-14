@@ -3,6 +3,12 @@
  *
  * A dedicated Route Handler is needed because the generic next.config.ts rewrite
  * would return the response as text/event-stream, breaking binary audio data.
+ *
+ * The response body is streamed directly without buffering so that:
+ *  - OpenAI TTS audio starts playing in the browser as soon as the first bytes
+ *    arrive from the API (progressive streaming).
+ *  - The LRU cache on the backend is still populated on the first request, so
+ *    subsequent requests for the same text are served instantly.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -32,8 +38,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return new NextResponse(errorText, { status: backendRes.status })
   }
 
-  const audioBuffer = await backendRes.arrayBuffer()
-  return new NextResponse(audioBuffer, {
+  // Pass the ReadableStream straight through — no ArrayBuffer buffering.
+  // This lets MediaSource-capable browsers start decoding and playing audio
+  // as soon as the first chunk of the TTS response arrives.
+  return new NextResponse(backendRes.body, {
     status: 200,
     headers: { 'Content-Type': 'audio/mpeg' },
   })

@@ -907,19 +907,23 @@
   },
   "whatsNew": {
     "title": "Neuigkeiten",
-    "version": "v1.4.14",
+    "version": "v1.4.15",
     "cta": "Verstanden",
     "entry1": {
       "label": "Neue Stimme",
       "desc": "Das Echtzeit-Gespräch verwendet jetzt eine neue Stimme für ein natürlicheres und ansprechenderes Erlebnis."
     },
     "entry2": {
-      "label": "Fehlerbehebungen",
-      "desc": "Verschiedene kleinere Fehlerbehebungen und Stabilitätsverbesserungen auf der gesamten Plattform."
-    },
-    "entry3": {
       "label": "Gesprächsthemen",
       "desc": "Im Gesprächsbereich werden jetzt sechs Themen-Chips angezeigt, die dir den Einstieg in eine Sitzung erleichtern. Die Themen werden zufällig aus einem Bank von 30 ausgewählt und verschwinden, sobald die Sitzung beginnt."
+    },
+    "entry3": {
+      "label": "Schnellere Sprachkonversation",
+      "desc": "Audio wird in Sprachsitzungen jetzt progressiv gestreamt — die Wiedergabe beginnt, sobald die ersten Chunks eintreffen, was die Antwortlatenz reduziert. Verbindungs-Pooling beschleunigt zudem die Spracherkennung."
+    },
+    "entry4": {
+      "label": "Fehlerbehebungen",
+      "desc": "Verschiedene kleinere Fehlerbehebungen und Stabilitätsverbesserungen auf der gesamten Plattform."
     }
   },
   "contact": {

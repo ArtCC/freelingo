@@ -907,19 +907,23 @@
   },
   "whatsNew": {
     "title": "What's New",
-    "version": "v1.4.14",
+    "version": "v1.4.15",
     "cta": "Got it",
     "entry1": {
       "label": "New voice",
       "desc": "Real-time voice conversation now uses a new voice for a more natural and engaging experience."
     },
     "entry2": {
-      "label": "Bug fixes",
-      "desc": "Various minor bug fixes and stability improvements across the platform."
-    },
-    "entry3": {
       "label": "Conversation starters",
       "desc": "The voice conversation section now shows six topic chips to help you kick off a session. Topics are picked at random from a bank of 30 and disappear once a session starts."
+    },
+    "entry3": {
+      "label": "Faster voice conversation",
+      "desc": "Audio now streams progressively during voice sessions — playback starts as soon as the first chunks arrive, reducing response latency. Connection pooling also speeds up speech recognition."
+    },
+    "entry4": {
+      "label": "Bug fixes",
+      "desc": "Various minor bug fixes and stability improvements across the platform."
     }
   },
   "contact": {

@@ -907,19 +907,23 @@
   },
   "whatsNew": {
     "title": "Nieuw",
-    "version": "v1.4.14",
+    "version": "v1.4.15",
     "cta": "Begrepen",
     "entry1": {
       "label": "Nieuwe stem",
       "desc": "Realtime spraakgesprekken gebruiken nu een nieuwe stem voor een natuurlijkere en boeiendere ervaring."
     },
     "entry2": {
-      "label": "Bugfixes",
-      "desc": "Diverse kleine bugfixes en stabiliteitsverbeteringen op het hele platform."
-    },
-    "entry3": {
       "label": "Gespreksonderwerpen",
       "desc": "De spraakgesprekssectie toont nu zes onderwerp-chips om je op weg te helpen een sessie te starten. De onderwerpen worden willekeurig gekozen uit een bank van 30 en verdwijnen zodra een sessie begint."
+    },
+    "entry3": {
+      "label": "Snellere spraakconversatie",
+      "desc": "Audio wordt nu progressief gestreamd tijdens spraaksessies — het afspelen begint zodra de eerste fragmenten binnenkomen, waardoor de latentie afneemt. Verbindingspooling versnelt ook de spraakherkenning."
+    },
+    "entry4": {
+      "label": "Bugfixes",
+      "desc": "Diverse kleine bugfixes en stabiliteitsverbeteringen op het hele platform."
     }
   },
   "contact": {

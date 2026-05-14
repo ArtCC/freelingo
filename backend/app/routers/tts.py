@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import Response
+from fastapi.responses import StreamingResponse
 
 from app.core.deps import get_current_user
 from app.core.limiter import limiter
@@ -15,10 +15,17 @@ async def text_to_speech(
     request: Request,
     body: TTSRequest,
     current_user: User = Depends(get_current_user),
-) -> Response:
-    """Proxy TTS request to Kokoro service. Returns audio/mpeg."""
+) -> StreamingResponse:
+    """Proxy TTS request to the configured service. Streams back audio/mpeg.
+
+    Using StreamingResponse means the first bytes reach the browser as soon as
+    the TTS service starts sending them (beneficial for OpenAI TTS which streams
+    progressively; also populates the LRU cache so subsequent requests are instant).
+    """
     tts_service = getattr(request.app.state, "tts_service", None)
     if tts_service is None:
         raise HTTPException(status_code=503, detail="TTS service is not enabled")
-    audio = await tts_service.synthesize(body.text, body.voice)
-    return Response(content=audio, media_type="audio/mpeg")
+    return StreamingResponse(
+        tts_service.synthesize_stream(body.text, body.voice),
+        media_type="audio/mpeg",
+    )
