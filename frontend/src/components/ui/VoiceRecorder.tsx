@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { useAuthStore } from '@/store/auth'
+import { apiFetch } from '@/lib/api'
 
 interface VoiceRecorderProps {
   onTranscription: (text: string) => void
@@ -21,7 +21,6 @@ export function VoiceRecorder({
 }: VoiceRecorderProps) {
   const [state, setState] = useState<RecorderState>('idle')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const accessToken = useAuthStore((s) => s.accessToken)
   const t = useTranslations('voiceRecorder')
 
   async function handleClick() {
@@ -54,9 +53,8 @@ export function VoiceRecorder({
           const formData = new FormData()
           formData.append('audio', blob, 'recording.webm')
 
-          const res = await fetch('/api/stt', {
+          const res = await apiFetch('/api/stt', {
             method: 'POST',
-            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
             body: formData,
           })
           if (!res.ok) throw new Error(`STT error ${res.status}`)
