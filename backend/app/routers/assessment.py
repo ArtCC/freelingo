@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_subscription
+from app.core.deps import get_current_user
 from app.models.study_plan import StudyPlan
 from app.models.user import User
 from app.schemas.assessment import (
@@ -266,7 +266,7 @@ async def complete_assessment(
 @router.get("/level-test/questions/{plan_id}", response_model=dict)
 async def get_level_test_questions(
     plan_id: int,
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -312,7 +312,7 @@ async def get_level_test_questions(
 @router.post("/level-test/submit", response_model=LevelTestResult)
 async def submit_level_test(
     data: LevelTestSubmitRequest,
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Evaluate the end-of-level test and save the result to the study plan."""
@@ -358,7 +358,7 @@ async def submit_level_test(
 @router.get("/level-test/result/{plan_id}", response_model=LevelTestResult)
 async def get_level_test_result(
     plan_id: int,
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

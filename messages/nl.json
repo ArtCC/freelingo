@@ -70,7 +70,8 @@
     "admin": "Admin",
     "conversation": "Gesprek",
     "listening": "Listening",
-    "reading": "Reading"
+    "reading": "Reading",
+    "contact": "Contact"
   },
   "auth": {
     "login": {
@@ -885,7 +886,7 @@
     "planMonthly": "— Starten voor €{price}/maand →",
     "planYearly": "— Starten voor €{price}/jaar →",
     "checkoutError": "Betaling kon niet worden gestart. Probeer opnieuw.",
-    "pricingLabel": "Lanceringaanbieding",
+    "pricingLabel": "Prijs",
     "pricingTitle": "Eenvoudig en transparant",
     "pricingDesc": "Probeer {days} dagen gratis. Kaart vereist, geen kosten tot einde proefperiode.",
     "planMonthlyName": "Maandelijks",
@@ -895,11 +896,22 @@
     "year": "jaar",
     "ctaStart": "Start gratis proefperiode van {days} dagen",
     "planFeature": {
-      "feature1": "Onbeperkte sessies met de AI-tutor",
-      "feature2": "3 spraakgesprekssessies per week",
-      "feature3": "Flashcards, lessen en voortgangsregistratie",
-      "feature4": "Volledige grammatica- en woordenschatreferentie",
+      "feature1": "Chat met je AI-tutor",
+      "feature2": "Spraakgesprekken",
+      "feature3": "Listening-oefeningen",
+      "feature4": "Reading-oefeningen",
       "feature5": "2 maanden gratis"
+    },
+    "planFreeName": "Gratis",
+    "trialBadge": "7 dagen gratis",
+    "ctaRegister": "Aan de slag",
+    "everythingFree": "Alles inbegrepen in het gratis abonnement, plus:",
+    "freeFeature": {
+      "f1": "Niveautest & beoordeling",
+      "f2": "Lessen & studieplan",
+      "f3": "Grammatica & woordenschat",
+      "f4": "Dashboard & voortgangsregistratie",
+      "f5": "Flashcards & gespreide herhaling"
     },
     "successLabel": "Betaling bevestigd",
     "successTitle": "Welkom bij FreeLingo Premium!",
@@ -921,19 +933,22 @@
     "accessUntil": "Toegang tot",
     "manage": "Abonnement beheren",
     "subscribe": "Abonneren",
-    "portalError": "Factureringsportaal kon niet worden geopend. Probeer opnieuw."
+    "portalError": "Factureringsportaal kon niet worden geopend. Probeer opnieuw.",
+    "openSourceTitle": "Open source",
+    "openSourceDesc": "Gratis zelf hosten op je eigen server",
+    "openSourceCta": "Bekijk op GitHub"
   },
   "whatsNew": {
     "title": "Nieuw",
-    "version": "v1.5.3",
+    "version": "v1.5.5",
     "cta": "Begrepen",
     "entry1": {
-      "label": "Reading",
-      "desc": "Nieuwe Reading-oefeningen: AI-gegenereerde teksten op jouw CEFR-niveau met 5 begripsvragen. Tekst en vragen worden tegelijk getoond. Verdien XP voor elk correct antwoord."
+      "label": "Gratis plan",
+      "desc": "Dashboard, flashcards, lessen, studieplan en niveautest zijn nu gratis voor alle geregistreerde gebruikers. Geen abonnement vereist."
     },
     "entry2": {
-      "label": "Stemkiezer",
-      "desc": "Kies de stem van je AI-tutor rechtstreeks in Instellingen. Beluister een voorbeeld van alle 9 beschikbare stemmen voor je er een kiest, je voorkeur wordt automatisch opgeslagen."
+      "label": "Prijzen vernieuwd",
+      "desc": "De startpagina toont nu drie prijskaarten: Gratis, Maandelijks en Jaarlijks. De gratis kaart toont alle functies zonder abonnement. Betaalde kaarten bevatten 7 dagen gratis."
     },
     "entry3": {
       "label": "Bugfixes",

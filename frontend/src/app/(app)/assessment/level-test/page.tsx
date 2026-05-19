@@ -4,9 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/api'
-import { useAuthStore, isSubscribed } from '@/store/auth'
-import { useConfigStore } from '@/store/config'
-import { PaywallBanner } from '@/components/billing/PaywallBanner'
+import { useAuthStore } from '@/store/auth'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -78,7 +76,6 @@ export default function LevelTestPage() {
   const searchParams = useSearchParams()
   const planId = searchParams.get('plan')
   const user = useAuthStore((s) => s.user)
-  const stripeEnabled = useConfigStore((s) => s.stripeEnabled)
 
   // Bug #6 fix: gate loadQuestions until user confirms the start warning
   const [startConfirmed, setStartConfirmed] = useState(false)
@@ -101,7 +98,7 @@ export default function LevelTestPage() {
   // ── Load questions ────────────────────────────────────────────────────────
 
   const loadQuestions = useCallback(async () => {
-    // Bug #6 fix: do not fetch until the user has confirmed starting
+    // Bug #6 fix: skip network call until the user has confirmed starting
     if (!startConfirmed) return
 
     // Bug #5 fix: validate planId before converting to number
@@ -111,9 +108,6 @@ export default function LevelTestPage() {
       setStep('error')
       return
     }
-
-    // Bug #6 fix: skip network call for unsubscribed users — PaywallBanner renders instead
-    if (!isSubscribed(user, stripeEnabled)) return
 
     try {
       const res = await apiFetch(`/api/assessment/level-test/questions/${planIdNum}`)
@@ -132,7 +126,7 @@ export default function LevelTestPage() {
       setError(err instanceof Error ? err.message : 'Failed to load level test.')
       setStep('error')
     }
-  }, [planId, startConfirmed, user, stripeEnabled])
+  }, [planId, startConfirmed, user])
 
   useEffect(() => {
     void loadQuestions()
@@ -199,8 +193,6 @@ export default function LevelTestPage() {
   }
 
   // ── Renders ───────────────────────────────────────────────────────────────
-
-  if (!isSubscribed(user, stripeEnabled)) return <PaywallBanner />
 
   // Start warning dialog — shown before any loading begins
   if (showStartWarning) {

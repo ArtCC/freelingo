@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.app_logger import get_logger
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_subscription
+from app.core.deps import get_current_user
 from app.models.lesson import Exercise, Lesson
 from app.models.study_plan import StudyPlan
 from app.models.user import User
@@ -46,7 +46,7 @@ async def get_current_plan(
 @router.post("/generate", response_model=StudyPlanResponse)
 async def create_study_plan(
     data: GenerateStudyPlanRequest,
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     # Deactivate old plans
@@ -83,7 +83,7 @@ async def create_study_plan(
 
 @router.get("/today", response_model=TodayResponse)
 async def get_today_lessons(
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

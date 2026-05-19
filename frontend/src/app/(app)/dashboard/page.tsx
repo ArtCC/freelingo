@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/api'
 import { useAuthStore } from '@/store/auth'
 import { useProgressStore } from '@/store/progress'
-import { PaywallGate } from '@/components/billing/PaywallBanner'
 import OnboardingTour from '@/components/tour/OnboardingTour'
 import WhatsNew from '@/components/whats-new/WhatsNew'
 
@@ -67,7 +66,7 @@ export default function DashboardPage() {
   const skillEntries = Object.entries(skills)
 
   return (
-    <PaywallGate>
+    <>
       <OnboardingTour />
       <WhatsNew />
       <div className="p-6 max-w-4xl mx-auto">
@@ -189,6 +188,6 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
-    </PaywallGate>
+    </>
   )
 }

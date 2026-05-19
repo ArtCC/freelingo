@@ -70,7 +70,8 @@
     "admin": "Admin",
     "conversation": "Conversație",
     "listening": "Listening",
-    "reading": "Reading"
+    "reading": "Reading",
+    "contact": "Contact"
   },
   "auth": {
     "login": {
@@ -885,7 +886,7 @@
     "planMonthly": "— Începe la {price}€/lună →",
     "planYearly": "— Începe la {price}€/an →",
     "checkoutError": "Nu s-a putut iniția plata. Încearcă din nou.",
-    "pricingLabel": "Ofertă de lansare",
+    "pricingLabel": "Preț",
     "pricingTitle": "Simplu și transparent",
     "pricingDesc": "Încearcă gratuit {days} zile. Card necesar, nicio taxă până la sfârșitul perioadei de probă.",
     "planMonthlyName": "Lunar",
@@ -895,11 +896,22 @@
     "year": "an",
     "ctaStart": "Începe proba gratuită de {days} zile",
     "planFeature": {
-      "feature1": "Sesiuni nelimitate cu tutorul AI",
-      "feature2": "3 sesiuni de conversație vocală pe săptămână",
-      "feature3": "Flashcard-uri, lecții și urmărirea progresului",
-      "feature4": "Referință completă de gramatică și vocabular",
+      "feature1": "Chat cu tutorul tău AI",
+      "feature2": "Conversații vocale",
+      "feature3": "Exerciții de listening",
+      "feature4": "Exerciții de reading",
       "feature5": "2 luni gratuite"
+    },
+    "planFreeName": "Gratuit",
+    "trialBadge": "7 zile gratuit",
+    "ctaRegister": "Începe acum",
+    "everythingFree": "Tot ce include planul gratuit, plus:",
+    "freeFeature": {
+      "f1": "Test de nivel & evaluare",
+      "f2": "Lecții & plan de studiu",
+      "f3": "Gramatică & vocabular",
+      "f4": "Panou de control & urmărire progres",
+      "f5": "Flashcard-uri & repetiție spațiată"
     },
     "successLabel": "Plată confirmată",
     "successTitle": "Bun venit la FreeLingo Premium!",
@@ -921,19 +933,22 @@
     "accessUntil": "Acces până la",
     "manage": "Gestionează abonamentul",
     "subscribe": "Abonează-te",
-    "portalError": "Nu s-a putut deschide portalul de facturare. Încearcă din nou."
+    "portalError": "Nu s-a putut deschide portalul de facturare. Încearcă din nou.",
+    "openSourceTitle": "Sursă deschisă",
+    "openSourceDesc": "Găzduieşte-l gratuit pe propriul server",
+    "openSourceCta": "Vezi pe GitHub"
   },
   "whatsNew": {
     "title": "Noutăți",
-    "version": "v1.5.3",
+    "version": "v1.5.5",
     "cta": "Am înțeles",
     "entry1": {
-      "label": "Reading",
-      "desc": "Exerciții noi de Reading: texte generate de IA la nivelul tău CEFR cu 5 întrebări de înțelegere. Textul și întrebările sunt afișate împreună. Câștigă XP pentru fiecare răspuns corect."
+      "label": "Plan gratuit",
+      "desc": "Tabloul de bord, cardurile de memorie, lecțiile, planul de studiu și testul de nivel sunt acum gratuite pentru toți utilizatorii înregistrați. Nu este necesară nicio abonare."
     },
     "entry2": {
-      "label": "Selector de voce",
-      "desc": "Alege vocea tutorului tău IA direct din Setări. Ascultă o mostră din toate cele 9 voci disponibile înainte de a alege, preferința ta este salvată automat."
+      "label": "Prețuri redesenate",
+      "desc": "Pagina principală afișează acum trei carduri de preț: Gratuit, Lunar și Anual. Cardul gratuit listează toate funcțiile fără abonament. Cardurile plătite includ 7 zile de probă gratuită."
     },
     "entry3": {
       "label": "Corecții",

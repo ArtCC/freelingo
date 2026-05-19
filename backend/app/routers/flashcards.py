@@ -3,7 +3,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import require_subscription
+from app.core.deps import get_current_user
 from app.models.flashcard import Flashcard
 from app.models.user import User
 from app.schemas.flashcards import (
@@ -27,7 +27,7 @@ router = APIRouter(prefix="/api/flashcards", tags=["flashcards"])
 
 @router.get("/due", response_model=FlashcardListResponse)
 async def get_due_flashcards(
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     from datetime import date as date_type
@@ -54,7 +54,7 @@ async def get_due_flashcards(
 
 @router.get("/all", response_model=list[FlashcardResponse])
 async def get_all_flashcards(
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -68,7 +68,7 @@ async def get_all_flashcards(
 @router.post("", response_model=FlashcardResponse)
 async def create_flashcard(
     data: FlashcardCreate,
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     card = Flashcard(
@@ -88,7 +88,7 @@ async def create_flashcard(
 async def review_flashcard(
     card_id: int,
     data: FlashcardReview,
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     card = await db.get(Flashcard, card_id)
@@ -111,7 +111,7 @@ async def review_flashcard(
 @router.post("/generate", response_model=FlashcardGenerateResponse)
 async def generate_flashcards_endpoint(
     data: FlashcardGenerateRequest,
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     try:

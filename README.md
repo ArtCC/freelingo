@@ -43,6 +43,17 @@ The hosted instance is operated by the FreeLingo team and always runs the latest
 
 Self-hosting remains free and open source under the AGPL-3.0 licence. The hosted service exists for users who prefer a managed experience.
 
+## For businesses
+
+Need FreeLingo for your team or organisation?
+
+- **Private / on-premise deployment** — Deploy FreeLingo on your own infrastructure with full control over data and configuration. Ideal for schools, language academies, and companies with data-sovereignty requirements.
+- **Dedicated managed instance** — Request a hosted instance operated exclusively for your organisation, without sharing resources with the public service.
+
+[Get in touch](https://arturocarreterocalvo.com) to discuss your requirements.
+
+If FreeLingo is useful to you or your organisation, consider [**sponsoring the project on GitHub**](https://github.com/sponsors/artcc) to support continued development and keep the self-hosted version free for everyone.
+
 ---
 
 ## Architecture

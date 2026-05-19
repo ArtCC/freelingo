@@ -70,7 +70,8 @@
     "admin": "Admin",
     "conversation": "Rozmowa",
     "listening": "Listening",
-    "reading": "Reading"
+    "reading": "Reading",
+    "contact": "Kontakt"
   },
   "auth": {
     "login": {
@@ -885,7 +886,7 @@
     "planMonthly": "— Zacznij za {price}€/miesiąc →",
     "planYearly": "— Zacznij za {price}€/rok →",
     "checkoutError": "Nie można uruchomić płatności. Spróbuj ponownie.",
-    "pricingLabel": "Oferta startowa",
+    "pricingLabel": "Cena",
     "pricingTitle": "Prosto i przejrzyście",
     "pricingDesc": "Wypróbuj bezpłatnie przez {days} dni. Karta wymagana, brak opłat do końca okresu próbnego.",
     "planMonthlyName": "Miesięczny",
@@ -895,11 +896,22 @@
     "year": "rok",
     "ctaStart": "Rozpocznij bezpłatny okres próbny na {days} dni",
     "planFeature": {
-      "feature1": "Nieograniczone sesje z tutorem AI",
-      "feature2": "3 sesje konwersacji głosowej w tygodniu",
-      "feature3": "Fiszki, lekcje i śledzenie postępów",
-      "feature4": "Pełna gramatyka i słownictwo",
+      "feature1": "Czat z twoim tutorem AI",
+      "feature2": "Rozmowy głosowe",
+      "feature3": "Ćwiczenia listening",
+      "feature4": "Ćwiczenia reading",
       "feature5": "2 miesiące gratis"
+    },
+    "planFreeName": "Darmowy",
+    "trialBadge": "7 dni gratis",
+    "ctaRegister": "Zacznij teraz",
+    "everythingFree": "Wszystko zawarte w planie darmowym, plus:",
+    "freeFeature": {
+      "f1": "Test poziomujący & ocena",
+      "f2": "Lekcje & plan nauki",
+      "f3": "Gramatyka & słownictwo",
+      "f4": "Panel & śledzenie postępów",
+      "f5": "Fiszki & powtarzanie w odstępach"
     },
     "successLabel": "Płatność potwierdzona",
     "successTitle": "Witaj w FreeLingo Premium!",
@@ -921,19 +933,22 @@
     "accessUntil": "Dostęp do",
     "manage": "Zarządzaj subskrypcją",
     "subscribe": "Subskrybuj",
-    "portalError": "Nie można otworzyć portalu rozliczeń. Spróbuj ponownie."
+    "portalError": "Nie można otworzyć portalu rozliczeń. Spróbuj ponownie.",
+    "openSourceTitle": "Otwarte źródło",
+    "openSourceDesc": "Bezpłatnie hostuj na własnym serwerze",
+    "openSourceCta": "Zobacz na GitHubie"
   },
   "whatsNew": {
     "title": "Co nowego",
-    "version": "v1.5.3",
+    "version": "v1.5.5",
     "cta": "Rozumiem",
     "entry1": {
-      "label": "Reading",
-      "desc": "Nowe ćwiczenia Reading: teksty generowane przez AI na Twoim poziomie CEFR z 5 pytaniami ze zrozumienia. Tekst i pytania są wyświetlane razem. Zdobywaj XP za każdą poprawną odpowiedź."
+      "label": "Darmowy plan",
+      "desc": "Panel, fiszki, lekcje, plan nauki i test poziomujący są teraz bezpłatne dla wszystkich zarejestrowanych użytkowników. Subskrypcja nie jest wymagana."
     },
     "entry2": {
-      "label": "Wybór głosu",
-      "desc": "Wybierz głos swojego tutora AI bezpośrednio w Ustawieniach. Odsłuchaj próbkę wszystkich 9 dostępnych głosów przed wybraniem, Twoja preferencja jest zapisywana automatycznie."
+      "label": "Nowy cennik",
+      "desc": "Strona główna pokazuje teraz trzy karty cenowe: Darmową, Miesięczną i Roczną. Karta darmowa zawiera listę wszystkich funkcji bez subskrypcji. Płatne karty oferują 7 dni bezpłatnego okresu próbnego."
     },
     "entry3": {
       "label": "Poprawki",

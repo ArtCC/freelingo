@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.5] - 2026-05-19
+
+### Changed
+- **Freemium model restructured**: dashboard, flashcards, lessons, study plan, and level assessment are now available to all registered users at no cost. Chat with AI tutor, voice conversations, listening exercises, and reading exercises remain subscription-only features.
+- **Backend**: `require_subscription` dependency removed from `/api/lessons`, `/api/flashcards`, `/api/study-plan`, and `/api/assessment` routers; all endpoints in these routers now use `get_current_user` only.
+- **Frontend**: `PaywallGate` removed from `/dashboard`, `/flashcards`, and `/assessment/level-test` pages.
+- **Landing page pricing section redesigned**: three cards instead of two — Free (lists all features available without subscription), Monthly (all free features plus paid features, 7-day free trial badge), and Yearly (same as monthly plus 2-months-free badge). CTA button updated from "Start X-day free trial" to a register invitation.
+- **i18n**: `pricingLabel` updated to the native word for "Pricing" in all 10 locales. New keys added: `planFreeName`, `trialBadge`, `ctaRegister`, `everythingFree`, `freeFeature` (f1–f5). `planFeature.feature1–4` updated to reflect the actual paid-only features (AI chat tutor, voice conversations, listening exercises, reading exercises). All changes applied to all 10 locale files (en, es, de, fr, it, pl, pt, nl, ro, ru).
+
+## [1.5.4] - 2026-05-18
+
+### Fixed
+- **Anthropic LLM provider**: resolved crash `'NoneType' object has no attribute 'beta'` in `structured_output` caused by routing Anthropic through `_do_structured_output`, which uses the OpenAI `beta.chat.completions.parse` API while `self.client` is `None` for Anthropic. All providers now go through `_structured_via_json`.
+- **Anthropic — system prompt lost**: `_anthropic_chat` was extracting only the first system message via `next()`; extra instructions appended by `_structured_via_json` (JSON format hint) were silently dropped. All system messages are now combined with `\n\n` before the API call.
+- **Anthropic — `system=None` API error**: passing `system=None` explicitly to `messages.create` could cause an SDK validation error; the parameter is now omitted when no system message is present.
+- **Anthropic — missing timeout**: `messages.create` calls had no `timeout` guard; `REQUEST_TIMEOUT` (60 s) is now applied.
+- **Anthropic — double retry**: `_anthropic_chat` wrapped the API call in its own `_call_with_retry`, nesting it inside the outer retry loop in `_do_chat` (up to 9 attempts). The inner retry was removed; the outer loop is sufficient.
+- **Dead code removed**: `_do_structured_output` (referenced `self.client.beta` — broken for Anthropic, unreachable for all providers) deleted.
+
 ## [1.5.3] - 2026-05-17
 
 ### Added

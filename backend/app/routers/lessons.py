@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import require_subscription
+from app.core.deps import get_current_user
 from app.models.lesson import Exercise, Lesson
 from app.models.study_plan import StudyPlan
 from app.models.user import User
@@ -42,7 +42,7 @@ async def _get_lesson_for_user(lesson_id: int, user_id: int, db: AsyncSession) -
 @router.get("/{lesson_id}", response_model=LessonDetailResponse)
 async def get_lesson(
     lesson_id: int,
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     lesson = await _get_lesson_for_user(lesson_id, current_user.id, db)
@@ -58,7 +58,7 @@ async def get_lesson(
 @router.post("/{lesson_id}/start", response_model=LessonResponse)
 async def start_lesson(
     lesson_id: int,
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     lesson = await _get_lesson_for_user(lesson_id, current_user.id, db)
@@ -68,7 +68,7 @@ async def start_lesson(
 @router.post("/{lesson_id}/complete", response_model=LessonResponse)
 async def complete_lesson(
     lesson_id: int,
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     lesson = await _get_lesson_for_user(lesson_id, current_user.id, db)
@@ -123,7 +123,7 @@ async def complete_lesson(
 async def answer_exercise(
     exercise_id: int,
     data: ExerciseAnswerRequest,
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     exercise = await db.get(Exercise, exercise_id)

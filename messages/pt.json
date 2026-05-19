@@ -70,7 +70,8 @@
     "admin": "Admin",
     "conversation": "Conversa",
     "listening": "Listening",
-    "reading": "Reading"
+    "reading": "Reading",
+    "contact": "Contato"
   },
   "auth": {
     "login": {
@@ -885,7 +886,7 @@
     "planMonthly": "— Iniciar por €{price}/mês →",
     "planYearly": "— Iniciar por €{price}/ano →",
     "checkoutError": "Não foi possível iniciar o pagamento. Tente novamente.",
-    "pricingLabel": "Oferta de lançamento",
+    "pricingLabel": "Preço",
     "pricingTitle": "Simples e transparente",
     "pricingDesc": "Experimente gratuitamente por {days} dias. Cartão obrigatório, sem cobrança até o fim do período de avaliação.",
     "planMonthlyName": "Mensal",
@@ -895,11 +896,22 @@
     "year": "ano",
     "ctaStart": "Iniciar avaliação gratuita de {days} dias",
     "planFeature": {
-      "feature1": "Sessões ilimitadas com o tutor de IA",
-      "feature2": "3 sessões de conversa por voz por semana",
-      "feature3": "Flashcards, lições e acompanhamento do progresso",
-      "feature4": "Referência completa de gramática e vocabulário",
+      "feature1": "Chat com o teu tutor IA",
+      "feature2": "Conversações de voz",
+      "feature3": "Exercícios de listening",
+      "feature4": "Exercícios de reading",
       "feature5": "2 meses grátis"
+    },
+    "planFreeName": "Grátis",
+    "trialBadge": "7 dias grátis",
+    "ctaRegister": "Começar",
+    "everythingFree": "Tudo incluído no plano gratuito, mais:",
+    "freeFeature": {
+      "f1": "Teste de nível & avaliação",
+      "f2": "Lições & plano de estudo",
+      "f3": "Gramática & vocabulário",
+      "f4": "Painel & acompanhamento de progresso",
+      "f5": "Flashcards & repetição espaçada"
     },
     "successLabel": "Pagamento confirmado",
     "successTitle": "Bem-vindo ao FreeLingo Premium!",
@@ -921,19 +933,22 @@
     "accessUntil": "Acesso até",
     "manage": "Gerir subscrição",
     "subscribe": "Subscrever",
-    "portalError": "Não foi possível abrir o portal de faturação. Tente novamente."
+    "portalError": "Não foi possível abrir o portal de faturação. Tente novamente.",
+    "openSourceTitle": "Código aberto",
+    "openSourceDesc": "Autoaloje gratuitamente no seu servidor",
+    "openSourceCta": "Ver no GitHub"
   },
   "whatsNew": {
     "title": "Novidades",
-    "version": "v1.5.3",
+    "version": "v1.5.5",
     "cta": "Entendido",
     "entry1": {
-      "label": "Reading",
-      "desc": "Novos exercícios de Reading: textos gerados por IA no teu nível CEFR com 5 perguntas de compreensão. Texto e perguntas são mostrados em conjunto. Ganha XP por cada resposta correta."
+      "label": "Plano gratuito",
+      "desc": "O painel, os flashcards, as lições, o plano de estudo e o teste de nível são agora gratuitos para todos os utilizadores registados. Não é necessária subscrição."
     },
     "entry2": {
-      "label": "Seletor de voz",
-      "desc": "Escolhe a voz do teu tutor IA diretamente nas Definições. Ouve uma amostra das 9 vozes disponíveis antes de selecionar, a tua preferência é guardada automaticamente."
+      "label": "Preços renovados",
+      "desc": "A página inicial mostra agora três cartões de preço: Gratuito, Mensal e Anual. O cartão gratuito lista todas as funcionalidades sem subscrição. Os cartões pagos incluem 7 dias de prova gratuita."
     },
     "entry3": {
       "label": "Correções",

@@ -70,7 +70,8 @@
     "admin": "Admin",
     "conversation": "Gespräch",
     "listening": "Listening",
-    "reading": "Reading"
+    "reading": "Reading",
+    "contact": "Kontakt"
   },
   "auth": {
     "login": {
@@ -885,7 +886,7 @@
     "planMonthly": "— Starten für {price}€/Monat →",
     "planYearly": "— Starten für {price}€/Jahr →",
     "checkoutError": "Checkout konnte nicht gestartet werden. Bitte erneut versuchen.",
-    "pricingLabel": "Einführungsangebot",
+    "pricingLabel": "Preis",
     "pricingTitle": "Einfach und transparent",
     "pricingDesc": "{days} Tage kostenlos testen. Karte erforderlich, keine Abbuchung bis Testende.",
     "planMonthlyName": "Monatlich",
@@ -895,11 +896,22 @@
     "year": "Jahr",
     "ctaStart": "{days}-tägige kostenlose Testversion starten",
     "planFeature": {
-      "feature1": "Unbegrenzte KI-Tutorsitzungen",
-      "feature2": "3 Sprachkonversationssitzungen pro Woche",
-      "feature3": "Karteikarten, Lektionen & Fortschrittsverfolgung",
-      "feature4": "Vollständige Grammatik- & Vokabelreferenz",
+      "feature1": "Chat mit deinem KI-Tutor",
+      "feature2": "Sprachgespräche",
+      "feature3": "Listening-Übungen",
+      "feature4": "Reading-Übungen",
       "feature5": "2 Monate gratis"
+    },
+    "planFreeName": "Kostenlos",
+    "trialBadge": "7 Tage kostenlos",
+    "ctaRegister": "Jetzt starten",
+    "everythingFree": "Alles im kostenlosen Plan enthalten, plus:",
+    "freeFeature": {
+      "f1": "Einstufungstest & Bewertung",
+      "f2": "Lektionen & Lernplan",
+      "f3": "Grammatik & Wortschatz",
+      "f4": "Dashboard & Lernfortschritt",
+      "f5": "Karteikarten & Spaced Repetition"
     },
     "successLabel": "Zahlung bestätigt",
     "successTitle": "Willkommen bei FreeLingo Premium!",
@@ -921,19 +933,22 @@
     "accessUntil": "Zugang bis",
     "manage": "Abonnement verwalten",
     "subscribe": "Abonnieren",
-    "portalError": "Abrechnungsportal konnte nicht geöffnet werden. Bitte erneut versuchen."
+    "portalError": "Abrechnungsportal konnte nicht geöffnet werden. Bitte erneut versuchen.",
+    "openSourceTitle": "Open Source",
+    "openSourceDesc": "Kostenlos selbst hosten auf deinem Server",
+    "openSourceCta": "Auf GitHub ansehen"
   },
   "whatsNew": {
     "title": "Neuigkeiten",
-    "version": "v1.5.3",
+    "version": "v1.5.5",
     "cta": "Verstanden",
     "entry1": {
-      "label": "Reading",
-      "desc": "Neue Reading-Übungen: KI-generierte Lesetexte auf deinem CEFR-Niveau mit 5 Verständnisfragen. Text und Fragen werden gleichzeitig angezeigt. XP für jede richtige Antwort."
+      "label": "Kostenloser Plan",
+      "desc": "Dashboard, Karteikarten, Lektionen, Lernplan und Stufentest sind jetzt für alle registrierten Nutzer kostenlos. Kein Abonnement erforderlich."
     },
     "entry2": {
-      "label": "Stimmauswahl",
-      "desc": "Wähle die Stimme deines KI-Tutors direkt in den Einstellungen. Höre alle 9 verfügbaren Stimmen an, bevor du auswählst, deine Auswahl wird automatisch gespeichert."
+      "label": "Neues Preisdesign",
+      "desc": "Die Startseite zeigt jetzt drei Preiskarten: Kostenlos, Monatlich und Jährlich. Die kostenlose Karte listet alle enthaltenen Funktionen ohne Abonnement. Bezahlkarten beinhalten 7 Tage kostenlos."
     },
     "entry3": {
       "label": "Fehlerbehebungen",

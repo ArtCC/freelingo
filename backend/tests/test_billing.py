@@ -96,7 +96,7 @@ async def test_require_subscription_blocks_when_stripe_enabled(client, test_user
     """Unsubscribed user gets HTTP 402 when STRIPE_ENABLED=true."""
     user, headers = test_user
     with patch.object(settings, "STRIPE_ENABLED", True):
-        res = await client.get("/api/lessons/units", headers=headers)
+        res = await client.get("/api/chat/conversations", headers=headers)
     assert res.status_code == 402
     assert res.json()["detail"] == "subscription_required"
 
@@ -106,7 +106,7 @@ async def test_require_subscription_passes_when_stripe_disabled(client, test_use
     """All users pass when STRIPE_ENABLED=false (self-hosted)."""
     _, headers = test_user
     with patch.object(settings, "STRIPE_ENABLED", False):
-        res = await client.get("/api/lessons/units", headers=headers)
+        res = await client.get("/api/chat/conversations", headers=headers)
     # Any non-402 response means the paywall was bypassed
     assert res.status_code != 402
 
@@ -119,7 +119,7 @@ async def test_require_subscription_passes_for_active_user(client, db_session, t
     await db_session.commit()
 
     with patch.object(settings, "STRIPE_ENABLED", True):
-        res = await client.get("/api/lessons/units", headers=headers)
+        res = await client.get("/api/chat/conversations", headers=headers)
     assert res.status_code != 402
 
 

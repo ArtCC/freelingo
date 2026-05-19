@@ -9,6 +9,7 @@ import { useConfigStore } from '@/store/config'
 import { apiFetch } from '@/lib/api'
 import Image from 'next/image'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { ContactFormModal } from '@/components/ui/contact-form-modal'
 import { LoadingBar } from '@/components/ui/loading-bar'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -50,6 +51,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [logoutConfirm, setLogoutConfirm] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [resourcesOpen, setResourcesOpen] = useState(false)
+  const [contactOpen, setContactOpen] = useState(false)
   const [resendSent, setResendSent] = useState(false)
 
   async function handleResendVerification() {
@@ -240,7 +242,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <p className="text-fl-label font-mono text-fl-muted-4 truncate">@{user?.username}</p>
             </div>
           </div>
-          <p className="font-mono text-fl-label text-fl-muted-4 tracking-wider mb-2">v1.5.3</p>
+          <p className="font-mono text-fl-label text-fl-muted-4 tracking-wider mb-2">v1.5.5</p>
+          <button
+            onClick={() => setContactOpen(true)}
+            className="w-full text-left text-fl-label font-mono tracking-widest text-fl-muted-2 hover:text-fl-fg transition-colors uppercase mb-1"
+          >
+            — {tNav('contact')}
+          </button>
           <button
             onClick={() => setLogoutConfirm(true)}
             className="w-full text-left text-fl-label font-mono tracking-widest text-fl-muted-2 hover:text-fl-fg transition-colors uppercase"
@@ -359,7 +367,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
                 <p className="font-mono text-fl-label text-fl-muted-4 truncate">@{user?.username}</p>
               </div>
-              <p className="font-mono text-fl-label text-fl-muted-4 tracking-wider mb-2">v1.5.3</p>
+              <p className="font-mono text-fl-label text-fl-muted-4 tracking-wider mb-2">v1.5.5</p>
+              <button
+                onClick={() => { setMobileMenuOpen(false); setContactOpen(true) }}
+                className="font-mono text-fl-label tracking-widest text-fl-muted-2 hover:text-fl-fg transition-colors uppercase mb-1 block"
+              >
+                — {tNav('contact')}
+              </button>
               <button
                 onClick={() => { setMobileMenuOpen(false); setLogoutConfirm(true) }}
                 className="font-mono text-fl-label tracking-widest text-fl-muted-2 hover:text-fl-fg transition-colors uppercase"
@@ -395,6 +409,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       <LoadingBar />
+
+      <ContactFormModal open={contactOpen} onClose={() => setContactOpen(false)} />
 
       <ConfirmDialog
         open={logoutConfirm}
