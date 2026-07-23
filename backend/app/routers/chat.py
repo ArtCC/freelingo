@@ -12,6 +12,7 @@ from app.core.deps import (
     get_active_study_plan_optional,
     require_not_maintenance,
     require_subscription_or_freemium,
+    require_subscription_or_freemium_readonly,
 )
 from app.core.limiter import limiter
 from app.models.chat_history import ChatHistory
@@ -113,7 +114,7 @@ async def _resolve_chat_context(
 async def list_conversations(
     request: Request,
     _maintenance: None = Depends(require_not_maintenance),
-    current_user: User = Depends(require_subscription_or_freemium("chat")),
+    current_user: User = Depends(require_subscription_or_freemium_readonly("chat")),
     db: AsyncSession = Depends(get_db),
 ):
     # Filter conversations by the active language (not study plan)
@@ -138,7 +139,7 @@ async def create_conversation(
     request: Request,
     data: ConversationCreate,
     _maintenance: None = Depends(require_not_maintenance),
-    current_user: User = Depends(require_subscription_or_freemium("chat")),
+    current_user: User = Depends(require_subscription_or_freemium_readonly("chat")),
     db: AsyncSession = Depends(get_db),
 ):
     plan = await get_active_study_plan_optional(current_user, db)
@@ -164,7 +165,7 @@ async def delete_conversation(
     request: Request,
     conversation_id: int,
     _maintenance: None = Depends(require_not_maintenance),
-    current_user: User = Depends(require_subscription_or_freemium("chat")),
+    current_user: User = Depends(require_subscription_or_freemium_readonly("chat")),
     db: AsyncSession = Depends(get_db),
 ):
     conv = await db.get(Conversation, conversation_id)
@@ -186,7 +187,7 @@ async def get_conversation_messages(
     request: Request,
     conversation_id: int,
     _maintenance: None = Depends(require_not_maintenance),
-    current_user: User = Depends(require_subscription_or_freemium("chat")),
+    current_user: User = Depends(require_subscription_or_freemium_readonly("chat")),
     db: AsyncSession = Depends(get_db),
 ):
     conv = await db.get(Conversation, conversation_id)
@@ -502,7 +503,7 @@ async def chat(
 async def get_history(
     request: Request,
     _maintenance: None = Depends(require_not_maintenance),
-    current_user: User = Depends(require_subscription_or_freemium("chat")),
+    current_user: User = Depends(require_subscription_or_freemium_readonly("chat")),
     db: AsyncSession = Depends(get_db),
 ):
     # Filter history by active language (not study plan)

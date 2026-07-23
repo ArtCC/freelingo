@@ -1063,6 +1063,7 @@
     "quotaExceededSessions": "Вы использовали все сессии на этой неделе.",
     "quotaExceededTime": "Вы использовали всё ежедневное время практики.",
     "quotaExceededTokens": "Вы использовали все ежемесячные токены ИИ.",
+    "freemiumVoiceRemaining": "Бесплатный голос: {remaining}/{limit} мин на этой неделе",
     "quotaTokens": "Токены в этом месяце",
     "memoryUpdated": "Память обновлена",
     "trialBanner": "Free assessment conversation · {minutes} min",

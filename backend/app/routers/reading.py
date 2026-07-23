@@ -13,6 +13,7 @@ from app.core.deps import (
     get_redis,
     require_not_maintenance,
     require_subscription_or_freemium,
+    require_subscription_or_freemium_readonly,
 )
 from app.core.limiter import limiter
 from app.models.study_plan import StudyPlan
@@ -103,7 +104,7 @@ async def get_next_exercise(
     _maintenance: None = Depends(require_not_maintenance),
     wait: bool = False,
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription_or_freemium("reading")),
+    current_user: User = Depends(require_subscription_or_freemium_readonly("reading")),
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
 ) -> ReadingNextResponse:
@@ -233,7 +234,7 @@ async def get_reading_history(
     skip: int = 0,
     limit: int = 10,
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription_or_freemium("reading")),
+    current_user: User = Depends(require_subscription_or_freemium_readonly("reading")),
     db: AsyncSession = Depends(get_db),
 ) -> ReadingHistoryResponse:
     """Return paginated list of the user's past reading attempts."""

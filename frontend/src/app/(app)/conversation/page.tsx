@@ -44,6 +44,20 @@ export default function ConversationPage() {
     !isFreemiumTrialActive(user, stripeEnabled) &&
     freemiumStatus &&
     freemiumStatus.voice_remaining_seconds <= 0
+
+  const freemiumVoiceRemaining = freemiumStatus
+    ? Math.ceil(freemiumStatus.voice_remaining_seconds / 60)
+    : undefined
+  const freemiumVoiceLimit = freemiumStatus
+    ? Math.ceil(freemiumStatus.voice_limit_seconds / 60)
+    : undefined
+  const showFreemiumVoicePill =
+    stripeEnabled &&
+    !isSubscribed(user, stripeEnabled) &&
+    !isFreemiumTrialActive(user, stripeEnabled) &&
+    freemiumStatus &&
+    freemiumStatus.voice_limit_seconds > 0
+
   const [initialContext, setInitialContext] = useState<
     ChatContextItem[] | undefined
   >(undefined)
@@ -158,15 +172,18 @@ export default function ConversationPage() {
           <PaywallBanner feature="voice" compact />
         </>
       ) : (
-        <>
-          <FreemiumQuotaBanner feature="voice" className="mb-4" />
-          <ConversationMode
-            initialContext={initialContext}
-            autoStart={autoStart}
-            cefrLevel={cefrLevel}
-            targetLanguage={activeLanguage?.code}
-          />
-        </>
+        <ConversationMode
+          initialContext={initialContext}
+          autoStart={autoStart}
+          cefrLevel={cefrLevel}
+          targetLanguage={activeLanguage?.code}
+          freemiumVoiceRemaining={
+            showFreemiumVoicePill ? freemiumVoiceRemaining : undefined
+          }
+          freemiumVoiceLimit={
+            showFreemiumVoicePill ? freemiumVoiceLimit : undefined
+          }
+        />
       )}
     </MaintenanceGate>
   )

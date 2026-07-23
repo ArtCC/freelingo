@@ -24,6 +24,7 @@ from app.core.deps import (
     get_redis,
     require_not_maintenance,
     require_subscription_or_freemium,
+    require_subscription_or_freemium_readonly,
 )
 from app.core.limiter import limiter
 from app.models.listening import ListeningExercise
@@ -122,7 +123,7 @@ async def get_next_exercise(
     _maintenance: None = Depends(require_not_maintenance),
     wait: bool = False,
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription_or_freemium("listening")),
+    current_user: User = Depends(require_subscription_or_freemium_readonly("listening")),
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
 ) -> ListeningNextResponse:
@@ -213,7 +214,7 @@ async def get_audio(
     exercise_id: int,
     _maintenance: None = Depends(require_not_maintenance),
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription_or_freemium("listening")),
+    current_user: User = Depends(require_subscription_or_freemium_readonly("listening")),
     db: AsyncSession = Depends(get_db),
 ) -> FileResponse:
     """
@@ -296,7 +297,7 @@ async def get_listening_history(
     skip: int = 0,
     limit: int = 10,
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription_or_freemium("listening")),
+    current_user: User = Depends(require_subscription_or_freemium_readonly("listening")),
     db: AsyncSession = Depends(get_db),
 ) -> ListeningHistoryResponse:
     """Return paginated list of the user's past listening attempts."""

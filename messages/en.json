@@ -1063,6 +1063,7 @@
     "quotaExceededSessions": "You have used all your sessions for this week.",
     "quotaExceededTime": "You have used all your daily practice time.",
     "quotaExceededTokens": "You have used all your monthly AI tokens.",
+    "freemiumVoiceRemaining": "Free voice: {remaining}/{limit} min this week",
     "quotaTokens": "Tokens this month",
     "memoryUpdated": "Memory updated",
     "trialBanner": "Free assessment conversation · {minutes} min",

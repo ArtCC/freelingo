@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.25] - 2026-07-23
+## [1.8.25] - 2026-07-24
 
 ### Added
 
@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Freemium trial persistence**: the 7-day trial is now committed to the database on registration (previously it was set in memory but never persisted).
+- **Docker multi-architecture builds**: CI/CD now publishes backend and frontend images for both `linux/amd64` and `linux/arm64`, resolving "no matching manifest for linux/arm64/v8" on Apple Silicon. Each architecture builds on its own native GitHub Actions runner (`ubuntu-latest` for amd64, `ubuntu-24.04-arm` for arm64), eliminating unreliable QEMU emulation.
+- **Docker actions upgraded**: `docker/login-action` (v3→v4), `docker/setup-buildx-action` (v3→v4), and `docker/build-push-action` (v5→v7) to remove Node.js 20 deprecation warnings.
+- **Backend Dockerfile**: CMD converted to JSON exec form to silence Docker build check warnings.
 
 ## [1.8.24] - 2026-07-10
 

@@ -1063,6 +1063,7 @@
     "quotaExceededSessions": "Ai folosit toate sesiunile pentru această săptămână.",
     "quotaExceededTime": "Ai folosit tot timpul zilnic de practică.",
     "quotaExceededTokens": "Ai folosit toți tokenii IA lunari.",
+    "freemiumVoiceRemaining": "Voce gratuită: {remaining}/{limit} min săptămâna aceasta",
     "quotaTokens": "Tokeni luna aceasta",
     "memoryUpdated": "Memorie actualizată",
     "trialBanner": "Free assessment conversation · {minutes} min",

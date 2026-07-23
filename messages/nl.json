@@ -1063,6 +1063,7 @@
     "quotaExceededSessions": "Je hebt al je sessies voor deze week gebruikt.",
     "quotaExceededTime": "Je hebt al je dagelijkse oefentijd gebruikt.",
     "quotaExceededTokens": "Je hebt al je maandelijkse AI-tokens gebruikt.",
+    "freemiumVoiceRemaining": "Gratis stem: {remaining}/{limit} min deze week",
     "quotaTokens": "Tokens deze maand",
     "memoryUpdated": "Geheugen bijgewerkt",
     "trialBanner": "Free assessment conversation · {minutes} min",
