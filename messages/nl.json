@@ -1290,11 +1290,8 @@
     "month": "maand",
     "year": "jaar",
     "planFeature": {
-      "feature1": "Chat met je AI-tutor",
-      "feature2": "Spraakgesprekken",
-      "feature3": "Listening-oefeningen",
-      "feature4": "Reading-oefeningen",
-      "feature5": "2 maanden gratis"
+      "feature1": "Onbeperkte toegang — geen dagelijkse of wekelijkse limieten",
+      "feature2": "2 maanden gratis"
     },
     "planFreeName": "Gratis",
     "trialBadge": "Gratis proefperiode",
@@ -1306,7 +1303,12 @@
       "f2": "Lessen & studieplan",
       "f3": "Grammatica & woordenschat",
       "f4": "Dashboard & voortgangsregistratie",
-      "f5": "Flashcards & gespreide herhaling"
+      "f5": "Flashcards & gespreide herhaling",
+      "l1": "Chat met AI-tutor",
+      "l2": "Spraakgesprekken",
+      "l3": "Luisteroefeningen",
+      "l4": "Leesoefeningen",
+      "l5": "7 dagen volledige toegang"
     },
     "successLabel": "Betaling bevestigd",
     "successTitle": "Welkom bij FreeLingo Premium!",
@@ -1354,8 +1356,9 @@
     "priceAmount": "€{amount}",
     "pricePerPeriod": "€ / {period}",
     "priceOriginal": "€{price} / {period}",
-    "planFreeDesc": "Alles wat je nodig hebt om te beginnen",
-    "planFreeCta": "Beginnen"
+    "planFreeDesc": "7 dagen volledige proefperiode, daarna gratis met dagelijkse en wekelijkse limieten",
+    "planFreeCta": "Beginnen",
+    "limitedLabel": "Beperkt"
   },
   "freemium": {
     "chatLabel": "Chat",

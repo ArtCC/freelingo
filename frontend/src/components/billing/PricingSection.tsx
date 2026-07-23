@@ -100,22 +100,28 @@ export default function PricingSection({
   const planIcons = [Circle, CircleDot, Diamond]
 
   const freeRows = ['f1', 'f2', 'f3', 'f4', 'f5']
-  const paidRows = ['feature1', 'feature2', 'feature3', 'feature4']
+  const limitedRows = ['l1', 'l2', 'l3', 'l4', 'l5']
   const tableRows = [
     ...freeRows.map((k) => ({
       label: tBilling(`freeFeature.${k}`),
-      free: true,
+      free: true as boolean | 'limited',
       monthly: true,
       yearly: true,
     })),
-    ...paidRows.map((k) => ({
-      label: tBilling(`planFeature.${k}`),
-      free: false,
+    ...limitedRows.map((k) => ({
+      label: tBilling(`freeFeature.${k}`),
+      free: 'limited' as const,
       monthly: true,
       yearly: true,
     })),
     {
-      label: tBilling('planFeature.feature5'),
+      label: tBilling('planFeature.feature1'),
+      free: false as boolean | 'limited',
+      monthly: true,
+      yearly: true,
+    },
+    {
+      label: tBilling('planFeature.feature2'),
       free: false,
       monthly: false,
       yearly: true,
@@ -299,7 +305,11 @@ export default function PricingSection({
                   {row.label}
                 </td>
                 <td className="px-1 py-3 text-center sm:px-4">
-                  {row.free ? (
+                  {row.free === 'limited' ? (
+                    <span className="text-fl-muted-2 font-mono text-[0.6rem] tracking-widest uppercase">
+                      {tBilling('limitedLabel')}
+                    </span>
+                  ) : row.free ? (
                     <Check className="text-fl-accent mx-auto h-3.5 w-3.5" />
                   ) : (
                     <Minus className="text-fl-muted-4 mx-auto h-3.5 w-3.5" />

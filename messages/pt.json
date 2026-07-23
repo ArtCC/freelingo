@@ -1290,11 +1290,8 @@
     "month": "mês",
     "year": "ano",
     "planFeature": {
-      "feature1": "Chat com o teu tutor IA",
-      "feature2": "Conversações de voz",
-      "feature3": "Exercícios de listening",
-      "feature4": "Exercícios de reading",
-      "feature5": "2 meses grátis"
+      "feature1": "Acesso ilimitado — sem limites diários ou semanais",
+      "feature2": "2 meses grátis"
     },
     "planFreeName": "Grátis",
     "trialBadge": "Teste grátis",
@@ -1306,7 +1303,12 @@
       "f2": "Lições & plano de estudo",
       "f3": "Gramática & vocabulário",
       "f4": "Painel & acompanhamento de progresso",
-      "f5": "Flashcards & repetição espaçada"
+      "f5": "Flashcards & repetição espaçada",
+      "l1": "Chat com o tutor IA",
+      "l2": "Conversas por voz",
+      "l3": "Exercícios de audição",
+      "l4": "Exercícios de leitura",
+      "l5": "Teste completo de 7 dias"
     },
     "successLabel": "Pagamento confirmado",
     "successTitle": "Bem-vindo ao FreeLingo Premium!",
@@ -1354,8 +1356,9 @@
     "priceAmount": "{amount}€",
     "pricePerPeriod": "€/{period}",
     "priceOriginal": "{price}€ / {period}",
-    "planFreeDesc": "Todo o essencial para começar a aprender",
-    "planFreeCta": "Começar"
+    "planFreeDesc": "Teste completo de 7 dias, depois grátis com limites diários e semanais",
+    "planFreeCta": "Começar",
+    "limitedLabel": "Limitado"
   },
   "freemium": {
     "chatLabel": "Chat",

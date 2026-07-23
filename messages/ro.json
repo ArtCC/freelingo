@@ -1290,11 +1290,8 @@
     "month": "lună",
     "year": "an",
     "planFeature": {
-      "feature1": "Chat cu tutorul tău AI",
-      "feature2": "Conversații vocale",
-      "feature3": "Exerciții de listening",
-      "feature4": "Exerciții de reading",
-      "feature5": "2 luni gratuite"
+      "feature1": "Acces nelimitat — fără limite zilnice sau săptămânale",
+      "feature2": "2 luni gratuite"
     },
     "planFreeName": "Gratuit",
     "trialBadge": "Probă gratuită",
@@ -1306,7 +1303,12 @@
       "f2": "Lecții & plan de studiu",
       "f3": "Gramatică & vocabular",
       "f4": "Panou de control & urmărire progres",
-      "f5": "Flashcard-uri & repetiție spațiată"
+      "f5": "Flashcard-uri & repetiție spațiată",
+      "l1": "Chat cu tutorele AI",
+      "l2": "Conversații vocale",
+      "l3": "Exerciții de ascultare",
+      "l4": "Exerciții de citire",
+      "l5": "Probă completă de 7 zile"
     },
     "successLabel": "Plată confirmată",
     "successTitle": "Bun venit la FreeLingo Premium!",
@@ -1354,8 +1356,9 @@
     "priceAmount": "{amount} lei",
     "pricePerPeriod": " lei/{period}",
     "priceOriginal": "{price} lei / {period}",
-    "planFreeDesc": "Tot ce ai nevoie pentru a începe să înveți",
-    "planFreeCta": "Începe"
+    "planFreeDesc": "Probă completă de 7 zile, apoi gratuit cu limite zilnice și săptămânale",
+    "planFreeCta": "Începe",
+    "limitedLabel": "Limitat"
   },
   "freemium": {
     "chatLabel": "Chat",

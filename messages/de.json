@@ -1290,11 +1290,8 @@
     "month": "Monat",
     "year": "Jahr",
     "planFeature": {
-      "feature1": "Chat mit deinem KI-Tutor",
-      "feature2": "Sprachgespräche",
-      "feature3": "Listening-Übungen",
-      "feature4": "Reading-Übungen",
-      "feature5": "2 Monate gratis"
+      "feature1": "Unbegrenzter Zugang — keine täglichen oder wöchentlichen Limits",
+      "feature2": "2 Monate gratis"
     },
     "planFreeName": "Kostenlos",
     "trialBadge": "Kostenlose Testphase",
@@ -1306,7 +1303,12 @@
       "f2": "Lektionen & Lernplan",
       "f3": "Grammatik & Wortschatz",
       "f4": "Dashboard & Lernfortschritt",
-      "f5": "Karteikarten & Spaced Repetition"
+      "f5": "Karteikarten & Spaced Repetition",
+      "l1": "KI-Tutor-Chat",
+      "l2": "Sprachkonversationen",
+      "l3": "Hörübungen",
+      "l4": "Leseübungen",
+      "l5": "7 Tage voller Zugang"
     },
     "successLabel": "Zahlung bestätigt",
     "successTitle": "Willkommen bei FreeLingo Premium!",
@@ -1354,8 +1356,9 @@
     "priceAmount": "{amount}€",
     "pricePerPeriod": "€/{period}",
     "priceOriginal": "{price}€ / {period}",
-    "planFreeDesc": "Alles Wesentliche zum Lernen",
-    "planFreeCta": "Starten"
+    "planFreeDesc": "7 Tage volle Testphase, dann kostenlos mit täglichen und wöchentlichen Limits",
+    "planFreeCta": "Starten",
+    "limitedLabel": "Limitiert"
   },
   "freemium": {
     "chatLabel": "Chat",
