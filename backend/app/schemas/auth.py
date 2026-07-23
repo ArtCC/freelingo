@@ -147,6 +147,8 @@ class UserResponse(BaseModel):
     subscription_ends_at: datetime | None = None
     trial_used: bool = False
     assessment_voice_trial_used: bool = False
+    freemium_trial_ends_at: datetime | None = None
+    freemium_trial_used: bool = False
     created_at: datetime
 
     model_config = {"from_attributes": True}

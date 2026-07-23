@@ -35,6 +35,8 @@ Registration, authentication, and user preferences.
 - `subscription_ends_at` — nullable datetime for the current subscription period end.
 - `trial_used` — boolean; `true` once the user has started or completed a trial, preventing repeated free trials. Default: `false`.
 - `assessment_voice_trial_used` — boolean; `true` once the one-time post-assessment voice conversation demo has been consumed. Default: `false`.
+- `freemium_trial_ends_at` — nullable datetime; when the freemium 7-day trial expires. Set on registration when `STRIPE_ENABLED=true` and `FREEMIUM_TRIAL_ENABLED=true`.
+- `freemium_trial_used` — boolean; `true` once the user has ever used a freemium trial, preventing repeated trials. Default: `false`.
 - `avatar` — nullable text cache-busted internal avatar reference, for example `/api/avatars/{uuid}.{ext}?v={ms}`. Files are stored under `/app/avatars` and retrieved through authenticated profile endpoints with private no-store responses, not public static serving. Legacy base64 data URLs may still exist until replaced.
 - `bio` — nullable text profile bio.
 - `learning_goals` — nullable text JSON-encoded array of learning goal strings.
@@ -50,6 +52,7 @@ Registration, authentication, and user preferences.
 - On `/onboarding` the user chooses their `target_language`; the choice is saved via `PATCH /me` before accessing the app.
 - `trial_used` is surfaced through authenticated user profile responses and remains backend-authoritative: Stripe Checkout only receives `trial_period_days` when `STRIPE_TRIAL_DAYS > 0` and `trial_used=false`; webhooks set it to `true` once a trialing subscription starts.
 - `assessment_voice_trial_used` is surfaced through authenticated user profile responses and is separate from Stripe trial eligibility. It gates only the one-time post-assessment voice demo shown for unsubscribed hosted users; demo duration comes from `ASSESSMENT_VOICE_TRIAL_DURATION_SECONDS` (`300`, 5 minutes by default).
+- `freemium_trial_ends_at` and `freemium_trial_used` are surfaced through authenticated user profile responses. When `STRIPE_ENABLED=true` and `FREEMIUM_TRIAL_ENABLED=true`, new users are granted a 7-day freemium trial on registration (`freemium_trial_ends_at` = `now + FREEMIUM_TRIAL_DAYS` days, `freemium_trial_used` = `true`). After the trial expires, freemium quota limits apply. Freemium quotas (chat messages, lesson completions, listening/reading exercises, voice minutes) are stored in Redis with keys like `freemium:{feature}:{user_id}:{date/week}` and auto-expiring TTL, managed by an atomic Lua script — they are not stored in the database.
 - `stripe_subscription_id` is set from `checkout.session.completed` and backfilled from `customer.subscription.updated` for existing users when missing. Once present, subscription update/delete and invoice payment-failed webhooks whose subscription ID does not match are ignored as stale events.
 - Only `trialing` and `active` grant premium access. `past_due`, `unpaid`, and `paused` route users to payment recovery through Stripe Customer Portal. `none`, `incomplete`, `incomplete_expired`, and `canceled` show normal monthly/yearly plan-selection UI.
 

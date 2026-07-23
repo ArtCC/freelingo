@@ -307,7 +307,7 @@
       "pageTitle": "Termos de serviço",
       "updated": "Última atualização: junho de 2026",
       "s1Title": "1. Sobre o FreeLingo",
-      "s1Body": "FreeLingo é uma plataforma de aprendizado de idiomas com IA de código aberto disponível em dois modos: (1) auto-hospedado, onde você o executa na sua própria infraestrutura sem custo, e (2) como serviço hospedado operado pela equipe FreeLingo, disponível via assinatura paga. Ao usar o serviço em qualquer dos modos, você concorda com estes Termos de serviço.",
+      "s1Body": "FreeLingo é uma plataforma de aprendizado de idiomas com IA de código aberto disponível em dois modos: (1) auto-hospedado, onde você o executa na sua própria infraestrutura sem custo, e (2) como serviço hospedado operado pela equipe FreeLingo, com um plano gratuito e assinaturas pagas. Ao usar o serviço em qualquer dos modos, você concorda com estes Termos de serviço.",
       "s2Title": "2. Uso aceitável",
       "s2Intro": "Você pode usar o FreeLingo exclusivamente para fins pessoais de aprendizado de idiomas. Você concorda em não:",
       "s2i1": "Tentar obter acesso não autorizado a qualquer parte do sistema.",
@@ -319,9 +319,9 @@
       "s4Title": "4. Conteúdo e interações com IA",
       "s4Body": "As conversas com o tutor de IA são armazenadas no banco de dados para continuidade do aprendizado. No serviço hospedado, o chat e os recursos de voz são processados via API da OpenAI, e seu conteúdo está sujeito às políticas de uso da OpenAI. A IA pode produzir respostas imprecisas — aplique sempre seu próprio julgamento. FreeLingo não é responsável pelo conteúdo gerado pelos modelos de linguagem subjacentes. O conteúdo gerado pelo tutor de IA (exercícios, correções, explicações e outros materiais) pertence a você para uso pessoal. FreeLingo não reivindica propriedade sobre suas conversas nem sobre o conteúdo gerado a partir delas.",
       "s5Title": "5. Modalidades do serviço",
-      "s5Body": "As implantações auto-hospedadas são gratuitas e o operador mantém controle total sobre seus dados e infraestrutura. O serviço hospedado operado pela equipe FreeLingo é fornecido via assinatura paga, disponível em ciclo de cobrança mensal ou anual. No serviço hospedado, seus dados são armazenados em servidores operados pela equipe FreeLingo. O serviço hospedado aplica limites de uso aos recursos de tutoria com IA; seu uso atual está disponível nas configurações da conta.",
+      "s5Body": "As implantações auto-hospedadas são gratuitas e o operador mantém controle total sobre seus dados e infraestrutura. O serviço hospedado operado pela equipe FreeLingo oferece um plano gratuito com limites de uso e assinaturas pagas para acesso ilimitado, disponíveis em ciclo de cobrança mensal ou anual. O plano gratuito inclui um período experimental de 7 dias com acesso completo (sem necessidade de método de pagamento) e, posteriormente, quotas diárias limitadas para lições e chat com IA, mais quotas semanais para exercícios de compreensão oral, leitura e conversas por voz. As assinaturas pagas removem todos os limites de uso desses recursos. No serviço hospedado, seus dados são armazenados em servidores operados pela equipe FreeLingo. Os limites de uso atuais da sua conta estão disponíveis no seu painel.",
       "s6Title": "6. Assinatura e faturamento",
-      "s6Body": "As assinaturas estão disponíveis em ciclo de cobrança mensal ou anual e renovam automaticamente, salvo cancelamento antes da data de renovação. Novos assinantes recebem um período de avaliação gratuito (dados de pagamento necessários; nenhuma cobrança é realizada até o fim do período de avaliação). Você pode cancelar a qualquer momento nas configurações da conta, com efeito no final do período de cobrança atual. Se cancelar dentro de 14 dias do primeiro pagamento e não tiver usado o serviço de forma significativa, pode solicitar reembolso integral conforme o direito de desistência da UE. Não são emitidos reembolsos parciais por tempo não utilizado além desse direito. Os preços atuais de assinatura são exibidos no momento do pagamento.",
+      "s6Body": "O plano gratuito inclui acesso limitado às funcionalidades de IA com um período experimental de 7 dias com acesso completo para novos utilizadores (sem necessidade de método de pagamento). As assinaturas pagas estão disponíveis em ciclo de cobrança mensal ou anual e renovam automaticamente, salvo cancelamento antes da data de renovação. Novos assinantes de um plano pago recebem um período de avaliação gratuito (dados de pagamento necessários; nenhuma cobrança é realizada até o fim do período de avaliação). Você pode cancelar a qualquer momento nas configurações da conta, com efeito no final do período de cobrança atual. Se cancelar dentro de 14 dias do primeiro pagamento e não tiver usado o serviço de forma significativa, pode solicitar reembolso integral conforme o direito de desistência da UE. Não são emitidos reembolsos parciais por tempo não utilizado além desse direito. Os preços atuais de assinatura são exibidos no momento do pagamento.",
       "s7Title": "7. Disponibilidade",
       "s7Body": "Este serviço é fornecido sem garantias de disponibilidade. O operador pode suspender ou encerrar o serviço para manutenção, atualizações ou qualquer outro motivo, com aviso razoável sempre que possível.",
       "s8Title": "8. Limitação de responsabilidade",
@@ -429,7 +429,9 @@
     "premiumBannerCtaTrialUsed": "Ver planos",
     "premiumBannerPastDueTitle": "Pagamento pendente",
     "premiumBannerPastDueDesc": "Atualize o seu método de pagamento para recuperar o acesso Premium a chat, conversa por voz, reading e listening.",
-    "premiumBannerPastDueCta": "Recuperar Premium"
+    "premiumBannerPastDueCta": "Recuperar Premium",
+    "freemiumTrialTitle": "{days, plural, one {# dia de teste gratuito} other {# dias de teste gratuito}}",
+    "freemiumTrialDesc": "Desfrute de acesso ilimitado a chat, voz, listening e reading. Experimente tudo o Premium gratuitamente."
   },
   "assessment": {
     "title": "Avaliação",
@@ -1263,6 +1265,8 @@
     "paywallDescTrialUsed": "Desbloqueie toda a prática Premium e reveja o valor antes de confirmar.",
     "paywallChatTitle": "Pratique com Lingu sem limites",
     "paywallChatDesc": "Faça perguntas, receba correções e mantenha conversas naturais por texto com o seu tutor IA.",
+    "paywallLessonsTitle": "Completa lições ilimitadas",
+    "paywallLessonsDesc": "Gramática, vocabulário, leitura e escrita — termina quantas lições quiseres todos os dias.",
     "paywallConversationTitle": "Fale em tempo real com Lingu",
     "paywallConversationDesc": "Pratique conversa oral com transcrição, respostas rápidas e feedback para ganhar fluência.",
     "paywallListeningTitle": "Treine o ouvido ao seu nível",
@@ -1352,21 +1356,28 @@
     "planFreeDesc": "Todo o essencial para começar a aprender",
     "planFreeCta": "Começar"
   },
+  "freemium": {
+    "chatLabel": "Chat",
+    "lessonsLabel": "Lições",
+    "listeningLabel": "Audição",
+    "readingLabel": "Leitura",
+    "voiceLabel": "Voz (min)",
+    "freeLimit": "Obter Premium",
+    "trialDaysLeft": "{days, plural, one {# dia de teste gratuito} other {# dias de teste gratuito}}",
+    "trialUnlimited": "Acesso ilimitado",
+    "requiresSubscription": "Só Premium"
+  },
   "whatsNew": {
     "title": "Novidades",
-    "version": "v1.8.24",
+    "version": "v1.8.25",
     "cta": "Entendido",
     "entry1": {
-      "label": "Notificações de feedback por ler",
-      "desc": "O Feedback agora mostra um pequeno contador de não lidos no menu lateral, para veres novas sugestões, bugs e respostas sem mais emails. Ao abrir um tópico de feedback, apenas esse tópico fica marcado como lido."
+      "label": "Experimenta tudo grátis",
+      "desc": "Agora podes conversar com o Lingu, praticar audição e leitura, e experimentar conversas de voz sem introduzir dados de pagamento. Começa com um teste gratuito e continua a usar todas as funcionalidades com limites diários e semanais. Faz o upgrade quando quiseres a partir do painel."
     },
     "entry2": {
-      "label": "Demo de voz gratuita após a avaliação",
-      "desc": "Depois de criares o teu plano de estudo, podes experimentar gratuitamente uma conversa de voz em tempo real com a Lingu durante 5 minutos. Quando a demo termina, o Premium desbloqueia a prática de voz completa e os outros modos guiados."
-    },
-    "entry3": {
-      "label": "Correções de bugs",
-      "desc": "Várias correções de bugs menores e melhorias de estabilidade em toda a plataforma."
+      "label": "Correções de erros",
+      "desc": "Várias correções de erros menores e melhorias de estabilidade em toda a plataforma."
     }
   },
   "contact": {

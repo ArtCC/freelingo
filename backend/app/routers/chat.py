@@ -7,11 +7,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.app_logger import get_logger
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import (
     get_active_study_plan_optional,
     require_not_maintenance,
-    require_subscription,
+    require_subscription_or_freemium,
 )
 from app.core.limiter import limiter
 from app.models.chat_history import ChatHistory
@@ -42,6 +43,7 @@ from app.services.memory_service import (
 )
 from app.services.prompts.common import get_language_prompt_overlay
 from app.services.prompts.tutor import build_tutor_system_prompt
+from app.services.subscription_service import is_subscribed
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -113,7 +115,7 @@ async def _resolve_chat_context(
 async def list_conversations(
     request: Request,
     _maintenance: None = Depends(require_not_maintenance),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("chat")),
     db: AsyncSession = Depends(get_db),
 ):
     # Filter conversations by the active language (not study plan)
@@ -138,7 +140,7 @@ async def create_conversation(
     request: Request,
     data: ConversationCreate,
     _maintenance: None = Depends(require_not_maintenance),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("chat")),
     db: AsyncSession = Depends(get_db),
 ):
     plan = await get_active_study_plan_optional(current_user, db)
@@ -164,7 +166,7 @@ async def delete_conversation(
     request: Request,
     conversation_id: int,
     _maintenance: None = Depends(require_not_maintenance),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("chat")),
     db: AsyncSession = Depends(get_db),
 ):
     conv = await db.get(Conversation, conversation_id)
@@ -186,7 +188,7 @@ async def get_conversation_messages(
     request: Request,
     conversation_id: int,
     _maintenance: None = Depends(require_not_maintenance),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("chat")),
     db: AsyncSession = Depends(get_db),
 ):
     conv = await db.get(Conversation, conversation_id)
@@ -222,7 +224,7 @@ async def chat(
     request: Request,
     request_data: ChatRequest,
     _maintenance: None = Depends(require_not_maintenance),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("chat")),
     db: AsyncSession = Depends(get_db),
 ):
     if current_user.monthly_tokens_limit > 0:
@@ -445,6 +447,20 @@ async def chat(
 
             yield f"data: {json.dumps({'done': True})}\n\n"
 
+            # Record freemium chat usage (best-effort)
+            if not is_subscribed(current_user, settings.STRIPE_ENABLED):
+                from app.services.freemium_service import is_freemium_trial_active
+
+                if not is_freemium_trial_active(current_user.freemium_trial_ends_at):
+                    try:
+                        from app.services.freemium_service import record_chat_usage
+                        from app.utils.redis import redis_client as _rc
+
+                        async with _rc() as r:
+                            await record_chat_usage(r, current_user.id)
+                    except Exception:
+                        pass
+
             # Persist token usage best-effort in a separate transaction
             if isinstance(stream, LLMStream) and (
                 stream.prompt_tokens is not None or stream.completion_tokens is not None
@@ -497,7 +513,7 @@ async def chat(
 async def get_history(
     request: Request,
     _maintenance: None = Depends(require_not_maintenance),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("chat")),
     db: AsyncSession = Depends(get_db),
 ):
     # Filter history by active language (not study plan)

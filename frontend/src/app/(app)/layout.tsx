@@ -125,6 +125,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
+    // Stripe trial countdown
     if (
       user?.subscription_status === 'trialing' &&
       user?.subscription_ends_at &&
@@ -138,10 +139,32 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )
       )
       setTrialDaysLeft(days)
-    } else {
-      setTrialDaysLeft(0)
+      return
     }
-  }, [user?.subscription_status, user?.subscription_ends_at, stripeEnabled])
+    // Freemium trial countdown
+    if (
+      user?.freemium_trial_ends_at &&
+      stripeEnabled &&
+      user?.subscription_status !== 'active' &&
+      user?.subscription_status !== 'trialing'
+    ) {
+      const end = new Date(user.freemium_trial_ends_at)
+      if (end > new Date()) {
+        const days = Math.max(
+          1,
+          Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        )
+        setTrialDaysLeft(days)
+        return
+      }
+    }
+    setTrialDaysLeft(0)
+  }, [
+    user?.subscription_status,
+    user?.subscription_ends_at,
+    user?.freemium_trial_ends_at,
+    stripeEnabled,
+  ])
 
   useEffect(() => {
     if (initializing) return
@@ -356,7 +379,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <p className="text-fl-label text-fl-muted-4 mb-2 font-mono tracking-wider">
-            v1.8.24
+            v1.8.25
           </p>
           <button
             onClick={() => setContactOpen(true)}
@@ -550,7 +573,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </p>
               )}
               <p className="text-fl-label text-fl-muted-4 mb-2 font-mono tracking-wider">
-                v1.8.24
+                v1.8.25
               </p>
               <button
                 onClick={() => {

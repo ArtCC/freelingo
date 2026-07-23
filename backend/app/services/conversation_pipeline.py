@@ -130,6 +130,7 @@ class ConversationPipeline:
         self.inactivity_timeout = inactivity_timeout
         self._redis: object | None = None  # injected after construction
         self._recorded = False
+        self._freemium_voice = False
 
         self.current_task: asyncio.Task | None = None
         # Pre-populate history from optional chat context
@@ -819,6 +820,13 @@ class ConversationPipeline:
                     await record_session_seconds(self._redis, self._user_id, elapsed)
                 except Exception:
                     logger.debug("[pipeline] Failed to record session seconds — ignored")
+                if self._freemium_voice:
+                    try:
+                        from app.services.freemium_service import record_voice_usage
+
+                        await record_voice_usage(self._redis, self._user_id, elapsed)
+                    except Exception:
+                        logger.debug("[pipeline] Failed to record freemium voice seconds — ignored")
         await self.cancel_current()
         for t in self._timer_tasks:
             t.cancel()

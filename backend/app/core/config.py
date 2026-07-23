@@ -43,6 +43,16 @@ class Settings(BaseSettings):
     DEFAULT_MONTHLY_TOKENS_LIMIT: int = 1_000_000
     ASSESSMENT_VOICE_TRIAL_DURATION_SECONDS: int = 300
 
+    # Freemium quotas for unsubscribed users when STRIPE_ENABLED=true.
+    # A quota value of 0 means the feature is entirely blocked for free users.
+    FREEMIUM_CHAT_DAILY_MESSAGES: int = 5
+    FREEMIUM_LESSONS_DAILY: int = 3
+    FREEMIUM_LISTENING_WEEKLY: int = 3
+    FREEMIUM_READING_WEEKLY: int = 3
+    FREEMIUM_VOICE_WEEKLY_MINUTES: int = 5
+    FREEMIUM_TRIAL_ENABLED: bool = True
+    FREEMIUM_TRIAL_DAYS: int = 7
+
     # Stripe (for paid plans and billing management)
     STRIPE_ENABLED: bool = False
     STRIPE_SECRET_KEY: str = ""
@@ -111,6 +121,20 @@ class Settings(BaseSettings):
     def validate_default_inactivity_timeout(cls, value: int) -> int:
         if value not in (60, 180, 300):
             raise ValueError("DEFAULT_CONVERSATION_INACTIVITY_TIMEOUT must be 60, 180, or 300")
+        return value
+
+    @field_validator(
+        "FREEMIUM_CHAT_DAILY_MESSAGES",
+        "FREEMIUM_LESSONS_DAILY",
+        "FREEMIUM_LISTENING_WEEKLY",
+        "FREEMIUM_READING_WEEKLY",
+        "FREEMIUM_VOICE_WEEKLY_MINUTES",
+        "FREEMIUM_TRIAL_DAYS",
+    )
+    @classmethod
+    def validate_freemium_quotas(cls, value: int) -> int:
+        if value < 0:
+            raise ValueError("Freemium quota values must be >= 0")
         return value
 
     @field_validator("ASSESSMENT_VOICE_TRIAL_DURATION_SECONDS")

@@ -243,7 +243,7 @@ async def test_history_pagination(reading_client) -> None:
 
 @pytest.mark.asyncio
 async def test_paywall_blocked(reading_client) -> None:
-    """With STRIPE_ENABLED=True a user without subscription gets 403."""
+    """With STRIPE_ENABLED=True an unsubscribed user still accesses /api/reading/next via freemium."""
     ac, _, db = reading_client
     user, headers = await _make_user(
         db,
@@ -257,4 +257,4 @@ async def test_paywall_blocked(reading_client) -> None:
     with patch.object(settings, "STRIPE_ENABLED", True):
         r = await ac.get("/api/reading/next", headers=headers)
 
-    assert r.status_code == 402
+    assert r.status_code == 200

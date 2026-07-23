@@ -7,12 +7,13 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request,
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import (
     get_active_study_plan,
     get_redis,
     require_not_maintenance,
-    require_subscription,
+    require_subscription_or_freemium,
 )
 from app.core.limiter import limiter
 from app.models.study_plan import StudyPlan
@@ -34,6 +35,7 @@ from app.services.reading_service import (
     get_user_history,
     submit_attempt,
 )
+from app.services.subscription_service import is_subscribed
 from app.utils.db import db_session
 from app.utils.redis import redis_client as _redis_client
 
@@ -103,7 +105,7 @@ async def get_next_exercise(
     _maintenance: None = Depends(require_not_maintenance),
     wait: bool = False,
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("reading")),
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
 ) -> ReadingNextResponse:
@@ -150,7 +152,7 @@ async def generate_exercise(
     background_tasks: BackgroundTasks,
     _maintenance: None = Depends(require_not_maintenance),
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("reading")),
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
 ) -> ReadingGeneratingResponse:
@@ -184,7 +186,7 @@ async def submit_reading_attempt(
     body: ReadingSubmitRequest,
     _maintenance: None = Depends(require_not_maintenance),
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("reading")),
     db: AsyncSession = Depends(get_db),
 ) -> ReadingSubmitResponse:
     """Submit answers and receive score, XP, and correct answers."""
@@ -212,6 +214,20 @@ async def submit_reading_attempt(
     correct_answers = [
         CorrectAnswerOut(index=q["index"], correct=q["correct"]) for q in exercise.questions
     ]
+
+    # Record freemium reading usage (best-effort)
+    if not is_subscribed(current_user, settings.STRIPE_ENABLED):
+        from app.services.freemium_service import is_freemium_trial_active
+
+        if not is_freemium_trial_active(current_user.freemium_trial_ends_at):
+            try:
+                from app.services.freemium_service import record_reading_usage
+
+                async with _redis_client() as r:
+                    await record_reading_usage(r, current_user.id)
+            except Exception:
+                pass
+
     return ReadingSubmitResponse(
         score=attempt.score,
         xp_earned=attempt.xp_earned,
@@ -227,7 +243,7 @@ async def get_reading_history(
     skip: int = 0,
     limit: int = 10,
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("reading")),
     db: AsyncSession = Depends(get_db),
 ) -> ReadingHistoryResponse:
     """Return paginated list of the user's past reading attempts."""

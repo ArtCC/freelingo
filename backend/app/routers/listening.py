@@ -23,7 +23,7 @@ from app.core.deps import (
     get_active_study_plan,
     get_redis,
     require_not_maintenance,
-    require_subscription,
+    require_subscription_or_freemium,
 )
 from app.core.limiter import limiter
 from app.models.listening import ListeningExercise
@@ -46,6 +46,7 @@ from app.services.listening_service import (
     get_user_history,
     submit_attempt,
 )
+from app.services.subscription_service import is_subscribed
 from app.utils.db import db_session
 from app.utils.redis import redis_client as _redis_client
 
@@ -122,7 +123,7 @@ async def get_next_exercise(
     _maintenance: None = Depends(require_not_maintenance),
     wait: bool = False,
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("listening")),
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
 ) -> ListeningNextResponse:
@@ -173,7 +174,7 @@ async def generate_exercise(
     _maintenance: None = Depends(require_not_maintenance),
     voice: str = Query(default=""),
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("listening")),
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
 ) -> ListeningGeneratingResponse:
@@ -213,7 +214,7 @@ async def get_audio(
     exercise_id: int,
     _maintenance: None = Depends(require_not_maintenance),
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("listening")),
     db: AsyncSession = Depends(get_db),
 ) -> FileResponse:
     """
@@ -246,7 +247,7 @@ async def submit_listening_attempt(
     body: ListeningSubmitRequest,
     _maintenance: None = Depends(require_not_maintenance),
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("listening")),
     db: AsyncSession = Depends(get_db),
 ) -> ListeningSubmitResponse:
     """Submit answers and receive score, XP, correct answers, and transcript."""
@@ -274,6 +275,20 @@ async def submit_listening_attempt(
     correct_answers = [
         CorrectAnswerOut(index=q["index"], correct=q["correct"]) for q in exercise.questions
     ]
+
+    # Record freemium listening usage (best-effort)
+    if not is_subscribed(current_user, settings.STRIPE_ENABLED):
+        from app.services.freemium_service import is_freemium_trial_active
+
+        if not is_freemium_trial_active(current_user.freemium_trial_ends_at):
+            try:
+                from app.services.freemium_service import record_listening_usage
+
+                async with _redis_client() as r:
+                    await record_listening_usage(r, current_user.id)
+            except Exception:
+                pass
+
     return ListeningSubmitResponse(
         score=attempt.score,
         xp_earned=attempt.xp_earned,
@@ -290,7 +305,7 @@ async def get_listening_history(
     skip: int = 0,
     limit: int = 10,
     plan: StudyPlan = Depends(get_active_study_plan),
-    current_user: User = Depends(require_subscription),
+    current_user: User = Depends(require_subscription_or_freemium("listening")),
     db: AsyncSession = Depends(get_db),
 ) -> ListeningHistoryResponse:
     """Return paginated list of the user's past listening attempts."""

@@ -7,13 +7,17 @@ import { useLocale, useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/api'
 import { useProgressStore } from '@/store/progress'
 import { useLanguageStore } from '@/store/language'
-import { useAuthStore } from '@/store/auth'
+import { useAuthStore, isSubscribed, isFreemiumTrialActive } from '@/store/auth'
 import { getGrammarTopics, type GrammarTopic } from '@/data/grammar'
 import { AudioPlayer } from '@/components/ui/AudioPlayer'
 import { VoiceRecorder } from '@/components/ui/VoiceRecorder'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { WordTooltip, useWordSave } from '@/components/ui/WordTooltip'
 import { PageLoading } from '@/components/ui/page-loading'
+import { FreemiumQuotaBanner } from '@/components/billing/FreemiumQuotaBanner'
+import { PaywallBanner } from '@/components/billing/PaywallBanner'
+import { useFreemiumStore } from '@/store/freemium'
+import { useConfigStore } from '@/store/config'
 import { TargetLanguageText } from '@/components/TargetLanguageText'
 import {
   ReviewPrompt,
@@ -76,6 +80,16 @@ export default function LessonPage() {
   const completeLesson = useProgressStore((s) => s.completeLesson)
   const activeLanguage = useLanguageStore((s) => s.activeLanguage)
   const user = useAuthStore((s) => s.user)
+  const stripeEnabled = useConfigStore((s) => s.stripeEnabled)
+  const fetchFreemium = useFreemiumStore((s) => s.fetchStatus)
+  const decrementFreemium = useFreemiumStore((s) => s.decrement)
+  const freemiumStatus = useFreemiumStore((s) => s.status)
+  const freemiumExhausted =
+    stripeEnabled &&
+    !isSubscribed(user, stripeEnabled) &&
+    !isFreemiumTrialActive(user, stripeEnabled) &&
+    freemiumStatus &&
+    freemiumStatus.lessons_remaining <= 0
   const nativeLanguageName = user?.native_language
     ? formatLanguageName(tLang(user.native_language), locale)
     : ''
@@ -105,6 +119,12 @@ export default function LessonPage() {
       .then(setGrammarTopics)
       .catch(() => setGrammarTopics([]))
   }, [activeLanguage?.code])
+
+  useEffect(() => {
+    if (stripeEnabled && !isSubscribed(user, stripeEnabled)) {
+      fetchFreemium()
+    }
+  }, [stripeEnabled, user, fetchFreemium])
 
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -351,7 +371,16 @@ export default function LessonPage() {
 
   async function completeLessonHandler() {
     const completedUnitId = getLessonUnitId(lesson)
-    await apiFetch(`/api/lessons/${id}/complete`, { method: 'POST' })
+    const res = await apiFetch(`/api/lessons/${id}/complete`, {
+      method: 'POST',
+    })
+    if (!res.ok) return
+    if (
+      !isSubscribed(user, stripeEnabled) &&
+      !isFreemiumTrialActive(user, stripeEnabled)
+    ) {
+      decrementFreemium('lessons_remaining')
+    }
     if (lesson) completeLesson(lesson.id)
     // Detect if completing this lesson advanced the plan to the next day
     try {
@@ -467,6 +496,7 @@ export default function LessonPage() {
   return (
     <>
       <div className="mx-auto max-w-4xl space-y-4 p-6">
+        <FreemiumQuotaBanner feature="lessons" />
         {/* Lesson header */}
         <div className="border-fl-border bg-fl-surface border">
           <div className="border-fl-border flex items-center justify-between border-b px-6 py-4">
@@ -1018,6 +1048,8 @@ export default function LessonPage() {
                       >
                         {tCommon('next')} →
                       </button>
+                    ) : freemiumExhausted ? (
+                      <PaywallBanner feature="lessons" compact />
                     ) : (
                       <button
                         onClick={completeLessonHandler}
