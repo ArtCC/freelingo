@@ -1,11 +1,11 @@
-FROM node:25-alpine AS deps
+FROM --platform=$BUILDPLATFORM node:25-alpine AS deps
 WORKDIR /app
 RUN npm install -g npm@11
 COPY frontend/package.json frontend/package-lock.json ./
 COPY frontend/scripts/ ./scripts/
 RUN npm ci
 
-FROM node:25-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:25-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY frontend/ .
