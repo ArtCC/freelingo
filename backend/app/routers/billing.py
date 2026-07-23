@@ -215,6 +215,10 @@ def _subscription_period_end(sub: object) -> datetime | None:
                 period_end = _sget(data[0], "current_period_end")
     if period_end is not None:
         return datetime.fromtimestamp(int(period_end), UTC).replace(tzinfo=None)
+    logger.warning(
+        "[billing] Could not determine current_period_end for subscription %s",
+        _sget(sub, "id"),
+    )
     return None
 
 

@@ -46,7 +46,6 @@ from app.services.listening_service import (
     get_user_history,
     submit_attempt,
 )
-from app.services.subscription_service import is_subscribed
 from app.utils.db import db_session
 from app.utils.redis import redis_client as _redis_client
 
@@ -277,17 +276,9 @@ async def submit_listening_attempt(
     ]
 
     # Record freemium listening usage (best-effort)
-    if not is_subscribed(current_user, settings.STRIPE_ENABLED):
-        from app.services.freemium_service import is_freemium_trial_active
+    from app.services.freemium_service import maybe_record_freemium_usage
 
-        if not is_freemium_trial_active(current_user.freemium_trial_ends_at):
-            try:
-                from app.services.freemium_service import record_listening_usage
-
-                async with _redis_client() as r:
-                    await record_listening_usage(r, current_user.id)
-            except Exception:
-                pass
+    await maybe_record_freemium_usage(current_user, "listening")
 
     return ListeningSubmitResponse(
         score=attempt.score,

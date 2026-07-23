@@ -531,5 +531,5 @@ stripe trigger checkout.session.completed
 - 22 — Task: `/billing/success` page; File(s): `app/(auth)/billing/success/page.tsx`; Status: ✅
 - 23 — Task: `/billing/canceled` page; File(s): `app/(auth)/billing/canceled/page.tsx`; Status: ✅
 - 24 — Task: i18n keys (10 locales); File(s): `messages/*.json`; Status: ✅
-- 25 — Task: Tests; File(s): `tests/test_billing.py`, `tests/test_freemium.py`; Status: ✅
+- 25 — Task: Tests; File(s): `tests/test_billing.py`; Status: ✅
 - 26 — Task: Docs + version bump; File(s): Various; Status: ✅

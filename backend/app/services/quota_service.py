@@ -80,28 +80,45 @@ async def get_quota_status(
     }
 
 
+_CHECK_AND_INCR_SESSIONS_LUA = """
+local current = redis.call('GET', KEYS[1])
+current = tonumber(current) or 0
+local limit = tonumber(ARGV[1])
+if limit > 0 and current >= limit then
+    return {0, current}
+end
+local new_val = redis.call('INCR', KEYS[1])
+if new_val == 1 then
+    redis.call('EXPIRE', KEYS[1], ARGV[2])
+end
+return {1, current}
+"""
+
+
 async def check_and_increment_sessions(
     redis: object,
     user_id: int,
     weekly_limit: int,
 ) -> tuple[bool, int, int]:
-    """Check weekly session quota and increment if allowed.
+    """Check weekly session quota and atomically increment if allowed.
 
     Returns (allowed, sessions_used_before, limit).
-    When limit == 0, always returns (True, current, 0).
+    When limit == 0, always returns (True, 0, 0).
+    Uses a Lua script to avoid TOCTOU race between GET and INCR.
     """
+    if weekly_limit == 0:
+        return True, 0, 0
+
     week_key = _week_key(user_id)
-    current = int(await redis.get(week_key) or 0)  # type: ignore[attr-defined]
-
-    if weekly_limit > 0 and current >= weekly_limit:
-        return False, current, weekly_limit
-
-    new_val = await redis.incr(week_key)  # type: ignore[attr-defined]
-    if new_val == 1:
-        # First session of the week — set TTL
-        await redis.expire(week_key, _seconds_until_monday())  # type: ignore[attr-defined]
-
-    return True, current, weekly_limit
+    result = await redis.eval(  # type: ignore[attr-defined]
+        _CHECK_AND_INCR_SESSIONS_LUA,
+        1,
+        week_key,
+        str(weekly_limit),
+        str(_seconds_until_monday()),
+    )
+    allowed, previous = bool(result[0]), int(result[1])
+    return allowed, previous, weekly_limit
 
 
 async def check_daily_minutes(

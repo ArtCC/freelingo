@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_subscription_or_freemium
 from app.core.limiter import limiter
@@ -284,21 +283,9 @@ async def complete_lesson(
     )
 
     # Record freemium lesson usage (best-effort)
-    try:
-        from app.services.freemium_service import (
-            is_freemium_trial_active,
-            record_lesson_usage,
-        )
-        from app.services.subscription_service import is_subscribed
-        from app.utils.redis import redis_client as _rc
+    from app.services.freemium_service import maybe_record_freemium_usage
 
-        if not is_subscribed(
-            current_user, settings.STRIPE_ENABLED
-        ) and not is_freemium_trial_active(current_user.freemium_trial_ends_at):
-            async with _rc() as r:
-                await record_lesson_usage(r, current_user.id)
-    except Exception:
-        pass
+    await maybe_record_freemium_usage(current_user, "lessons")
 
     if lesson.unit_id:
         from app.data.curriculum import get_curriculum_units  # noqa: PLC0415

@@ -29,4 +29,6 @@ async def apply_subscription_quotas(user: User, db: AsyncSession) -> None:
     user.conversation_weekly_minutes = settings.DEFAULT_CONVERSATION_WEEKLY_MINUTES
     user.conversation_daily_minutes = settings.DEFAULT_CONVERSATION_DAILY_MINUTES
     user.monthly_tokens_limit = settings.DEFAULT_MONTHLY_TOKENS_LIMIT
+    user.conversation_max_duration = settings.DEFAULT_CONVERSATION_MAX_DURATION
+    user.conversation_inactivity_timeout = settings.DEFAULT_CONVERSATION_INACTIVITY_TIMEOUT
     await db.commit()

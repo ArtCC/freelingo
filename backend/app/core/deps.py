@@ -136,7 +136,15 @@ def require_subscription_or_freemium(feature: str):
             raise
         except Exception:
             # Redis unavailable or other error → block access safely
-            raise HTTPException(status_code=402, detail="subscription_required") from None
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "reason": "freemium_unavailable",
+                    "feature": feature,
+                    "remaining": 0,
+                    "limit": 0,
+                },
+            ) from None
 
         return current_user
 

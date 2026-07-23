@@ -7,7 +7,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.app_logger import get_logger
-from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import (
     get_active_study_plan_optional,
@@ -43,7 +42,6 @@ from app.services.memory_service import (
 )
 from app.services.prompts.common import get_language_prompt_overlay
 from app.services.prompts.tutor import build_tutor_system_prompt
-from app.services.subscription_service import is_subscribed
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -448,18 +446,9 @@ async def chat(
             yield f"data: {json.dumps({'done': True})}\n\n"
 
             # Record freemium chat usage (best-effort)
-            if not is_subscribed(current_user, settings.STRIPE_ENABLED):
-                from app.services.freemium_service import is_freemium_trial_active
+            from app.services.freemium_service import maybe_record_freemium_usage
 
-                if not is_freemium_trial_active(current_user.freemium_trial_ends_at):
-                    try:
-                        from app.services.freemium_service import record_chat_usage
-                        from app.utils.redis import redis_client as _rc
-
-                        async with _rc() as r:
-                            await record_chat_usage(r, current_user.id)
-                    except Exception:
-                        pass
+            await maybe_record_freemium_usage(current_user, "chat")
 
             # Persist token usage best-effort in a separate transaction
             if isinstance(stream, LLMStream) and (

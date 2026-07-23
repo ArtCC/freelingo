@@ -199,6 +199,43 @@ async def record_voice_usage(redis: Redis, user_id: int, seconds: int) -> int:
     return await _incr_with_ttl(redis, _voice_week_key(user_id), seconds, _seconds_until_monday())
 
 
+# ── Unified freemium recording helper ──────────────────────────────────────────
+
+
+async def maybe_record_freemium_usage(user, feature: str) -> None:
+    """Record freemium usage for *feature* if the user is not subscribed and not in trial.
+
+    No-op when STRIPE_ENABLED=false, the user is subscribed, or the trial is active.
+    Best-effort: Redis failures are silently ignored so recording never blocks the caller.
+    """
+    from app.services.subscription_service import is_subscribed  # noqa: PLC0415
+
+    if not settings.STRIPE_ENABLED:
+        return
+    if is_subscribed(user, settings.STRIPE_ENABLED):
+        return
+    if is_freemium_trial_active(user.freemium_trial_ends_at):
+        return
+
+    record_map = {
+        "chat": record_chat_usage,
+        "lessons": record_lesson_usage,
+        "listening": record_listening_usage,
+        "reading": record_reading_usage,
+    }
+    record_fn = record_map.get(feature)
+    if record_fn is None:
+        return
+
+    try:
+        from app.utils.redis import redis_client as _rc  # noqa: PLC0415
+
+        async with _rc() as r:
+            await record_fn(r, user.id)
+    except Exception:
+        pass
+
+
 # ── Quota status for frontend ──────────────────────────────────────────────────
 
 

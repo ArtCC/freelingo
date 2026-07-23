@@ -139,9 +139,11 @@ class Settings(BaseSettings):
 
     @field_validator("ASSESSMENT_VOICE_TRIAL_DURATION_SECONDS")
     @classmethod
-    def validate_positive_duration(cls, value: int) -> int:
+    def validate_trial_duration(cls, value: int) -> int:
         if value <= 0:
-            raise ValueError("Duration defaults must be greater than 0")
+            raise ValueError("ASSESSMENT_VOICE_TRIAL_DURATION_SECONDS must be greater than 0")
+        if value > 1800:
+            raise ValueError("ASSESSMENT_VOICE_TRIAL_DURATION_SECONDS must not exceed 1800")
         return value
 
     model_config = {"env_file": ".env"}
