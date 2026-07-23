@@ -13,39 +13,43 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build-and-push:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      short-sha: ${{ steps.sha.outputs.short-sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: develop
+      - id: sha
+        run: echo "short-sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+  build-backend:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - runs-on: ubuntu-latest
+            platform: linux/amd64
+            suffix: amd64
+          - runs-on: ubuntu-24.04-arm
+            platform: linux/arm64
+            suffix: arm64
+    runs-on: ${{ matrix.arch.runs-on }}
     permissions:
       contents: read
       packages: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           ref: develop
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Extract metadata for backend
-        id: meta-backend
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.BACKEND_IMAGE }}
-          tags: |
-            type=raw,value=latest
-            type=sha,prefix=,format=short
+      - uses: docker/setup-buildx-action@v3
 
       - name: Build and push backend
         uses: docker/build-push-action@v5
@@ -53,20 +57,39 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta-backend.outputs.tags }}
-          labels: ${{ steps.meta-backend.outputs.labels }}
+          platforms: ${{ matrix.arch.platform }}
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:latest-${{ matrix.arch.suffix }}
+            ${{ env.BACKEND_IMAGE }}:${{ needs.prepare.outputs.short-sha }}-${{ matrix.arch.suffix }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Extract metadata for frontend
-        id: meta-frontend
-        uses: docker/metadata-action@v5
+  build-frontend:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - runs-on: ubuntu-latest
+            platform: linux/amd64
+            suffix: amd64
+          - runs-on: ubuntu-24.04-arm
+            platform: linux/arm64
+            suffix: arm64
+    runs-on: ${{ matrix.arch.runs-on }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
         with:
-          images: ${{ env.FRONTEND_IMAGE }}
-          tags: |
-            type=raw,value=latest
-            type=sha,prefix=,format=short
+          ref: develop
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
 
       - name: Build and push frontend
         uses: docker/build-push-action@v5
@@ -74,8 +97,51 @@ jobs:
           context: .
           file: ./frontend/Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta-frontend.outputs.tags }}
-          labels: ${{ steps.meta-frontend.outputs.labels }}
+          platforms: ${{ matrix.arch.platform }}
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:latest-${{ matrix.arch.suffix }}
+            ${{ env.FRONTEND_IMAGE }}:${{ needs.prepare.outputs.short-sha }}-${{ matrix.arch.suffix }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  merge-backend:
+    needs: [prepare, build-backend]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Merge backend manifests
+        run: |
+          docker buildx imagetools create -t ${{ env.BACKEND_IMAGE }}:latest \
+            ${{ env.BACKEND_IMAGE }}:latest-amd64 \
+            ${{ env.BACKEND_IMAGE }}:latest-arm64
+          docker buildx imagetools create -t ${{ env.BACKEND_IMAGE }}:${{ needs.prepare.outputs.short-sha }} \
+            ${{ env.BACKEND_IMAGE }}:${{ needs.prepare.outputs.short-sha }}-amd64 \
+            ${{ env.BACKEND_IMAGE }}:${{ needs.prepare.outputs.short-sha }}-arm64
+
+  merge-frontend:
+    needs: [prepare, build-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Merge frontend manifests
+        run: |
+          docker buildx imagetools create -t ${{ env.FRONTEND_IMAGE }}:latest \
+            ${{ env.FRONTEND_IMAGE }}:latest-amd64 \
+            ${{ env.FRONTEND_IMAGE }}:latest-arm64
+          docker buildx imagetools create -t ${{ env.FRONTEND_IMAGE }}:${{ needs.prepare.outputs.short-sha }} \
+            ${{ env.FRONTEND_IMAGE }}:${{ needs.prepare.outputs.short-sha }}-amd64 \
+            ${{ env.FRONTEND_IMAGE }}:${{ needs.prepare.outputs.short-sha }}-arm64
