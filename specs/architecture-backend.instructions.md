@@ -64,7 +64,7 @@ backend/
 │   │   ├── curriculum.py
 │   │   └── phrasebook.py
 │   │
-│   ├── routers/                 # FastAPI routers (22 REST + 1 WebSocket = 23 total)
+│   ├── routers/                 # FastAPI routers (23 REST + 1 WebSocket = 24 total)
 │   │   ├── __init__.py
 │   │   ├── admin.py             # Admin overview metrics, review signals, user management, filtered lists, maintenance toggle
 │   │   ├── assessment.py        # Level assessment quiz + completion + static bank
@@ -77,6 +77,7 @@ backend/
 │   │   ├── curriculum.py        # Curriculum data (now auth-required)
 │   │   ├── feedback.py          # Feedback CRUD, search, unread counters, author roles, admin status management
 │   │   ├── flashcards.py        # Spaced-repetition flashcard CRUD + review
+│   │   ├── freemium.py          # Freemium quota status and trial state
 │   │   ├── grammar.py            # Grammar reference topics by language and CEFR level
 │   │   ├── health.py            # Public minimal liveness check + private admin diagnostics
 │   │   ├── languages.py         # Available target languages
@@ -92,13 +93,14 @@ backend/
 │   │   ├── tts.py               # Text-to-speech proxy
 │   │   └── vocabulary.py        # Static vocabulary data (per language + per level)
 │   │
-│   ├── services/                # Business logic + external service clients (20 modules + prompts package)
+│   ├── services/                # Business logic + external service clients (21 modules + prompts package)
 │   │   ├── __init__.py
 │   │   ├── assessment.py        # Adaptive quiz logic, CEFR level estimation
 │   │   ├── assessment_voice_trial.py # One-time post-assessment voice demo token service
 │   │   ├── conversation_pipeline.py  # WebSocket voice orchestrator: STT → LLM → TTS
 │   │   ├── email_service.py     # SMTP email (verification, password reset, contact, admin notifications)
 │   │   ├── flashcard_sm2.py     # SM-2 spaced repetition algorithm
+│   │   ├── freemium_service.py  # Freemium quota checking, usage recording, trial state, status response builder
 │   │   ├── language_helpers.py  # Language code parsing, script metadata, prompt length guidance, voice/engine selection
 │   │   ├── lesson_generator.py  # LLM-powered lesson content generation
 │   │   ├── listening_service.py # AI listening exercise generation + caching
@@ -143,7 +145,7 @@ backend/
 
 The application uses 21 SQLAlchemy ORM model sections organized into 5 domains:
 
-- **Core**: User (authentication, preferences, quotas, Stripe state, post-assessment voice demo state), Progress (daily XP/streak/skills)
+- **Core**: User (authentication, preferences, quotas, Stripe state, post-assessment voice demo state, freemium trial state), Progress (daily XP/streak/skills)
 - **Study plan**: StudyPlan, Lesson, Exercise, UserCompetency (curriculum tracking)
 - **Spaced repetition**: Flashcard (SM-2 algorithm)
 - **Conversations**: Conversation, ChatHistory (text and voice transcripts)
@@ -169,7 +171,7 @@ The application uses 18 services plus a centralized `services/prompts/` package 
 - **LLM & AI**: LLM Adapter (multi-provider), Assessment, Study Plan Generator, Lesson Generator, Flashcard SM-2
 - **Media**: TTS Service, STT Service, Conversation Pipeline (WebSocket voice orchestrator)
 - **Content**: Listening Service, Reading Service (AI-generated exercises with caching; generation responses validated with Pydantic `structured_output()` schemas), Resource Native Help (global cache for static-resource native-language helpers)
-- **User**: Progress Service, Memory Service, Quota Service, Subscription Service, User Language Service
+- **User**: Progress Service, Memory Service, Quota Service, Subscription Service, Freemium Service, User Language Service
 - **Community**: Review Service
 - **Infrastructure**: Language Helpers, Email Service
 - **Prompt architecture**: prompt templates, shared blocks, CJK-ready language overlays, and builders live in `services/prompts/`; see [prompts.instructions.md](prompts.instructions.md)
@@ -212,7 +214,7 @@ Testing infrastructure and strategy are documented in [testing.instructions.md](
 
 ## Environment variables
 
-All configuration is environment-driven. Variables are defined in `app/core/config.py` (Pydantic Settings). 56 variables total — the complete list below.
+All configuration is environment-driven. Variables are defined in `app/core/config.py` (Pydantic Settings). 63 variables total — the complete list below.
 
 ### Core
 
@@ -281,6 +283,16 @@ All configuration is environment-driven. Variables are defined in `app/core/conf
 - STRIPE_BASE_URL — Default: http://localhost:3000; Purpose: Frontend base URL used in Stripe redirect URLs
 
 The app does not create Stripe products or prices automatically; operators configure the Stripe Price IDs from the Stripe Dashboard.
+
+### Freemium
+
+- FREEMIUM_CHAT_DAILY_MESSAGES — Default: 5; Purpose: daily AI chat messages for free-tier users. `0` = blocked.
+- FREEMIUM_LESSONS_DAILY — Default: 3; Purpose: daily lesson completions for free-tier users. `0` = blocked.
+- FREEMIUM_LISTENING_WEEKLY — Default: 3; Purpose: weekly listening exercises for free-tier users. `0` = blocked.
+- FREEMIUM_READING_WEEKLY — Default: 3; Purpose: weekly reading exercises for free-tier users. `0` = blocked.
+- FREEMIUM_VOICE_WEEKLY_MINUTES — Default: 5; Purpose: weekly voice conversation minutes for free-tier users. `0` = blocked.
+- FREEMIUM_TRIAL_ENABLED — Default: true; Purpose: enable 7-day no-card trial for new users
+- FREEMIUM_TRIAL_DAYS — Default: 7; Purpose: duration of freemium trial in days
 
 ### Email
 

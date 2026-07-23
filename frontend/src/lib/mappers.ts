@@ -37,6 +37,10 @@ export function mapUser(
       data.assessment_voice_trial_used ??
       current?.assessment_voice_trial_used ??
       false,
+    freemium_trial_ends_at:
+      data.freemium_trial_ends_at ?? current?.freemium_trial_ends_at ?? null,
+    freemium_trial_used:
+      data.freemium_trial_used ?? current?.freemium_trial_used ?? false,
   }
 }
 

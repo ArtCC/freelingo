@@ -17,7 +17,13 @@ Most REST endpoints are prefixed under `/api`. The public health check is at `/h
 
 ## Config — `/api/config`
 
-- **GET `/api/config`** — Rate limit: 60/min. Public runtime configuration flags for the frontend. Returns non-sensitive values including Stripe enablement/prices, TTS provider/voice, and `maintenance_mode`.
+- **GET `/api/config`** — Rate limit: 60/min. Public runtime configuration flags for the frontend. Returns non-sensitive values including Stripe enablement/prices, TTS provider/voice, `maintenance_mode`, and `freemium_trial_enabled`.
+
+---
+
+## Freemium — `/api/freemium`
+
+- **GET `/status`** — Rate limit: 60/min. Auth: get_current_user. Returns freemium trial state and remaining quotas for all 5 gated features. Response: `{trial_active: bool, trial_ends_at: string|null, quotas: {chat_remaining: int, lessons_remaining: int, listening_remaining: int, reading_remaining: int, voice_minutes_remaining: int}}`. A quota value of `0` means the feature is blocked for free-tier users. When `STRIPE_ENABLED=false`, all quotas return `-1` (unlimited).
 
 ---
 
@@ -27,7 +33,7 @@ Most REST endpoints are prefixed under `/api`. The public health check is at `/h
 - **POST `/login`** — Rate limit: 10/min. Returns access_token (JWT, 15 min) + refresh_token in httpOnly cookie (30 days)
 - **POST `/refresh`** — Rate limit: 60/min. Rotates refresh token, returns new access_token
 - **POST `/logout`** — Rate limit: 60/min. Deletes refresh token from Redis, clears cookie
-- **GET `/me`** — Rate limit: 60/min. Returns authenticated user profile, including subscription fields (`subscription_status`, `subscription_ends_at`, `trial_used`, `assessment_voice_trial_used`) so the frontend can distinguish Stripe trial eligibility, post-assessment voice-demo eligibility, and active subscription state.
+- **GET `/me`** — Rate limit: 60/min. Returns authenticated user profile, including subscription fields (`subscription_status`, `subscription_ends_at`, `trial_used`, `assessment_voice_trial_used`) and freemium fields (`freemium_trial_ends_at`, `freemium_trial_used`) so the frontend can distinguish Stripe trial eligibility, freemium trial state, post-assessment voice-demo eligibility, and active subscription state.
 - **PATCH `/me`** — Rate limit: 60/min. Updates display_name, email, password, target_language, conversation settings
 - **POST `/me/avatar`** — Rate limit: 60/min. Uploads the authenticated user's profile avatar (JPEG/PNG, max 2 MB). Validates the declared content type, image signature, and minimal image structure, stores the image on disk under `/app/avatars` using a non-predictable UUID filename, and returns the user profile with `avatar` set to a cache-busted internal reference (`/api/avatars/{uuid}.{ext}?v={ms}`). The file reference is not publicly served.
 - **GET `/me/avatar-file`** — Rate limit: 60/min. Authenticated current-user avatar retrieval endpoint. Returns only the authenticated user's own avatar file; this is the supported image retrieval path used by the frontend. Responses are marked `Cache-Control: private, no-store`; client-side avatar reuse is handled by the frontend blob cache keyed by the stored avatar reference.
@@ -135,14 +141,16 @@ Auth required (`get_current_user`). Serves static vocabulary data across the bac
 
 ## Lessons — `/api/lessons`
 
-- **GET `/{lesson_id}`** — Rate limit: 60/min. Lesson detail with exercises. Exercise responses include optional `native_explanation` and `native_hint` copied from generated lesson JSON when available. Lesson content may include enriched vocabulary items with optional native-language translation, example translation, usage note, and reading fields.
-- **POST `/{lesson_id}/start`** — Rate limit: 60/min. Marks lesson as in-progress.
-- **POST `/{lesson_id}/complete`** — Rate limit: 60/min. Marks the lesson as completed and updates progress and competencies.
-- **POST `/{lesson_id}/native-explanation`** — Rate limit: 10/min. Generates and caches a native-language explanation for existing lessons at any CEFR level whose `content.native_explanation` is missing. Returned support includes translated text, key points, examples, common traps, and a mini-glossary. If already present, returns the cached explanation idempotently.
-- **POST `/exercises/{id}/native-explanation`** — Rate limit: 10/min. Generates and caches a concise native-language clarification for an exercise whose target-language `explanation` exists but whose generated JSON lacks `native_explanation`. If already present, returns the cached exercise-level explanation idempotently.
-- **POST `/exercises/{id}/native-hint`** — Rate limit: 10/min. Generates and caches a concise pre-answer native-language hint for an exercise whose generated JSON lacks `native_hint`. Hints must help without revealing the correct answer. If already present, returns the cached hint idempotently.
-- **POST `/exercises/{id}/regenerate`** — Rate limit: 5/hour. Regenerates one unanswered, technically invalid exercise on demand while preserving the rest of the lesson. Rejects completed lessons, answered exercises, and exercises that pass validation.
-- **POST `/exercises/{id}/answer`** — Rate limit: 20/min. Submits an answer, evaluates multiple choice, fill, free-write, or pronunciation exercises, and returns score plus feedback.
+Lesson viewing and exercise answering use `get_current_user` (always free). Only completion is gated by `require_subscription_or_freemium("lessons")`.
+
+- **GET `/{lesson_id}`** — Rate limit: 60/min. Auth: get_current_user. Lesson detail with exercises. Exercise responses include optional `native_explanation` and `native_hint` copied from generated lesson JSON when available. Lesson content may include enriched vocabulary items with optional native-language translation, example translation, usage note, and reading fields.
+- **POST `/{lesson_id}/start`** — Rate limit: 60/min. Auth: get_current_user. Marks lesson as in-progress.
+- **POST `/{lesson_id}/complete`** — Rate limit: 60/min. Auth: require_subscription_or_freemium("lessons"). Marks the lesson as completed and updates progress and competencies.
+- **POST `/{lesson_id}/native-explanation`** — Rate limit: 10/min. Auth: get_current_user. Generates and caches a native-language explanation for existing lessons at any CEFR level whose `content.native_explanation` is missing. Returned support includes translated text, key points, examples, common traps, and a mini-glossary. If already present, returns the cached explanation idempotently.
+- **POST `/exercises/{id}/native-explanation`** — Rate limit: 10/min. Auth: get_current_user. Generates and caches a concise native-language clarification for an exercise whose target-language `explanation` exists but whose generated JSON lacks `native_explanation`. If already present, returns the cached exercise-level explanation idempotently.
+- **POST `/exercises/{id}/native-hint`** — Rate limit: 10/min. Auth: get_current_user. Generates and caches a concise pre-answer native-language hint for an exercise whose generated JSON lacks `native_hint`. Hints must help without revealing the correct answer. If already present, returns the cached hint idempotently.
+- **POST `/exercises/{id}/regenerate`** — Rate limit: 5/hour. Auth: get_current_user. Regenerates one unanswered, technically invalid exercise on demand while preserving the rest of the lesson. Rejects completed lessons, answered exercises, and exercises that pass validation.
+- **POST `/exercises/{id}/answer`** — Rate limit: 20/min. Auth: get_current_user. Submits an answer, evaluates multiple choice, fill, free-write, or pronunciation exercises, and returns score plus feedback.
 
 ---
 
@@ -171,6 +179,8 @@ All endpoints require `get_current_user`.
 ---
 
 ## Chat — `/api/chat`
+
+All endpoints require `require_subscription_or_freemium("chat")`. Memories endpoints still use `require_subscription`.
 
 - GET — Path: `/conversations`; Description: Rate limit: 60/min. Lists user's conversations (text + voice), ordered by `updated_at` desc. Response includes `source` (`chat` or `voice`).
 - POST — Path: `/conversations`; Description: Rate limit: 60/min. Creates new conversation
@@ -214,7 +224,7 @@ All endpoints require `get_current_user`.
 
 Full-duplex voice conversation pipeline.
 
-Both `POST /api/conversation/warmup` and `/ws/conversation` require an authenticated user with subscription access when `STRIPE_ENABLED=true`, except for a valid post-assessment voice trial token. Both reject non-admin users while maintenance mode is active.
+Both `POST /api/conversation/warmup` and `/ws/conversation` require an authenticated user with subscription or freemium access when `STRIPE_ENABLED=true`, except for a valid post-assessment voice trial token. Both reject non-admin users while maintenance mode is active.
 
 - **POST `/api/conversation/warmup`** — Rate limit: 20/min. Pre-heats TTS and STT models before opening the WebSocket. Optional body: `{trial_token}` for the post-assessment demo.
 
@@ -254,22 +264,22 @@ Both `POST /api/conversation/warmup` and `/ws/conversation` require an authentic
 
 ## Listening — `/api/listening`
 
-All endpoints require `require_subscription`. Audio file path is built from the integer exercise ID — never from a DB string — to prevent path traversal.
+All endpoints require `require_subscription_or_freemium("listening")`. Audio file path is built from the integer exercise ID — never from a DB string — to prevent path traversal.
 
-- **GET `/next`** — Rate limit: 10/min. Auth: require_subscription. Returns the oldest unplayed `ListeningExercise` for the user's current CEFR level and target language (questions included, **text and correct answers omitted**). Returns `{"available": false, "generating": false}` when the pool is empty, or `{"available": false, "generating": true}` while generation is in progress (Redis lock held).
-- **POST `/generate`** — Rate limit: 5/min. Auth: require_subscription. Acquires a per-(level, language) Redis lock (`nx=True, ex=60`) and enqueues a `BackgroundTask` that calls LLM + TTS, saves the exercise and MP3. Returns HTTP 202. Returns 409 if a generation job is already running.
-- **GET `/audio/{exercise_id}`** — Rate limit: 60/min. Auth: require_subscription. Serves the MP3 for the given exercise as a `FileResponse` (`audio/mpeg`). Returns 404 if the exercise or its audio file does not exist.
-- **POST `/attempt`** — Rate limit: 20/min. Auth: require_subscription. Submits answers (`{exercise_id, answers: [str]}`) for scoring. Returns score (0–5), XP earned (0–50), correct answers, and the full transcript. Returns 404 (exercise not found), 409 (already attempted), 400 (wrong number of answers).
-- **GET `/history`** — Rate limit: 60/min. Auth: require_subscription. Returns paginated list of the user's past attempts with scores, XP, and transcripts. Query params: `skip` (default 0), `limit` (default 10, max 50).
+- **GET `/next`** — Rate limit: 10/min. Auth: require_subscription_or_freemium. Returns the oldest unplayed `ListeningExercise` for the user's current CEFR level and target language (questions included, **text and correct answers omitted**). Returns `{"available": false, "generating": false}` when the pool is empty, or `{"available": false, "generating": true}` while generation is in progress (Redis lock held).
+- **POST `/generate`** — Rate limit: 5/min. Auth: require_subscription_or_freemium. Acquires a per-(level, language) Redis lock (`nx=True, ex=60`) and enqueues a `BackgroundTask` that calls LLM + TTS, saves the exercise and MP3. Returns HTTP 202. Returns 409 if a generation job is already running.
+- **GET `/audio/{exercise_id}`** — Rate limit: 60/min. Auth: require_subscription_or_freemium. Serves the MP3 for the given exercise as a `FileResponse` (`audio/mpeg`). Returns 404 if the exercise or its audio file does not exist.
+- **POST `/attempt`** — Rate limit: 20/min. Auth: require_subscription_or_freemium. Submits answers (`{exercise_id, answers: [str]}`) for scoring. Returns score (0–5), XP earned (0–50), correct answers, and the full transcript. Returns 404 (exercise not found), 409 (already attempted), 400 (wrong number of answers).
+- **GET `/history`** — Rate limit: 60/min. Auth: require_subscription_or_freemium. Returns paginated list of the user's past attempts with scores, XP, and transcripts. Query params: `skip` (default 0), `limit` (default 10, max 50).
 
 ## Reading — `/api/reading`
 
-All endpoints require `require_subscription`. Unlike Listening, exercise text is included in the exercise response — there is no audio endpoint and no transcript reveal on submit.
+All endpoints require `require_subscription_or_freemium("reading")`. Unlike Listening, exercise text is included in the exercise response — there is no audio endpoint and no transcript reveal on submit.
 
-- **GET `/next`** — Rate limit: 10/min. Auth: require_subscription. Returns the oldest uncompleted `ReadingExercise` for the user's current CEFR level and target language. **Text and questions are included immediately.** Returns `{"available": false}` when the pool is empty. Supports `?wait=true` for long-polling (max 90 s) while generation is in progress.
-- **POST `/generate`** — Rate limit: 5/min. Auth: require_subscription. Acquires a per-(level, language) Redis lock (`nx=True, ex=60`) and enqueues a `BackgroundTask` that calls LLM and saves the exercise. Returns HTTP 202 with `{"status": "generating"}`. Returns 202 (no-op) if a generation job is already running.
-- **POST `/attempt`** — Rate limit: 20/min. Auth: require_subscription. Submits answers (`{exercise_id, answers: dict[str,str], replay: bool}`) for scoring. Returns score (0–5), XP earned (0–50), and correct answers. Returns 404 (exercise not found), 409 (already attempted), 400 (wrong number of answers).
-- **GET `/history`** — Rate limit: 60/min. Auth: require_subscription. Returns paginated list of the user's past attempts with scores, XP, exercise text, and correct answers. Query params: `skip` (default 0), `limit` (default 10, max 50).
+- **GET `/next`** — Rate limit: 10/min. Auth: require_subscription_or_freemium. Returns the oldest uncompleted `ReadingExercise` for the user's current CEFR level and target language. **Text and questions are included immediately.** Returns `{"available": false}` when the pool is empty. Supports `?wait=true` for long-polling (max 90 s) while generation is in progress.
+- **POST `/generate`** — Rate limit: 5/min. Auth: require_subscription_or_freemium. Acquires a per-(level, language) Redis lock (`nx=True, ex=60`) and enqueues a `BackgroundTask` that calls LLM and saves the exercise. Returns HTTP 202 with `{"status": "generating"}`. Returns 202 (no-op) if a generation job is already running.
+- **POST `/attempt`** — Rate limit: 20/min. Auth: require_subscription_or_freemium. Submits answers (`{exercise_id, answers: dict[str,str], replay: bool}`) for scoring. Returns score (0–5), XP earned (0–50), and correct answers. Returns 404 (exercise not found), 409 (already attempted), 400 (wrong number of answers).
+- **GET `/history`** — Rate limit: 60/min. Auth: require_subscription_or_freemium. Returns paginated list of the user's past attempts with scores, XP, exercise text, and correct answers. Query params: `skip` (default 0), `limit` (default 10, max 50).
 
 ---
 

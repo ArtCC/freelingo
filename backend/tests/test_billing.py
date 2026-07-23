@@ -106,12 +106,11 @@ async def test_config_stripe_enabled(client):
 
 @pytest.mark.asyncio
 async def test_require_subscription_blocks_when_stripe_enabled(client, test_user_with_plan):
-    """Unsubscribed user gets HTTP 402 when STRIPE_ENABLED=true."""
+    """Unsubscribed user gets HTTP 200 when STRIPE_ENABLED=true (freemium quotas allow access)."""
     user, headers = test_user_with_plan
     with patch.object(settings, "STRIPE_ENABLED", True):
         res = await client.get("/api/chat/conversations", headers=headers)
-    assert res.status_code == 402
-    assert res.json()["detail"] == "subscription_required"
+    assert res.status_code == 200
 
 
 @pytest.mark.asyncio

@@ -3,14 +3,14 @@
 ![Next.js](https://img.shields.io/badge/next.js-16-black?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.14-blue?style=flat-square)
 ![Self-hosted](https://img.shields.io/badge/self--hosted-yes-orange?style=flat-square)
-![Version](https://img.shields.io/badge/version-1.8.24-brightgreen?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.8.25-brightgreen?style=flat-square)
 
 <p align="left">
   <img src="assets/logo_large.png" alt="FreeLingo logo" />
 </p>
 
 Open source AI language learning platform available in two modes: self-hosted (free, run it on your own
-infrastructure) and as a hosted service operated by the FreeLingo team (paid subscription).
+infrastructure) and as a hosted service operated by the FreeLingo team with a free plan and paid subscriptions.
 A language model evaluates your CEFR level, generates a personalized study plan, and guides you through
 grammar, vocabulary, reading comprehension, writing lessons, AI-generated listening exercises, and AI-generated reading exercises — with optional voice features.
 
@@ -38,7 +38,7 @@ end-of-level completion test.
 > **Don't want to manage your own server?**  
 > FreeLingo is available as a fully managed hosted service at **[freelingo.app](https://freelingo.app)**.
 
-Sign up, choose a subscription plan, and start learning immediately — no Docker, no GPU, no maintenance required.
+Sign up, start with a free plan, or upgrade to a subscription for unlimited access — no Docker, no GPU, no maintenance required.
 The hosted instance is operated by the FreeLingo team and always runs the latest stable version.
 
 Self-hosting remains free and open source under the AGPL-3.0 licence. The hosted service exists for users who prefer a managed experience.
@@ -164,6 +164,7 @@ The first registered user becomes admin automatically.
 - The `LLM_PROVIDER` field controls the LLM provider: `ollama` (local, recommended), `openai`, `anthropic`, or `deepseek`.
 - `TTS_PROVIDER` and `STT_PROVIDER` are independent: `local` (Kokoro / faster-whisper) or `openai` (OpenAI API).
 - New-user and subscription quota defaults are configurable in `.env` with `DEFAULT_CONVERSATION_*`, `DEFAULT_MONTHLY_TOKENS_LIMIT`, and `ASSESSMENT_VOICE_TRIAL_DURATION_SECONDS`. Quota values of `0` mean unlimited. Conversation duration defaults must use the same supported options as the settings UI: `900` or `1800` seconds for max duration, and `60`, `180`, or `300` seconds for inactivity timeout.
+- Freemium quotas for the hosted free plan are configurable via `FREEMIUM_CHAT_DAILY_MESSAGES`, `FREEMIUM_LESSONS_DAILY`, `FREEMIUM_LISTENING_WEEKLY`, `FREEMIUM_READING_WEEKLY`, and `FREEMIUM_VOICE_WEEKLY_MINUTES`. A quota value of `0` blocks the feature entirely for free users. New users receive a `FREEMIUM_TRIAL_DAYS`-day full-access trial when `FREEMIUM_TRIAL_ENABLED=true`. Self-hosted deployments ignore all freemium settings (everything is free).
 - Supported study languages include English (`en-GB`, `en-US`), Spanish (`es-ES`), Italian (`it-IT`), Portuguese (`pt-PT`), German (`de-DE`), French (`fr-FR`), Japanese (`ja-JP`), Korean (`ko-KR`), and Mainland Chinese (`zh-CN`). The study language is chosen on `/onboarding` and can be expanded later from Settings → My Languages. The user's native language is asked during registration and is used for flashcard translations, tutor feedback, lesson native explanations, and cached native-language help in static grammar, phrasebook, and vocabulary resources.
 
 ## Linux host: Redis memory overcommit

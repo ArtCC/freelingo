@@ -196,10 +196,13 @@ async def test_warmup_allows_valid_assessment_voice_trial(client, test_user, db_
 
 @pytest.mark.asyncio
 async def test_warmup_rejects_invalid_assessment_voice_trial(client, test_user) -> None:
-    """Warmup still requires subscription when the trial token is invalid."""
+    """Warmup still requires subscription when freemium quota is exhausted and trial token is invalid."""
     _user, headers = test_user
 
-    with patch.object(settings, "STRIPE_ENABLED", True):
+    with (
+        patch.object(settings, "STRIPE_ENABLED", True),
+        patch.object(settings, "FREEMIUM_VOICE_WEEKLY_MINUTES", 0),
+    ):
         response = await client.post(
             "/api/conversation/warmup",
             headers=headers,

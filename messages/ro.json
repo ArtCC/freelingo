@@ -307,7 +307,7 @@
       "pageTitle": "Termeni și condiții",
       "updated": "Ultima actualizare: iunie 2026",
       "s1Title": "1. Despre FreeLingo",
-      "s1Body": "FreeLingo este o platformă de învățare a limbilor bazată pe AI, disponibilă în două moduri: (1) auto-găzduită, pe care o poți rula pe propria infrastructură fără costuri, și (2) ca serviciu găzduit gestionat de echipa FreeLingo, disponibil prin abonament plătit.",
+      "s1Body": "FreeLingo este o platformă de învățare a limbilor bazată pe AI, disponibilă în două moduri: (1) auto-găzduită, pe care o poți rula pe propria infrastructură fără costuri, și (2) ca serviciu găzduit gestionat de echipa FreeLingo, cu un plan gratuit și abonamente plătite.",
       "s2Title": "2. Utilizare permisă",
       "s2Intro": "Poți folosi FreeLingo exclusiv în scopuri personale de învățare a limbilor. Ești de acord să nu:",
       "s2i1": "Încerci să obții acces neautorizat la orice parte a sistemului.",
@@ -319,9 +319,9 @@
       "s4Title": "4. Conținut și interacțiuni AI",
       "s4Body": "Conversațiile cu tutorele AI sunt stocate în baza de date pentru continuitatea învățării. AI poate oferi răspunsuri incorecte — folosește întotdeauna propriul tău raționament. Conținutul generat de tutorele AI (exerciții, corecturi, explicații și alte materiale) îți aparține pentru uz personal. FreeLingo nu revendică drepturi de proprietate asupra conversațiilor tale sau asupra conținutului generat din acestea.",
       "s5Title": "5. Moduri de serviciu",
-      "s5Body": "Implementările auto-găzduite sunt gratuite. Serviciul găzduit de echipa FreeLingo este oferit prin abonament plătit, disponibil lunar sau anual. Serviciul găzduit aplică limite de utilizare funcțiilor de îndrumare AI; utilizarea curentă este disponibilă în setările contului.",
+      "s5Body": "Implementările auto-găzduite sunt gratuite. Serviciul găzduit de echipa FreeLingo oferă un plan gratuit cu limite de utilizare și abonamente plătite pentru acces nelimitat, disponibile lunar sau anual. Planul gratuit include o perioadă de probă de 7 zile cu acces complet (fără metodă de plată necesară) și ulterior cote zilnice limitate pentru lecții și chat AI, plus cote săptămânale pentru exerciții de ascultare, citire și conversații vocale. Abonamentele plătite elimină toate limitele de utilizare ale acestor funcții. În serviciul găzduit, datele tale sunt stocate pe servere operate de echipa FreeLingo. Limitele actuale de utilizare pentru contul tău sunt disponibile în tabloul de bord.",
       "s6Title": "6. Abonament și facturare",
-      "s6Body": "Abonamentele sunt disponibile cu ciclu de facturare lunar sau anual şi se reînoiesc automat dacă nu sunt anulate înainte de data de reînoiire. Noii abonanţi beneficiază de o perioadă de încercare gratuită (detalii de plată necesare; nu se efectuează nicio taxă până la sfârşitul perioadei de încercare). Poţi anula oricand din setarile contului, cu efect la sfârşitul perioadei de facturare curente. Preţurile actuale ale abonamentelor sunt afisate la checkout.",
+      "s6Body": "Planul gratuit include acces limitat la funcțiile AI cu o perioadă de probă de 7 zile cu acces complet pentru utilizatorii noi (fără metodă de plată necesară). Abonamentele plătite sunt disponibile cu ciclu de facturare lunar sau anual şi se reînoiesc automat dacă nu sunt anulate înainte de data de reînoiire. Noii abonaţi la un plan plătit beneficiază de o perioadă de încercare gratuită (detalii de plată necesare; nu se efectuează nicio taxă până la sfârşitul perioadei de încercare). Poţi anula oricand din setarile contului, cu efect la sfârşitul perioadei de facturare curente. Preţurile actuale ale abonamentelor sunt afisate la checkout.",
       "s7Title": "7. Disponibilitate",
       "s7Body": "Acest serviciu este oferit fără garanții de uptime. Operatorul poate suspenda sau întrerupe serviciul pentru întreținere sau actualizări.",
       "s8Title": "8. Limitarea răspunderii",
@@ -429,7 +429,9 @@
     "premiumBannerCtaTrialUsed": "Vezi planurile",
     "premiumBannerPastDueTitle": "Plată în așteptare",
     "premiumBannerPastDueDesc": "Actualizează metoda de plată pentru a restabili accesul Premium la chat, conversație vocală, reading și listening.",
-    "premiumBannerPastDueCta": "Restabilește Premium"
+    "premiumBannerPastDueCta": "Restabilește Premium",
+    "freemiumTrialTitle": "{days, plural, one {# zi de test gratuit} other {# zile de test gratuit}}",
+    "freemiumTrialDesc": "Bucură-te de acces nelimitat la chat, voce, listening și reading. Încearcă tot Premium gratuit."
   },
   "assessment": {
     "title": "Evaluare",
@@ -1263,6 +1265,8 @@
     "paywallDescTrialUsed": "Deblochează toată practica Premium și verifică suma înainte de confirmare.",
     "paywallChatTitle": "Exersează cu Lingu fără limite",
     "paywallChatDesc": "Pune întrebări, primește corecturi și poartă conversații naturale prin text cu tutorele tău AI.",
+    "paywallLessonsTitle": "Completează lecții nelimitate",
+    "paywallLessonsDesc": "Gramatică, vocabular, citire și scriere — termină câte lecții dorești în fiecare zi.",
     "paywallConversationTitle": "Vorbește în timp real cu Lingu",
     "paywallConversationDesc": "Exersează conversația orală cu transcriere, răspunsuri rapide și feedback pentru mai multă fluență.",
     "paywallListeningTitle": "Antrenează-ți auzul la nivelul tău",
@@ -1352,21 +1356,28 @@
     "planFreeDesc": "Tot ce ai nevoie pentru a începe să înveți",
     "planFreeCta": "Începe"
   },
+  "freemium": {
+    "chatLabel": "Chat",
+    "lessonsLabel": "Lecții",
+    "listeningLabel": "Ascultare",
+    "readingLabel": "Citire",
+    "voiceLabel": "Voce (min)",
+    "freeLimit": "Obține Premium",
+    "trialDaysLeft": "{days, plural, one {# zi de probă gratuită} other {# zile de probă gratuită}}",
+    "trialUnlimited": "Acces nelimitat",
+    "requiresSubscription": "Doar Premium"
+  },
   "whatsNew": {
     "title": "Noutăți",
-    "version": "v1.8.24",
+    "version": "v1.8.25",
     "cta": "Am înțeles",
     "entry1": {
-      "label": "Notificări de feedback necitit",
-      "desc": "Feedback afișează acum un mic contor de necitite în meniul lateral, ca să vezi sugestiile, bug-urile și răspunsurile noi fără emailuri suplimentare. Când deschizi un fir de feedback, doar acel fir este marcat ca citit."
+      "label": "Încearcă totul gratuit",
+      "desc": "Acum poți discuta cu Lingu, exersa ascultarea și citirea și încerca conversațiile vocale fără a introduce date de plată. Începe cu o perioadă de probă gratuită, apoi continuă să folosești toate funcțiile cu limite zilnice și săptămânale. Fă upgrade oricând din tabloul de bord."
     },
     "entry2": {
-      "label": "Demo vocal gratuit după evaluare",
-      "desc": "După crearea planului de studiu, poți încerca gratuit o conversație vocală în timp real cu Lingu timp de 5 minute. Când demo-ul se termină, Premium deblochează practica vocală completă și celelalte moduri ghidate."
-    },
-    "entry3": {
-      "label": "Corectări de bug-uri",
-      "desc": "Diverse corectări minore de bug-uri și îmbunătățiri de stabilitate pe întreaga platformă."
+      "label": "Corectări de erori",
+      "desc": "Diverse corectări minore de erori și îmbunătățiri ale stabilității pe întreaga platformă."
     }
   },
   "contact": {

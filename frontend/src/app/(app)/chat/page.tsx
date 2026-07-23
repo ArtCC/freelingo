@@ -9,8 +9,12 @@ import { useAuthStore } from '@/store/auth'
 import { useLanguageStore } from '@/store/language'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { AudioPlayer } from '@/components/ui/AudioPlayer'
-import { PaywallGate } from '@/components/billing/PaywallBanner'
 import { MaintenanceGate } from '@/components/billing/MaintenanceBanner'
+import { PaywallBanner } from '@/components/billing/PaywallBanner'
+import { FreemiumQuotaBanner } from '@/components/billing/FreemiumQuotaBanner'
+import { useFreemiumStore } from '@/store/freemium'
+import { useConfigStore } from '@/store/config'
+import { isSubscribed, isFreemiumTrialActive } from '@/store/auth'
 import { WordTooltip, useWordSave } from '@/components/ui/WordTooltip'
 import { PageLoading } from '@/components/ui/page-loading'
 import { TargetLanguageText } from '@/components/TargetLanguageText'
@@ -61,6 +65,23 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const targetLanguageCode = activeLanguage?.code ?? 'en-GB'
+
+  const stripeEnabled = useConfigStore((s) => s.stripeEnabled)
+  const freemiumStatus = useFreemiumStore((s) => s.status)
+  const fetchFreemium = useFreemiumStore((s) => s.fetchStatus)
+  const decrementFreemium = useFreemiumStore((s) => s.decrement)
+  const freemiumExhausted =
+    stripeEnabled &&
+    !isSubscribed(user, stripeEnabled) &&
+    !isFreemiumTrialActive(user, stripeEnabled) &&
+    freemiumStatus &&
+    freemiumStatus.chat_remaining <= 0
+
+  useEffect(() => {
+    if (stripeEnabled && !isSubscribed(user, stripeEnabled)) {
+      fetchFreemium()
+    }
+  }, [stripeEnabled, user, fetchFreemium])
 
   const scrollBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -240,6 +261,12 @@ export default function ChatPage() {
             }
             if (data.error) setError(data.error)
             if (data.done) {
+              if (
+                !isSubscribed(user, stripeEnabled) &&
+                !isFreemiumTrialActive(user, stripeEnabled)
+              ) {
+                decrementFreemium('chat_remaining')
+              }
               loadConversations().then((list) => list && setConversations(list))
             }
             if (data.memory_updated) {
@@ -261,314 +288,320 @@ export default function ChatPage() {
 
   return (
     <MaintenanceGate>
-      <PaywallGate>
-        <div className="flex h-[calc(100dvh-56px)] w-full overflow-hidden md:h-screen">
-          {/* Memory updated toast */}
-          {memoryToast && (
-            <div className="pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center">
-              <div className="border-fl-border bg-fl-surface text-fl-muted-1 animate-in fade-in slide-in-from-top-2 pointer-events-auto border px-4 py-2 font-mono text-xs tracking-widest uppercase shadow-lg">
-                {t('memoryUpdated')}
-              </div>
+      <div className="flex h-[calc(100dvh-56px)] w-full overflow-hidden md:h-screen">
+        {/* Memory updated toast */}
+        {memoryToast && (
+          <div className="pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center">
+            <div className="border-fl-border bg-fl-surface text-fl-muted-1 animate-in fade-in slide-in-from-top-2 pointer-events-auto border px-4 py-2 font-mono text-xs tracking-widest uppercase shadow-lg">
+              {t('memoryUpdated')}
             </div>
-          )}
-          {/* Sidebar backdrop — mobile only */}
-          {sidebarOpen && (
-            <div
-              className="fixed inset-x-0 top-14 bottom-0 z-10 bg-black/40 md:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-          )}
+          </div>
+        )}
+        {/* Sidebar backdrop — mobile only */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-x-0 top-14 bottom-0 z-10 bg-black/40 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-          {/* Sidebar */}
-          {sidebarOpen && (
-            <aside className="border-fl-border bg-fl-bg fixed top-14 bottom-0 left-0 z-20 flex w-56 shrink-0 flex-col overflow-hidden border-r md:relative md:top-auto md:bottom-auto md:left-auto md:z-auto">
-              <div className="border-fl-border flex items-center justify-between border-b px-4 py-3">
-                <span className="text-fl-hint text-fl-muted-2 font-mono tracking-widest uppercase">
-                  {t('conversations')}
-                </span>
-                <button
-                  onClick={newChat}
-                  className="text-fl-label text-fl-muted-1 hover:text-fl-fg font-mono tracking-widest uppercase transition-colors"
-                  title={t('newConversation')}
-                >
-                  + {t('newConversation')}
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                {loadingConvs ? (
-                  <PageLoading fullScreen={false} className="block px-4 py-4" />
-                ) : convLoadError ? (
-                  <div className="flex flex-col items-center gap-3 px-4 py-6">
-                    <p className="text-fl-error font-mono text-xs">
-                      {tCommon('error')}
-                    </p>
-                    <button
-                      onClick={() => {
-                        setConvLoadError(false)
-                        setLoadingConvs(true)
-                        loadConversations()
-                          .then((data) => {
-                            if (data === null) {
-                              setConvLoadError(true)
-                            } else if (data.length > 0) {
-                              selectConversation(data[0].id)
-                            }
-                          })
-                          .finally(() => setLoadingConvs(false))
-                      }}
-                      className="border-fl-border text-fl-label text-fl-muted-1 hover:text-fl-fg hover:border-fl-border-2 border px-4 py-2 font-mono tracking-widest uppercase transition-colors"
-                    >
-                      {tCommon('retry')}
-                    </button>
-                  </div>
-                ) : conversations.length === 0 ? (
-                  <p className="text-fl-label text-fl-muted-4 px-4 py-4 font-mono">
-                    {t('noConversation')}
-                  </p>
-                ) : (
-                  conversations.map((c) => (
-                    <div
-                      key={c.id}
-                      onClick={() => selectConversation(c.id)}
-                      className={`group border-fl-surface-2 flex cursor-pointer items-center justify-between border-b px-4 py-3 transition-colors ${
-                        activeId === c.id
-                          ? 'bg-fl-surface-2 border-l-fl-fg border-l-2'
-                          : 'hover:bg-fl-surface border-l-2 border-l-transparent'
-                      }`}
-                    >
-                      <span
-                        className={`text-fl-label truncate pr-1 font-mono leading-tight ${activeId === c.id ? 'text-fl-fg' : 'text-fl-muted-1'}`}
-                      >
-                        {c.source === 'voice' && (
-                          <span
-                            className="text-fl-muted-3 mr-1.5"
-                            title="Voice session"
-                          >
-                            🎤
-                          </span>
-                        )}
-                        {c.title}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setDeletePending(c.id)
-                        }}
-                        className="text-fl-label text-fl-error-fg hover:text-fl-error shrink-0 font-mono opacity-0 transition-all group-hover:opacity-100"
-                        title="Delete"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </aside>
-          )}
-
-          {/* Main chat area */}
-          <div className="flex flex-1 flex-col overflow-hidden">
-            {/* Header */}
-            <div className="border-fl-border bg-fl-bg flex shrink-0 items-center gap-2 border-b px-5 py-4">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="text-fl-label text-fl-muted-2 hover:text-fl-fg mr-1 font-mono tracking-widest transition-colors"
-                title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-              >
-                {sidebarOpen ? '◂' : '▸'}
-              </button>
-              <span className="text-fl-label text-fl-muted-3">●</span>
-              <span className="text-fl-label text-fl-muted-2 font-mono tracking-widest uppercase">
-                {activeId
-                  ? (conversations.find((c) => c.id === activeId)?.title ??
-                    t('title'))
-                  : t('newConversation')}
+        {/* Sidebar */}
+        {sidebarOpen && (
+          <aside className="border-fl-border bg-fl-bg fixed top-14 bottom-0 left-0 z-20 flex w-56 shrink-0 flex-col overflow-hidden border-r md:relative md:top-auto md:bottom-auto md:left-auto md:z-auto">
+            <div className="border-fl-border flex items-center justify-between border-b px-4 py-3">
+              <span className="text-fl-hint text-fl-muted-2 font-mono tracking-widest uppercase">
+                {t('conversations')}
               </span>
-              {sending ? (
-                <div className="ml-auto flex flex-col items-end gap-0.5">
-                  <span className="text-fl-hint text-fl-muted-3 animate-pulse font-mono tracking-widest uppercase">
-                    {t('thinking')}
-                  </span>
-                  {sendingWarn && (
-                    <span className="text-fl-hint font-mono tracking-widest text-amber-500 uppercase">
-                      {t('takingLonger')}
-                    </span>
-                  )}
-                </div>
-              ) : messages.length > 0 ? (
-                <button
-                  onClick={continueInVoice}
-                  className="text-fl-hint text-fl-muted-2 hover:text-fl-fg ml-auto font-mono tracking-widest uppercase transition-colors"
-                >
-                  {t('continueInVoice')}
-                </button>
-              ) : null}
+              <button
+                onClick={newChat}
+                className="text-fl-label text-fl-muted-1 hover:text-fl-fg font-mono tracking-widest uppercase transition-colors"
+                title={t('newConversation')}
+              >
+                + {t('newConversation')}
+              </button>
             </div>
-
-            {/* Messages */}
-            <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
-              {loadingMsgs ? (
-                <div className="flex h-full items-center justify-center">
-                  <PageLoading fullScreen={false} />
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-                  <p className="text-fl-label text-fl-muted-3 font-mono tracking-widest uppercase">
-                    {t('title')}
+            <div className="flex-1 overflow-y-auto">
+              {loadingConvs ? (
+                <PageLoading fullScreen={false} className="block px-4 py-4" />
+              ) : convLoadError ? (
+                <div className="flex flex-col items-center gap-3 px-4 py-6">
+                  <p className="text-fl-error font-mono text-xs">
+                    {tCommon('error')}
                   </p>
-                  <p className="text-fl-muted-2 max-w-xs font-mono text-xs leading-relaxed">
-                    {t('subtitle', {
-                      language: activeLanguage
-                        ? tLang(activeLanguage.code)
-                        : tLang('en-GB'),
-                    })}
-                  </p>
-                </div>
-              ) : (
-                messages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-end gap-2 ${msg.role === 'user' ? 'ml-auto max-w-[75%] flex-row-reverse' : 'flex-row'}`}
-                  >
-                    {/* Avatar */}
-                    <div className="border-fl-border mb-0.5 h-7 w-7 flex-shrink-0 overflow-hidden rounded-full border">
-                      {msg.role === 'assistant' ? (
-                        <Image
-                          src="/logo_head.png"
-                          alt="Tutor"
-                          width={28}
-                          height={28}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : user?.avatar ? (
-                        <AuthAvatarImage
-                          avatar={user.avatar}
-                          alt=""
-                          width={28}
-                          height={28}
-                          className="h-full w-full object-cover"
-                          fallback={
-                            <div className="bg-fl-surface-2 flex h-full w-full items-center justify-center">
-                              <span className="text-fl-hint text-fl-muted-1 font-mono select-none">
-                                {(user?.displayName ||
-                                  user?.username ||
-                                  '?')[0].toUpperCase()}
-                              </span>
-                            </div>
+                  <button
+                    onClick={() => {
+                      setConvLoadError(false)
+                      setLoadingConvs(true)
+                      loadConversations()
+                        .then((data) => {
+                          if (data === null) {
+                            setConvLoadError(true)
+                          } else if (data.length > 0) {
+                            selectConversation(data[0].id)
                           }
-                        />
-                      ) : (
-                        <div className="bg-fl-surface-2 flex h-full w-full items-center justify-center">
-                          <span className="text-fl-hint text-fl-muted-1 font-mono select-none">
-                            {(user?.displayName ||
-                              user?.username ||
-                              '?')[0].toUpperCase()}
-                          </span>
-                        </div>
+                        })
+                        .finally(() => setLoadingConvs(false))
+                    }}
+                    className="border-fl-border text-fl-label text-fl-muted-1 hover:text-fl-fg hover:border-fl-border-2 border px-4 py-2 font-mono tracking-widest uppercase transition-colors"
+                  >
+                    {tCommon('retry')}
+                  </button>
+                </div>
+              ) : conversations.length === 0 ? (
+                <p className="text-fl-label text-fl-muted-4 px-4 py-4 font-mono">
+                  {t('noConversation')}
+                </p>
+              ) : (
+                conversations.map((c) => (
+                  <div
+                    key={c.id}
+                    onClick={() => selectConversation(c.id)}
+                    className={`group border-fl-surface-2 flex cursor-pointer items-center justify-between border-b px-4 py-3 transition-colors ${
+                      activeId === c.id
+                        ? 'bg-fl-surface-2 border-l-fl-fg border-l-2'
+                        : 'hover:bg-fl-surface border-l-2 border-l-transparent'
+                    }`}
+                  >
+                    <span
+                      className={`text-fl-label truncate pr-1 font-mono leading-tight ${activeId === c.id ? 'text-fl-fg' : 'text-fl-muted-1'}`}
+                    >
+                      {c.source === 'voice' && (
+                        <span
+                          className="text-fl-muted-3 mr-1.5"
+                          title="Voice session"
+                        >
+                          🎤
+                        </span>
                       )}
-                    </div>
-                    <div className={`max-w-[75%] min-w-[10rem] text-left`}>
-                      <TargetLanguageText
-                        as="div"
-                        languageCode={targetLanguageCode}
-                        className={`word-selectable border px-4 py-3 text-left ${
-                          msg.role === 'user'
-                            ? 'bg-fl-accent text-fl-accent-fg border-fl-accent'
-                            : 'bg-fl-surface text-fl-fg-2 border-fl-border'
-                        }`}
-                        onPointerUp={
-                          msg.role === 'assistant'
-                            ? () => handleTextSelection(msg.content)
-                            : undefined
-                        }
-                      >
-                        {msg.content ||
-                          (sending && i === messages.length - 1 ? (
-                            <span className="text-fl-muted-2 animate-pulse">
-                              ▌
-                            </span>
-                          ) : null)}
-                      </TargetLanguageText>
-                      {msg.role === 'assistant' &&
-                        msg.content &&
-                        !(sending && i === messages.length - 1) && (
-                          <div className="mt-1">
-                            <AudioPlayer text={msg.content} size="sm" />
-                          </div>
-                        )}
-                    </div>
+                      {c.title}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setDeletePending(c.id)
+                      }}
+                      className="text-fl-label text-fl-error-fg hover:text-fl-error shrink-0 font-mono opacity-0 transition-all group-hover:opacity-100"
+                      title="Delete"
+                    >
+                      ✕
+                    </button>
                   </div>
                 ))
               )}
-              {error && (
-                <div className="text-fl-label text-fl-error-fg border-fl-error/30 border px-4 py-2 font-mono">
-                  ✕{' '}
-                  {error === 'No active study plan found'
-                    ? tCommon('noActivePlan')
-                    : t('errorMessage')}
-                </div>
-              )}
-              <div ref={bottomRef} />
             </div>
+          </aside>
+        )}
 
-            {/* Input */}
-            <div className="border-fl-border bg-fl-bg shrink-0 border-t px-4 py-4">
-              <div className="flex gap-2">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === 'Enter' && !e.shiftKey && sendMessage()
-                  }
-                  disabled={sending || loadingMsgs}
-                  placeholder={t('placeholder')}
-                  className="bg-fl-surface border-fl-border text-fl-fg placeholder:text-fl-border-2 focus:border-fl-border-2 flex-1 border px-4 py-3 font-mono text-sm transition-colors focus:outline-none disabled:opacity-40"
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={sending || !input.trim() || loadingMsgs}
-                  className="bg-fl-accent text-fl-accent-fg text-fl-label hover:bg-fl-accent/90 px-5 font-mono font-bold tracking-widest uppercase transition-colors disabled:opacity-30"
-                >
-                  {sending ? '...' : t('send')}
-                </button>
+        {/* Main chat area */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Header */}
+          <div className="border-fl-border bg-fl-bg flex shrink-0 items-center gap-2 border-b px-5 py-4">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="text-fl-label text-fl-muted-2 hover:text-fl-fg mr-1 font-mono tracking-widest transition-colors"
+              title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+            >
+              {sidebarOpen ? '◂' : '▸'}
+            </button>
+            <span className="text-fl-label text-fl-muted-3">●</span>
+            <span className="text-fl-label text-fl-muted-2 font-mono tracking-widest uppercase">
+              {activeId
+                ? (conversations.find((c) => c.id === activeId)?.title ??
+                  t('title'))
+                : t('newConversation')}
+            </span>
+            {sending ? (
+              <div className="ml-auto flex flex-col items-end gap-0.5">
+                <span className="text-fl-hint text-fl-muted-3 animate-pulse font-mono tracking-widest uppercase">
+                  {t('thinking')}
+                </span>
+                {sendingWarn && (
+                  <span className="text-fl-hint font-mono tracking-widest text-amber-500 uppercase">
+                    {t('takingLonger')}
+                  </span>
+                )}
               </div>
-              <p className="text-fl-hint text-fl-border-2 mt-2 font-mono tracking-wide">
-                {t('enterToSend')}
-              </p>
-            </div>
+            ) : messages.length > 0 ? (
+              <button
+                onClick={continueInVoice}
+                className="text-fl-hint text-fl-muted-2 hover:text-fl-fg ml-auto font-mono tracking-widest uppercase transition-colors"
+              >
+                {t('continueInVoice')}
+              </button>
+            ) : null}
           </div>
 
-          <ConfirmDialog
-            open={deletePending !== null}
-            title={t('deleteTitle')}
-            message={t('deleteMessage')}
-            confirmLabel={t('deleteConfirm')}
-            danger
-            onConfirm={() =>
-              deletePending !== null && deleteConversation(deletePending)
-            }
-            onCancel={() => setDeletePending(null)}
-          />
+          <FreemiumQuotaBanner feature="chat" />
 
-          {/* Word-save tooltip */}
-          {selectedWord && (
-            <WordTooltip
-              word={selectedWord}
-              pos={tooltipPos}
-              saveState={saveState}
-              onSave={() => handleSaveWord()}
-              onDismiss={dismissTooltip}
-              labels={{
-                saveWord: tCommon('saveWord'),
-                wordSaved: tCommon('wordSaved'),
-                wordSaveError: tCommon('wordSaveError'),
-              }}
-            />
-          )}
+          {/* Messages */}
+          <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
+            {loadingMsgs ? (
+              <div className="flex h-full items-center justify-center">
+                <PageLoading fullScreen={false} />
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+                <p className="text-fl-label text-fl-muted-3 font-mono tracking-widest uppercase">
+                  {t('title')}
+                </p>
+                <p className="text-fl-muted-2 max-w-xs font-mono text-xs leading-relaxed">
+                  {t('subtitle', {
+                    language: activeLanguage
+                      ? tLang(activeLanguage.code)
+                      : tLang('en-GB'),
+                  })}
+                </p>
+              </div>
+            ) : (
+              messages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex items-end gap-2 ${msg.role === 'user' ? 'ml-auto max-w-[75%] flex-row-reverse' : 'flex-row'}`}
+                >
+                  {/* Avatar */}
+                  <div className="border-fl-border mb-0.5 h-7 w-7 flex-shrink-0 overflow-hidden rounded-full border">
+                    {msg.role === 'assistant' ? (
+                      <Image
+                        src="/logo_head.png"
+                        alt="Tutor"
+                        width={28}
+                        height={28}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : user?.avatar ? (
+                      <AuthAvatarImage
+                        avatar={user.avatar}
+                        alt=""
+                        width={28}
+                        height={28}
+                        className="h-full w-full object-cover"
+                        fallback={
+                          <div className="bg-fl-surface-2 flex h-full w-full items-center justify-center">
+                            <span className="text-fl-hint text-fl-muted-1 font-mono select-none">
+                              {(user?.displayName ||
+                                user?.username ||
+                                '?')[0].toUpperCase()}
+                            </span>
+                          </div>
+                        }
+                      />
+                    ) : (
+                      <div className="bg-fl-surface-2 flex h-full w-full items-center justify-center">
+                        <span className="text-fl-hint text-fl-muted-1 font-mono select-none">
+                          {(user?.displayName ||
+                            user?.username ||
+                            '?')[0].toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className={`max-w-[75%] min-w-[10rem] text-left`}>
+                    <TargetLanguageText
+                      as="div"
+                      languageCode={targetLanguageCode}
+                      className={`word-selectable border px-4 py-3 text-left ${
+                        msg.role === 'user'
+                          ? 'bg-fl-accent text-fl-accent-fg border-fl-accent'
+                          : 'bg-fl-surface text-fl-fg-2 border-fl-border'
+                      }`}
+                      onPointerUp={
+                        msg.role === 'assistant'
+                          ? () => handleTextSelection(msg.content)
+                          : undefined
+                      }
+                    >
+                      {msg.content ||
+                        (sending && i === messages.length - 1 ? (
+                          <span className="text-fl-muted-2 animate-pulse">
+                            ▌
+                          </span>
+                        ) : null)}
+                    </TargetLanguageText>
+                    {msg.role === 'assistant' &&
+                      msg.content &&
+                      !(sending && i === messages.length - 1) && (
+                        <div className="mt-1">
+                          <AudioPlayer text={msg.content} size="sm" />
+                        </div>
+                      )}
+                  </div>
+                </div>
+              ))
+            )}
+            {error && (
+              <div className="text-fl-label text-fl-error-fg border-fl-error/30 border px-4 py-2 font-mono">
+                ✕{' '}
+                {error === 'No active study plan found'
+                  ? tCommon('noActivePlan')
+                  : t('errorMessage')}
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Input */}
+          <div className="border-fl-border bg-fl-bg shrink-0 border-t px-4 py-4">
+            {freemiumExhausted ? (
+              <PaywallBanner feature="chat" compact />
+            ) : (
+              <>
+                <div className="flex gap-2">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === 'Enter' && !e.shiftKey && sendMessage()
+                    }
+                    disabled={sending || loadingMsgs}
+                    placeholder={t('placeholder')}
+                    className="bg-fl-surface border-fl-border text-fl-fg placeholder:text-fl-border-2 focus:border-fl-border-2 flex-1 border px-4 py-3 font-mono text-sm transition-colors focus:outline-none disabled:opacity-40"
+                  />
+                  <button
+                    onClick={sendMessage}
+                    disabled={sending || !input.trim() || loadingMsgs}
+                    className="bg-fl-accent text-fl-accent-fg text-fl-label hover:bg-fl-accent/90 px-5 font-mono font-bold tracking-widest uppercase transition-colors disabled:opacity-30"
+                  >
+                    {sending ? '...' : t('send')}
+                  </button>
+                </div>
+                <p className="text-fl-hint text-fl-border-2 mt-2 font-mono tracking-wide">
+                  {t('enterToSend')}
+                </p>
+              </>
+            )}
+          </div>
         </div>
-      </PaywallGate>
+
+        <ConfirmDialog
+          open={deletePending !== null}
+          title={t('deleteTitle')}
+          message={t('deleteMessage')}
+          confirmLabel={t('deleteConfirm')}
+          danger
+          onConfirm={() =>
+            deletePending !== null && deleteConversation(deletePending)
+          }
+          onCancel={() => setDeletePending(null)}
+        />
+
+        {/* Word-save tooltip */}
+        {selectedWord && (
+          <WordTooltip
+            word={selectedWord}
+            pos={tooltipPos}
+            saveState={saveState}
+            onSave={() => handleSaveWord()}
+            onDismiss={dismissTooltip}
+            labels={{
+              saveWord: tCommon('saveWord'),
+              wordSaved: tCommon('wordSaved'),
+              wordSaveError: tCommon('wordSaveError'),
+            }}
+          />
+        )}
+      </div>
     </MaintenanceGate>
   )
 }

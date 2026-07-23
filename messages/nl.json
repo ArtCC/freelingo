@@ -307,7 +307,7 @@
       "pageTitle": "Gebruiksvoorwaarden",
       "updated": "Laatst bijgewerkt: juni 2026",
       "s1Title": "1. Over FreeLingo",
-      "s1Body": "FreeLingo is een open-source AI-gestuurd taalleerleerplatform dat beschikbaar is in twee modi: (1) zelf gehost, waarbij je het op je eigen infrastructuur uitvoert zonder kosten, en (2) als een gehoste service die wordt beheerd door het FreeLingo-team, beschikbaar via betaald abonnement. Door deze service in een van beide modi te gebruiken, ga je akkoord met deze Gebruiksvoorwaarden.",
+      "s1Body": "FreeLingo is een open-source AI-gestuurd taalleerleerplatform dat beschikbaar is in twee modi: (1) zelf gehost, waarbij je het op je eigen infrastructuur uitvoert zonder kosten, en (2) als een gehoste service die wordt beheerd door het FreeLingo-team, met een gratis abonnement en betaalde abonnementen. Door deze service in een van beide modi te gebruiken, ga je akkoord met deze Gebruiksvoorwaarden.",
       "s2Title": "2. Toegestaan gebruik",
       "s2Intro": "Je mag FreeLingo uitsluitend gebruiken voor persoonlijke taaleerlerdoeleinden. Je stemt ermee in om niet:",
       "s2i1": "Te proberen ongeautoriseerde toegang te krijgen tot een deel van het systeem.",
@@ -319,9 +319,9 @@
       "s4Title": "4. Inhoud en AI-interacties",
       "s4Body": "Gesprekken met de AI-tutor worden opgeslagen in de database voor leercontinuïteit. In de gehoste service worden AI-chat en spraakfuncties verwerkt via de API van OpenAI en is je inhoud onderworpen aan het gebruiksbeleid van OpenAI. De AI kan onjuiste antwoorden geven — gebruik altijd je eigen oordeel. FreeLingo is niet verantwoordelijk voor inhoud gegenereerd door onderliggende taalmodellen. De door de AI-tutor gegenereerde inhoud (oefeningen, correcties, uitleg en ander materiaal) is van jou voor persoonlijk gebruik. FreeLingo maakt geen aanspraak op eigendom van je gesprekken of de daaruit gegenereerde inhoud.",
       "s5Title": "5. Servicemodi",
-      "s5Body": "Zelf gehoste implementaties zijn gratis en de operator behoudt volledige controle over zijn gegevens en infrastructuur. De gehoste service die wordt beheerd door het FreeLingo-team wordt aangeboden via een betaald abonnement, beschikbaar op maandelijkse of jaarlijkse basis. In de gehoste service worden je gegevens opgeslagen op servers beheerd door het FreeLingo-team. De gehoste service kent gebruikslimieten voor AI-tutoring-functies; uw huidige gebruik is zichtbaar in de accountinstellingen.",
+      "s5Body": "Zelf gehoste implementaties zijn gratis en de operator behoudt volledige controle over zijn gegevens en infrastructuur. De gehoste service die wordt beheerd door het FreeLingo-team biedt een gratis abonnement met gebruikslimieten en betaalde abonnementen voor onbeperkte toegang, beschikbaar op maandelijkse of jaarlijkse basis. Het gratis abonnement omvat een proefperiode van 7 dagen met volledige toegang (geen betaalmethode vereist) en daarna beperkte dagelijkse quota voor lessen en AI-chat, plus wekelijkse quota voor luisteroefeningen, leesoefeningen en spraakgesprekken. Betaalde abonnementen verwijderen alle gebruikslimieten op deze functies. In de gehoste service worden je gegevens opgeslagen op servers beheerd door het FreeLingo-team. De huidige gebruikslimieten voor je account zijn beschikbaar op je dashboard.",
       "s6Title": "6. Abonnement en facturering",
-      "s6Body": "Abonnementen zijn beschikbaar op maandelijkse of jaarlijkse factureringscyclus en worden automatisch verlengd, tenzij ze vóór de verlengingsdatum worden opgezegd. Nieuwe abonnees ontvangen een gratis proefperiode (betaalgegevens vereist; er wordt niets in rekening gebracht tot het einde van de proefperiode). Je kunt op elk moment opzeggen via je accountinstellingen, met ingang van het einde van de huidige factureringsperiode. Als je binnen 14 dagen na je eerste betaling opzegt en de service niet wezenlijk hebt gebruikt, kun je een volledige terugbetaling aanvragen op grond van het EU-consumentenrecht. Voor niet-gebruikte tijd worden buiten dit recht geen gedeeltelijke terugbetalingen verstrekt. De huidige abonnementsprijzen worden weergegeven bij het afrekenen.",
+      "s6Body": "Het gratis abonnement omvat beperkte toegang tot AI-functies met een proefperiode van 7 dagen met volledige toegang voor nieuwe gebruikers (geen betaalmethode vereist). Betaalde abonnementen zijn beschikbaar op maandelijkse of jaarlijkse factureringscyclus en worden automatisch verlengd, tenzij ze vóór de verlengingsdatum worden opgezegd. Nieuwe abonnees op een betaald abonnement ontvangen een gratis proefperiode (betaalgegevens vereist; er wordt niets in rekening gebracht tot het einde van de proefperiode). Je kunt op elk moment opzeggen via je accountinstellingen, met ingang van het einde van de huidige factureringsperiode. Als je binnen 14 dagen na je eerste betaling opzegt en de service niet wezenlijk hebt gebruikt, kun je een volledige terugbetaling aanvragen op grond van het EU-consumentenrecht. Voor niet-gebruikte tijd worden buiten dit recht geen gedeeltelijke terugbetalingen verstrekt. De huidige abonnementsprijzen worden weergegeven bij het afrekenen.",
       "s7Title": "7. Beschikbaarheid",
       "s7Body": "Deze service wordt aangeboden zonder uptime-garanties. De operator kan de service opschorten of stopzetten voor onderhoud, updates of om andere reden, met redelijke kennisgeving waar mogelijk.",
       "s8Title": "8. Beperking van aansprakelijkheid",
@@ -429,7 +429,9 @@
     "premiumBannerCtaTrialUsed": "Bekijk plannen",
     "premiumBannerPastDueTitle": "Betaling in behandeling",
     "premiumBannerPastDueDesc": "Werk je betaalmethode bij om Premium-toegang tot chat, spraakgesprekken, reading en listening te herstellen.",
-    "premiumBannerPastDueCta": "Premium herstellen"
+    "premiumBannerPastDueCta": "Premium herstellen",
+    "freemiumTrialTitle": "{days, plural, one {# dag gratis proefperiode} other {# dagen gratis proefperiode}}",
+    "freemiumTrialDesc": "Geniet van onbeperkte toegang tot chat, spraak, listening en reading. Probeer alles Premium gratis."
   },
   "assessment": {
     "title": "Beoordeling",
@@ -1263,6 +1265,8 @@
     "paywallDescTrialUsed": "Ontgrendel alle Premium-oefenmodi en controleer het bedrag voordat je bevestigt.",
     "paywallChatTitle": "Oefen zonder limiet met Lingu",
     "paywallChatDesc": "Stel vragen, krijg correcties en voer natuurlijke tekstgesprekken met je AI-tutor.",
+    "paywallLessonsTitle": "Onbeperkt lessen voltooien",
+    "paywallLessonsDesc": "Grammatica, woordenschat, lezen en schrijven — voltooi elke dag zoveel lessen als je wilt.",
     "paywallConversationTitle": "Spreek in realtime met Lingu",
     "paywallConversationDesc": "Oefen gesproken conversatie met transcriptie, snelle antwoorden en feedback voor meer vloeiendheid.",
     "paywallListeningTitle": "Train je gehoor op jouw niveau",
@@ -1352,19 +1356,26 @@
     "planFreeDesc": "Alles wat je nodig hebt om te beginnen",
     "planFreeCta": "Beginnen"
   },
+  "freemium": {
+    "chatLabel": "Chat",
+    "lessonsLabel": "Lessen",
+    "listeningLabel": "Luisteren",
+    "readingLabel": "Lezen",
+    "voiceLabel": "Spraak (min)",
+    "freeLimit": "Premium nemen",
+    "trialDaysLeft": "{days, plural, one {# dag gratis proefperiode} other {# dagen gratis proefperiode}}",
+    "trialUnlimited": "Onbeperkte toegang",
+    "requiresSubscription": "Alleen Premium"
+  },
   "whatsNew": {
     "title": "Nieuw",
-    "version": "v1.8.24",
+    "version": "v1.8.25",
     "cta": "Begrepen",
     "entry1": {
-      "label": "Ongelezen feedbackmeldingen",
-      "desc": "Feedback toont nu een kleine ongelezen teller in de zijbalk, zodat je nieuwe suggesties, bugs en reacties ziet zonder extra e-mails. Als je een feedbackthread opent, wordt alleen die thread als gelezen gemarkeerd."
+      "label": "Probeer alles gratis",
+      "desc": "Je kunt nu chatten met Lingu, luisteren en lezen oefenen, en spraakgesprekken uitproberen zonder betalingsgegevens in te voeren. Begin met een gratis proefperiode en blijf alle functies gebruiken met dagelijkse en wekelijkse limieten. Upgrade wanneer je wilt vanaf het dashboard."
     },
     "entry2": {
-      "label": "Gratis voice-demo na de beoordeling",
-      "desc": "Nadat je studieplan is gemaakt, kun je 5 minuten gratis een realtime spraakgesprek met Lingu proberen. Wanneer de demo eindigt, ontgrendelt Premium volledige spraaktraining en de andere begeleide modi."
-    },
-    "entry3": {
       "label": "Bugfixes",
       "desc": "Diverse kleine bugfixes en stabiliteitsverbeteringen in het hele platform."
     }

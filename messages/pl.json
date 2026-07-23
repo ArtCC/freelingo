@@ -307,7 +307,7 @@
       "pageTitle": "Regulamin",
       "updated": "Ostatnia aktualizacja: czerwiec 2026",
       "s1Title": "1. O FreeLingo",
-      "s1Body": "FreeLingo to platforma do nauki języków wspierana przez AI, dostępna w dwóch trybach: (1) samodzielnie hostowana, gdzie uruchamiasz ją na własnej infrastrukturze bezpłatnie, oraz (2) jako usługa hostowana prowadzona przez zespół FreeLingo, dostępna za pośrednictwem płatnej subskrypcji. Korzystając z tej usługi w dowolnym trybie, wyrażasz zgodę na niniejszy Regulamin.",
+      "s1Body": "FreeLingo to platforma do nauki języków wspierana przez AI, dostępna w dwóch trybach: (1) samodzielnie hostowana, gdzie uruchamiasz ją na własnej infrastrukturze bezpłatnie, oraz (2) jako usługa hostowana prowadzona przez zespół FreeLingo, z darmowym planem i płatnymi subskrypcjami. Korzystając z tej usługi w dowolnym trybie, wyrażasz zgodę na niniejszy Regulamin.",
       "s2Title": "2. Dopuszczalne użytkowanie",
       "s2Intro": "Możesz korzystać z FreeLingo wyłącznie do osobistych celów nauki języków. Zgadzasz się nie:",
       "s2i1": "Próbować uzyskać nieautoryzowanego dostępu do jakiejkolwiek części systemu.",
@@ -319,9 +319,9 @@
       "s4Title": "4. Treści i interakcje z AI",
       "s4Body": "Rozmowy z korepetytorem AI są przechowywane w bazie danych dla ciągłości nauki. W usłudze hostowanej czat AI i funkcje głosowe są przetwarzane za pośrednictwem API OpenAI, a Twoje treści podlegają zasadom użytkowania OpenAI. AI może generować niedokładne odpowiedzi — zawsze stosuj własny osąd. FreeLingo nie ponosi odpowiedzialności za treści generowane przez modele językowe. Treści generowane przez korepetytora AI (ćwiczenia, poprawki, wyjaśnienia i inne materiały) należą do Ciebie do użytku osobistego. FreeLingo nie rości sobie praw własności do Twoich rozmów ani do treści z nich generowanych.",
       "s5Title": "5. Tryby usługi",
-      "s5Body": "Wdrożenia samodzielnie hostowane są bezpłatne, a operator zachowuje pełną kontrolę nad swoimi danymi i infrastrukturą. Usługa hostowana prowadzona przez zespół FreeLingo jest świadczona w ramach płatnej subskrypcji, dostępnej w cyklu miesięcznym lub rocznym. Usługa hostowana stosuje limity użytkowania dla funkcji tutoringu AI; bieżące zużycie jest dostępne w ustawieniach konta.",
+      "s5Body": "Wdrożenia samodzielnie hostowane są bezpłatne, a operator zachowuje pełną kontrolę nad swoimi danymi i infrastrukturą. Usługa hostowana prowadzona przez zespół FreeLingo oferuje darmowy plan z limitami użytkowania oraz płatne subskrypcje na nielimitowany dostęp, dostępne w cyklu miesięcznym lub rocznym. Darmowy plan obejmuje 7-dniowy okres próbny z pełnym dostępem (bez podawania metody płatności), a następnie ograniczone dzienne limity na lekcje i czat AI oraz tygodniowe limity na ćwiczenia ze słuchania, czytania i rozmowy głosowe. Płatne subskrypcje znoszą wszystkie limity użytkowania tych funkcji. W usłudze hostowanej Twoje dane są przechowywane na serwerach zarządzanych przez zespół FreeLingo. Aktualne limity użytkowania Twojego konta są dostępne na pulpicie nawigacyjnym.",
       "s6Title": "6. Subskrypcja i płatności",
-      "s6Body": "Subskrypcje są dostępne w miesięcznym lub rocznym cyklu rozliczeniowym i odnawiane automatycznie, chyba że zostaną anulowane przed datą odnowienia. Nowi subskrybenci otrzymują bezpłatny okres próbny (wymagane dane płatnicze; żadna opłata nie jest pobierana do końca okresu próbnego). Możesz anulować subskrypcję w dowolnym momencie z ustawień konta, ze skutkiem na koniec bieżącego okresu rozliczeniowego. Jeśli anulujesz w ciągu 14 dni od pierwszej płatności i nie korzystałeś(-aś) z usługi w znaczący sposób, możesz zażądać pełnego zwrotu środków zgodnie z prawem konsumenckim UE. Za niewykorzystany czas nie są wydawane częściowe zwroty poza tym uprawnieniem. Aktualne ceny subskrypcji są wyświetlane podczas realizacji zakupu.",
+      "s6Body": "Darmowy plan obejmuje ograniczony dostęp do funkcji AI z 7-dniowym okresem próbnym z pełnym dostępem dla nowych użytkowników (bez podawania metody płatności). Płatne subskrypcje są dostępne w miesięcznym lub rocznym cyklu rozliczeniowym i odnawiane automatycznie, chyba że zostaną anulowane przed datą odnowienia. Nowi subskrybenci planu płatnego otrzymują bezpłatny okres próbny (wymagane dane płatnicze; żadna opłata nie jest pobierana do końca okresu próbnego). Możesz anulować subskrypcję w dowolnym momencie z ustawień konta, ze skutkiem na koniec bieżącego okresu rozliczeniowego. Jeśli anulujesz w ciągu 14 dni od pierwszej płatności i nie korzystałeś(-aś) z usługi w znaczący sposób, możesz zażądać pełnego zwrotu środków zgodnie z prawem konsumenckim UE. Za niewykorzystany czas nie są wydawane częściowe zwroty poza tym uprawnieniem. Aktualne ceny subskrypcji są wyświetlane podczas realizacji zakupu.",
       "s7Title": "7. Dostępność",
       "s7Body": "Usługa jest świadczona bez gwarancji czasu działania. Operator może zawiesić lub zakończyć świadczenie usługi z powodu konserwacji, aktualizacji lub z innego powodu, z rozsądnym wyprzedzeniem tam, gdzie jest to możliwe.",
       "s8Title": "8. Ograniczenie odpowiedzialności",
@@ -429,7 +429,9 @@
     "premiumBannerCtaTrialUsed": "Zobacz plany",
     "premiumBannerPastDueTitle": "Płatność oczekuje",
     "premiumBannerPastDueDesc": "Zaktualizuj metodę płatności, aby przywrócić dostęp Premium do czatu, rozmów głosowych, reading i listening.",
-    "premiumBannerPastDueCta": "Przywróć Premium"
+    "premiumBannerPastDueCta": "Przywróć Premium",
+    "freemiumTrialTitle": "{days, plural, one {# dzień bezpłatnego okresu próbnego} other {# dni bezpłatnego okresu próbnego}}",
+    "freemiumTrialDesc": "Ciesz się nieograniczonym dostępem do czatu, głosu, listeningu i readingu. Wypróbuj wszystko Premium za darmo."
   },
   "assessment": {
     "title": "Ocena poziomu",
@@ -1263,6 +1265,8 @@
     "paywallDescTrialUsed": "Odblokuj wszystkie tryby Premium i sprawdź kwotę przed potwierdzeniem.",
     "paywallChatTitle": "Ćwicz z Lingu bez limitów",
     "paywallChatDesc": "Zadawaj pytania, otrzymuj poprawki i prowadź naturalne rozmowy tekstowe z tutorem AI.",
+    "paywallLessonsTitle": "Odblokuj nielimitowane lekcje",
+    "paywallLessonsDesc": "Gramatyka, słownictwo, czytanie i pisanie — kończ tyle lekcji, ile chcesz każdego dnia.",
     "paywallConversationTitle": "Rozmawiaj z Lingu w czasie rzeczywistym",
     "paywallConversationDesc": "Ćwicz mówienie z transkrypcją, szybkimi odpowiedziami i feedbackiem, aby budować płynność.",
     "paywallListeningTitle": "Trenuj słuch na swoim poziomie",
@@ -1352,19 +1356,26 @@
     "planFreeDesc": "Wszystko, co potrzebne, by zacząć naukę",
     "planFreeCta": "Zacznij"
   },
+  "freemium": {
+    "chatLabel": "Chat",
+    "lessonsLabel": "Lekcje",
+    "listeningLabel": "Słuchanie",
+    "readingLabel": "Czytanie",
+    "voiceLabel": "Głos (min)",
+    "freeLimit": "Kup Premium",
+    "trialDaysLeft": "{days, plural, one {# dzień bezpłatnego okresu próbnego} other {# dni bezpłatnego okresu próbnego}}",
+    "trialUnlimited": "Nieograniczony dostęp",
+    "requiresSubscription": "Tylko Premium"
+  },
   "whatsNew": {
     "title": "Co nowego",
-    "version": "v1.8.24",
+    "version": "v1.8.25",
     "cta": "Rozumiem",
     "entry1": {
-      "label": "Nieprzeczytane powiadomienia z feedbacku",
-      "desc": "Feedback pokazuje teraz mały licznik nieprzeczytanych elementów w menu bocznym, więc zobaczysz nowe sugestie, błędy i odpowiedzi bez dodatkowych e-maili. Otwarcie wątku feedbacku oznacza jako przeczytany tylko ten wątek."
+      "label": "Wypróbuj wszystko za darmo",
+      "desc": "Możesz teraz rozmawiać z Lingu, ćwiczyć słuchanie i czytanie oraz wypróbować konwersacje głosowe bez podawania danych płatności. Zacznij od bezpłatnego okresu próbnego, a następnie korzystaj ze wszystkich funkcji z dziennymi i tygodniowymi limitami. Przejdź na Premium w dowolnym momencie z panelu."
     },
     "entry2": {
-      "label": "Darmowa demo głosowe po ocenie",
-      "desc": "Po utworzeniu planu nauki możesz bezpłatnie wypróbować 5-minutową rozmowę głosową w czasie rzeczywistym z Lingu. Po zakończeniu demo Premium odblokowuje pełną praktykę mówienia i pozostałe tryby prowadzone."
-    },
-    "entry3": {
       "label": "Poprawki błędów",
       "desc": "Różne drobne poprawki błędów i ulepszenia stabilności na całej platformie."
     }

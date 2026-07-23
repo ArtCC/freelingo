@@ -307,7 +307,7 @@
       "pageTitle": "Nutzungsbedingungen",
       "updated": "Zuletzt aktualisiert: Juni 2026",
       "s1Title": "1. Über FreeLingo",
-      "s1Body": "FreeLingo ist eine quelloffene, KI-gestützte Sprachlernplattform, die in zwei Modi verfügbar ist: (1) selbst gehostet, wo Sie sie auf Ihrer eigenen Infrastruktur kostenlos betreiben, und (2) als gehosteter Dienst des FreeLingo-Teams, verfügbar über ein kostenpflichtiges Abonnement. Durch die Nutzung des Dienstes in einem der beiden Modi stimmen Sie diesen Nutzungsbedingungen zu.",
+      "s1Body": "FreeLingo ist eine quelloffene, KI-gestützte Sprachlernplattform, die in zwei Modi verfügbar ist: (1) selbst gehostet, wo Sie sie auf Ihrer eigenen Infrastruktur kostenlos betreiben, und (2) als gehosteter Dienst des FreeLingo-Teams mit einem kostenlosen Plan und kostenpflichtigen Abonnements. Durch die Nutzung des Dienstes in einem der beiden Modi stimmen Sie diesen Nutzungsbedingungen zu.",
       "s2Title": "2. Zulässige Nutzung",
       "s2Intro": "Sie dürfen FreeLingo ausschließlich für persönliche Sprachlernzwecke nutzen. Sie verpflichten sich, Folgendes zu unterlassen:",
       "s2i1": "Versuche, unbefugten Zugang zu Teilen des Systems zu erlangen.",
@@ -319,9 +319,9 @@
       "s4Title": "4. Inhalte und KI-Interaktionen",
       "s4Body": "Gespräche mit dem KI-Tutor werden für die Lernkontinuität in der Datenbank gespeichert. Beim gehosteten Dienst werden Chat und Sprachfunktionen über die OpenAI-API verarbeitet, und Ihre Inhalte unterliegen den Nutzungsrichtlinien von OpenAI. Die KI kann ungenaue Antworten liefern — beurteilen Sie diese immer mit eigenem Urteilsvermögen. FreeLingo haftet nicht für Inhalte, die von den zugrunde liegenden Sprachmodellen generiert werden. Die vom KI-Tutor generierten Inhalte (Übungen, Korrekturen, Erklärungen und andere Materialien) gehören Ihnen für Ihre persönliche Nutzung. FreeLingo erhebt keinen Eigentumsanspruch auf Ihre Gespräche oder die daraus generierten Inhalte.",
       "s5Title": "5. Dienstmodalitäten",
-      "s5Body": "Selbst gehostete Installationen sind kostenlos, und der Betreiber behält die volle Kontrolle über seine Daten und Infrastruktur. Der vom FreeLingo-Team betriebene gehostete Dienst wird über ein kostenpflichtiges Abonnement angeboten, das monatlich oder jährlich abgerechnet werden kann. Beim gehosteten Dienst werden Ihre Daten auf Servern des FreeLingo-Teams gespeichert. Beim gehosteten Dienst gelten Nutzungslimits für KI-Tutoring-Funktionen; Ihre aktuelle Nutzung ist in den Kontoeinstellungen einsehbar.",
+      "s5Body": "Selbst gehostete Installationen sind kostenlos, und der Betreiber behält die volle Kontrolle über seine Daten und Infrastruktur. Der vom FreeLingo-Team betriebene gehostete Dienst bietet einen kostenlosen Plan mit Nutzungslimits und kostenpflichtige Abonnements für unbegrenzten Zugang, die monatlich oder jährlich abgerechnet werden können. Der kostenlose Plan umfasst eine 7-tägige Testphase mit vollem Zugang (keine Zahlungsmethode erforderlich) und danach begrenzte tägliche Kontingente für Lektionen und KI-Chat sowie wöchentliche Kontingente für Hörübungen, Leseübungen und Sprachgespräche. Kostenpflichtige Abonnements heben alle Nutzungslimits für diese Funktionen auf. Beim gehosteten Dienst werden Ihre Daten auf Servern des FreeLingo-Teams gespeichert. Die aktuellen Nutzungslimits für Ihr Konto finden Sie in Ihrem Dashboard.",
       "s6Title": "6. Abonnement und Abrechnung",
-      "s6Body": "Abonnements sind in monatlichen oder jährlichen Abrechnungszyklen verfügbar und verlängern sich automatisch, sofern sie nicht vor dem Verlängerungsdatum gekündigt werden. Neue Abonnenten erhalten eine kostenlose Testphase (Zahlungsdaten erforderlich; es entstehen keine Kosten bis zum Ende der Testphase). Sie können jederzeit in Ihren Kontoeinstellungen kündigen, wirksam zum Ende des aktuellen Abrechnungszeitraums. Wenn Sie innerhalb von 14 Tagen nach Ihrer ersten Zahlung kündigen und den Dienst nicht wesentlich genutzt haben, können Sie gemäß EU-Verbraucherrecht eine vollständige Rückerstattung beantragen. Für nicht genutzte Zeit werden über dieses Recht hinaus keine Teilrückerstattungen gewährt. Die aktuellen Abonnementpreise werden beim Bezahlvorgang angezeigt.",
+      "s6Body": "Der kostenlose Plan umfasst begrenzten Zugang zu KI-gestützten Funktionen mit einer 7-tägigen Testphase mit vollem Zugang für neue Nutzer (keine Zahlungsmethode erforderlich). Kostenpflichtige Abonnements sind in monatlichen oder jährlichen Abrechnungszyklen verfügbar und verlängern sich automatisch, sofern sie nicht vor dem Verlängerungsdatum gekündigt werden. Neue Abonnenten eines kostenpflichtigen Plans erhalten eine kostenlose Testphase (Zahlungsdaten erforderlich; es entstehen keine Kosten bis zum Ende der Testphase). Sie können jederzeit in Ihren Kontoeinstellungen kündigen, wirksam zum Ende des aktuellen Abrechnungszeitraums. Wenn Sie innerhalb von 14 Tagen nach Ihrer ersten Zahlung kündigen und den Dienst nicht wesentlich genutzt haben, können Sie gemäß EU-Verbraucherrecht eine vollständige Rückerstattung beantragen. Für nicht genutzte Zeit werden über dieses Recht hinaus keine Teilrückerstattungen gewährt. Die aktuellen Abonnementpreise werden beim Bezahlvorgang angezeigt.",
       "s7Title": "7. Verfügbarkeit",
       "s7Body": "Dieser Dienst wird ohne Verfügbarkeitsgarantien erbracht. Der Betreiber kann den Dienst für Wartung, Updates oder andere Gründe unterbrechen, soweit möglich mit angemessener Vorankündigung.",
       "s8Title": "8. Haftungsbeschränkung",
@@ -429,7 +429,9 @@
     "premiumBannerCtaTrialUsed": "Pläne ansehen",
     "premiumBannerPastDueTitle": "Zahlung ausstehend",
     "premiumBannerPastDueDesc": "Aktualisiere deine Zahlungsmethode, um den Premium-Zugriff auf Chat, Sprachkonversation, Reading und Listening wiederherzustellen.",
-    "premiumBannerPastDueCta": "Premium wiederherstellen"
+    "premiumBannerPastDueCta": "Premium wiederherstellen",
+    "freemiumTrialTitle": "{days, plural, one {# Tag kostenlose Testphase} other {# Tage kostenlose Testphase}}",
+    "freemiumTrialDesc": "Genieße unbegrenzten Zugang zu Chat, Sprachgesprächen, Listening und Reading. Teste alles Premium kostenlos."
   },
   "assessment": {
     "title": "Einstufungstest",
@@ -1263,6 +1265,8 @@
     "paywallDescTrialUsed": "Schalte alle Premium-Übungsmodi frei und prüfe den Betrag vor der Bestätigung.",
     "paywallChatTitle": "Übe unbegrenzt mit Lingu",
     "paywallChatDesc": "Stelle Fragen, erhalte Korrekturen und führe natürliche Textgespräche mit deinem KI-Tutor.",
+    "paywallLessonsTitle": "Unbegrenzt Lektionen abschließen",
+    "paywallLessonsDesc": "Grammatik, Wortschatz, Lesen und Schreiben — schließe jeden Tag so viele Lektionen ab, wie du möchtest.",
     "paywallConversationTitle": "Sprich in Echtzeit mit Lingu",
     "paywallConversationDesc": "Übe gesprochene Konversation mit Transkription, schnellen Antworten und Feedback für mehr Flüssigkeit.",
     "paywallListeningTitle": "Trainiere dein Gehör auf deinem Niveau",
@@ -1352,19 +1356,26 @@
     "planFreeDesc": "Alles Wesentliche zum Lernen",
     "planFreeCta": "Starten"
   },
+  "freemium": {
+    "chatLabel": "Chat",
+    "lessonsLabel": "Lektionen",
+    "listeningLabel": "Hören",
+    "readingLabel": "Lesen",
+    "voiceLabel": "Sprache (Min.)",
+    "freeLimit": "Premium holen",
+    "trialDaysLeft": "{days, plural, one {# Tag kostenlose Testversion} other {# Tage kostenlose Testversion}}",
+    "trialUnlimited": "Unbegrenzter Zugang",
+    "requiresSubscription": "Nur Premium"
+  },
   "whatsNew": {
     "title": "Neuigkeiten",
-    "version": "v1.8.24",
+    "version": "v1.8.25",
     "cta": "Verstanden",
     "entry1": {
-      "label": "Ungelesene Feedback-Hinweise",
-      "desc": "Feedback zeigt jetzt einen kleinen Zähler für ungelesene Aktivitäten in der Seitenleiste, damit du neue Vorschläge, Fehlerberichte und Antworten ohne zusätzliche E-Mails siehst. Wenn du einen Feedback-Thread öffnest, wird nur dieser Thread als gelesen markiert."
+      "label": "Alles kostenlos testen",
+      "desc": "Du kannst jetzt mit Lingu chatten, Hören und Lesen üben und Sprachkonversationen ausprobieren, ohne Zahlungsdaten einzugeben. Starte mit einer kostenlosen Testphase und nutze alle Funktionen mit täglichen und wöchentlichen Limits. Upgrade jederzeit vom Dashboard."
     },
     "entry2": {
-      "label": "Kostenlose Sprachdemo nach der Einstufung",
-      "desc": "Nach dem Erstellen deines Lernplans kannst du 5 Minuten lang kostenlos ein Echtzeit-Sprachgespräch mit Lingu ausprobieren. Nach der Demo schaltet Premium die vollständige Sprachpraxis und die weiteren geführten Modi frei."
-    },
-    "entry3": {
       "label": "Fehlerbehebungen",
       "desc": "Verschiedene kleinere Fehlerbehebungen und Stabilitätsverbesserungen in der gesamten Plattform."
     }
