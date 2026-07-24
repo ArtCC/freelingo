@@ -208,7 +208,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         : ''
 
   return (
-    <div className="bg-fl-bg flex min-h-screen">
+    <div className="bg-fl-bg flex min-h-screen md:h-screen md:overflow-hidden">
       {/* Sidebar */}
       <aside className="border-fl-border bg-fl-bg hidden w-52 shrink-0 flex-col border-r px-0 py-0 md:flex">
         {/* Logo area */}
