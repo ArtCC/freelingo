@@ -149,6 +149,7 @@ export default function ChatPage() {
 
   async function selectConversation(id: number) {
     dismissTooltip()
+    if (window.innerWidth < 768) setSidebarOpen(false)
     setActiveId(id)
     setMessages([])
     setError('')
