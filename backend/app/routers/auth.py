@@ -260,7 +260,32 @@ async def logout(
 
 @router.get("/me", response_model=UserResponse)
 @limiter.limit("60/minute")
-async def get_me(request: Request, current_user: User = Depends(get_current_user)):
+async def get_me(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # Auto-activate freemium trial for eligible existing users who registered
+    # before the freemium launch. One-time, best-effort — if DB write fails,
+    # the user still gets in (the trial is re-evaluated on the next request).
+    try:
+        if (
+            settings.STRIPE_ENABLED
+            and settings.FREEMIUM_TRIAL_ENABLED
+            and current_user.freemium_trial_ends_at is None
+            and not current_user.freemium_trial_used
+            and current_user.subscription_status not in ("active", "trialing")
+        ):
+            from datetime import UTC, datetime, timedelta
+
+            current_user.freemium_trial_ends_at = datetime.now(UTC).replace(
+                tzinfo=None
+            ) + timedelta(days=settings.FREEMIUM_TRIAL_DAYS)
+            current_user.freemium_trial_used = True
+            await db.commit()
+    except Exception:
+        pass  # best-effort, user still gets in
+
     return current_user
 
 
