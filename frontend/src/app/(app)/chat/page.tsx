@@ -398,10 +398,10 @@ export default function ChatPage() {
           <div className="border-fl-border bg-fl-bg flex shrink-0 items-center gap-2 border-b px-5 py-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-fl-label text-fl-muted-2 hover:text-fl-fg mr-1 font-mono tracking-widest transition-colors"
-              title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+              className="text-fl-label text-fl-muted-2 hover:text-fl-fg mr-1 text-lg transition-colors"
+              title={sidebarOpen ? t('toggleSidebarHide') : t('toggleSidebarShow')}
             >
-              {sidebarOpen ? '◂' : '▸'}
+              {sidebarOpen ? '◀' : '☰'}
             </button>
             <span className="text-fl-label text-fl-muted-3">●</span>
             <span className="text-fl-label text-fl-muted-2 font-mono tracking-widest uppercase">
