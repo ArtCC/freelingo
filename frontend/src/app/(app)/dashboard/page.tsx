@@ -4,7 +4,12 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/api'
-import { isSubscribed, needsPaymentRecovery, useAuthStore } from '@/store/auth'
+import {
+  isSubscribed,
+  needsPaymentRecovery,
+  isFreemiumTrialActive,
+  useAuthStore,
+} from '@/store/auth'
 import { useProgressStore } from '@/store/progress'
 import { useLanguageStore } from '@/store/language'
 import { useConfigStore } from '@/store/config'
@@ -34,6 +39,22 @@ export default function DashboardPage() {
   const user = useAuthStore((s) => s.user)
   const stripeEnabled = useConfigStore((s) => s.stripeEnabled)
   const trialEligible = !user?.trial_used
+  const freemiumTrialActive = isFreemiumTrialActive(user, stripeEnabled)
+  const [freemiumTrialDaysLeft, setFreemiumTrialDaysLeft] = useState(0)
+
+  useEffect(() => {
+    if (freemiumTrialActive && user?.freemium_trial_ends_at) {
+      const days = Math.max(
+        1,
+        Math.ceil(
+          (new Date(user.freemium_trial_ends_at).getTime() - Date.now()) /
+            86400000
+        )
+      )
+      setFreemiumTrialDaysLeft(days)
+    }
+  }, [freemiumTrialActive, user?.freemium_trial_ends_at])
+
   const {
     streak,
     xp,
@@ -579,51 +600,58 @@ export default function DashboardPage() {
                 </span>
                 <div>
                   <p className="text-fl-label text-fl-muted-2 mb-2 font-mono tracking-widest uppercase">
-                    {t(
-                      paymentRecovery
-                        ? 'premiumBannerPastDueTitle'
-                        : 'premiumBannerTitle'
-                    )}
+                    {freemiumTrialActive
+                      ? t('freemiumTrialTitle', { days: freemiumTrialDaysLeft })
+                      : t(
+                          paymentRecovery
+                            ? 'premiumBannerPastDueTitle'
+                            : 'premiumBannerTitle'
+                        )}
                   </p>
                   <p className="text-fl-muted-2 font-mono text-xs leading-relaxed">
-                    {paymentRecovery
-                      ? t('premiumBannerPastDueDesc')
-                      : t(
-                          trialEligible
-                            ? 'premiumBannerDesc'
-                            : 'premiumBannerDescTrialUsed'
-                        )}
+                    {freemiumTrialActive
+                      ? t('freemiumTrialDesc', { days: freemiumTrialDaysLeft })
+                      : paymentRecovery
+                        ? t('premiumBannerPastDueDesc')
+                        : t(
+                            trialEligible
+                              ? 'premiumBannerDesc'
+                              : 'premiumBannerDescTrialUsed'
+                          )}
                   </p>
                 </div>
               </div>
-              <span className="text-fl-label text-fl-accent border-fl-accent/30 border px-3 py-1.5 font-mono tracking-widest whitespace-nowrap uppercase">
-                {paymentRecovery
-                  ? t('premiumBannerPastDueCta')
-                  : t(
-                      trialEligible
-                        ? 'premiumBannerCta'
-                        : 'premiumBannerCtaTrialUsed'
-                    )}
-              </span>
+              {!freemiumTrialActive && (
+                <span className="text-fl-label text-fl-accent border-fl-accent/30 border px-3 py-1.5 font-mono tracking-widest whitespace-nowrap uppercase">
+                  {paymentRecovery
+                    ? t('premiumBannerPastDueCta')
+                    : t(
+                        trialEligible
+                          ? 'premiumBannerCta'
+                          : 'premiumBannerCtaTrialUsed'
+                      )}
+                </span>
+              )}
             </div>
-            {paymentRecovery ? (
-              <div className="border-fl-border mt-4 border-t pt-4">
-                <button
-                  onClick={handleManageSubscription}
-                  disabled={portalLoading}
-                  className="bg-fl-accent text-fl-accent-fg hover:bg-fl-accent/90 w-full px-4 py-2.5 font-mono text-xs font-bold tracking-widest uppercase transition-colors disabled:opacity-50 sm:w-auto"
-                >
-                  {portalLoading ? '...' : tBilling('updatePayment')}
-                </button>
-                {portalError && (
-                  <p className="text-fl-hint mt-3 font-mono text-red-500">
-                    {portalError}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <SubscriptionPlanButtons className="border-fl-border mt-4 border-t pt-4" />
-            )}
+            {!freemiumTrialActive &&
+              (paymentRecovery ? (
+                <div className="border-fl-border mt-4 border-t pt-4">
+                  <button
+                    onClick={handleManageSubscription}
+                    disabled={portalLoading}
+                    className="bg-fl-accent text-fl-accent-fg hover:bg-fl-accent/90 w-full px-4 py-2.5 font-mono text-xs font-bold tracking-widest uppercase transition-colors disabled:opacity-50 sm:w-auto"
+                  >
+                    {portalLoading ? '...' : tBilling('updatePayment')}
+                  </button>
+                  {portalError && (
+                    <p className="text-fl-hint mt-3 font-mono text-red-500">
+                      {portalError}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <SubscriptionPlanButtons className="border-fl-border mt-4 border-t pt-4" />
+              ))}
           </div>
         )}
 

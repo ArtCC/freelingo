@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { splitYearlyCta, type BillingInterval } from '@/lib/billing-copy'
 import { mapUser } from '@/lib/mappers'
-import { useAuthStore, isSubscribed } from '@/store/auth'
+import { useAuthStore, isSubscribed, isFreemiumTrialActive } from '@/store/auth'
 import { useConfigStore } from '@/store/config'
 import { useLanguageStore } from '@/store/language'
 import TargetLanguageSelector from '@/components/TargetLanguageSelector'
@@ -89,6 +89,8 @@ export default function OnboardingPage() {
 
   const subscribed = isSubscribed(user, stripeEnabled)
   const showTrial = stripeEnabled && !subscribed
+  const freemiumTrialActive = isFreemiumTrialActive(user, stripeEnabled)
+  const totalSteps = showTrial || freemiumTrialActive ? 3 : 2
 
   async function handleStep2() {
     setLoading(true)
@@ -105,8 +107,11 @@ export default function OnboardingPage() {
       })
       if (!res.ok) throw new Error(t('saveFailed'))
       const updated = await res.json()
-      setUser(mapUser(updated, user))
-      if (showTrial) {
+      const mapped = mapUser(updated, user)
+      setUser(mapped)
+      const trialActive = isFreemiumTrialActive(mapped, stripeEnabled)
+      if (trialActive || showTrial) {
+        setStep(3)
         setStep(3)
       } else {
         router.push('/dashboard')
@@ -200,7 +205,7 @@ export default function OnboardingPage() {
               </span>
             </div>
             <span className="text-fl-hint text-fl-muted-4 font-mono tabular-nums">
-              {step}/{showTrial ? 3 : 2}
+              {step}/{totalSteps}
             </span>
           </div>
 
@@ -308,8 +313,45 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 3: Free trial */}
-          {step === 3 && (
+          {/* Step 3: Trial confirmation */}
+          {step === 3 && freemiumTrialActive && (
+            <div className="space-y-5 text-center">
+              <h2 className="text-fl-fg font-mono text-base font-bold">
+                {t('freemiumTrialTitle')}
+              </h2>
+              <p className="text-fl-muted-1 font-mono text-xs leading-relaxed">
+                {t('freemiumTrialDesc')}
+              </p>
+              <ul className="text-fl-muted-2 space-y-1.5 text-left font-mono text-xs">
+                <li className="flex items-start gap-2">
+                  <span className="text-fl-accent shrink-0">✓</span>
+                  {t('freemiumChatLabel')}
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-fl-accent shrink-0">✓</span>
+                  {t('freemiumVoiceLabel')}
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-fl-accent shrink-0">✓</span>
+                  {t('freemiumListeningLabel')}
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-fl-accent shrink-0">✓</span>
+                  {t('freemiumReadingLabel')}
+                </li>
+              </ul>
+              <button
+                type="button"
+                onClick={() => router.push('/dashboard')}
+                className="bg-fl-accent text-fl-accent-fg hover:bg-fl-accent/90 w-full py-3 font-mono text-xs font-bold tracking-widest uppercase transition-colors"
+              >
+                {t('goToDashboard')}
+              </button>
+            </div>
+          )}
+
+          {/* Step 3: Stripe subscription */}
+          {step === 3 && !freemiumTrialActive && (
             <div className="space-y-5 text-center">
               <h2 className="text-fl-fg font-mono text-base font-bold">
                 {t(trialEligible ? 'trialTitle' : 'trialTitleTrialUsed', {

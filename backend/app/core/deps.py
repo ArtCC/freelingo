@@ -73,6 +73,152 @@ async def require_subscription(
     return current_user
 
 
+def require_subscription_or_freemium(feature: str):
+    """Factory that returns a FastAPI dependency checking subscription OR freemium quota.
+
+    When STRIPE_ENABLED=false the user always passes (self-hosted mode).
+    When STRIPE_ENABLED=true the check follows this order:
+      1. Subscribed (trialing/active) → allowed
+      2. Freemium trial active → allowed
+      3. Freemium quota available for *feature* → allowed
+      4. Otherwise → 402 with freemium_exhausted detail
+
+    *feature* must be one of: chat, lessons, listening, reading, voice.
+    """
+
+    async def _check(
+        redis: Redis = Depends(get_redis),
+        current_user: User = Depends(get_current_user),
+    ) -> User:
+        if not settings.STRIPE_ENABLED:
+            return current_user
+
+        if is_subscribed(current_user, settings.STRIPE_ENABLED):
+            return current_user
+
+        from app.services.freemium_service import is_freemium_trial_active
+
+        if is_freemium_trial_active(current_user.freemium_trial_ends_at):
+            return current_user
+
+        try:
+            from app.services.freemium_service import (
+                check_chat_quota,
+                check_lesson_quota,
+                check_listening_quota,
+                check_reading_quota,
+                check_voice_quota,
+            )
+
+            check_map = {
+                "chat": check_chat_quota,
+                "lessons": check_lesson_quota,
+                "listening": check_listening_quota,
+                "reading": check_reading_quota,
+                "voice": check_voice_quota,
+            }
+            checker = check_map.get(feature)
+            if checker is None:
+                raise HTTPException(status_code=402, detail="subscription_required")
+
+            result = await checker(redis, current_user.id)
+            if not result.allowed:
+                raise HTTPException(
+                    status_code=402,
+                    detail={
+                        "reason": "freemium_exhausted",
+                        "feature": feature,
+                        "remaining": result.remaining,
+                        "limit": result.limit,
+                    },
+                )
+        except HTTPException:
+            raise
+        except Exception:
+            # Redis unavailable or other error → block access safely
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "reason": "freemium_unavailable",
+                    "feature": feature,
+                    "remaining": 0,
+                    "limit": 0,
+                },
+            ) from None
+
+        return current_user
+
+    return _check
+
+
+def require_subscription_or_freemium_readonly(feature: str):
+    """Factory that returns a FastAPI dependency for read-only endpoints.
+
+    Same cascade as require_subscription_or_freemium except the quota step
+    only checks that the feature EXISTS for free users (limit > 0), not that
+    remaining quota is available.
+
+    Use this on GET endpoints (history, conversation list, audio) that should
+    remain accessible even when the user's daily/weekly quota is exhausted.
+    POST endpoints that consume quota should use require_subscription_or_freemium.
+    """
+
+    async def _check(
+        redis: Redis = Depends(get_redis),
+        current_user: User = Depends(get_current_user),
+    ) -> User:
+        if not settings.STRIPE_ENABLED:
+            return current_user
+
+        if is_subscribed(current_user, settings.STRIPE_ENABLED):
+            return current_user
+
+        from app.services.freemium_service import is_freemium_trial_active
+
+        if is_freemium_trial_active(current_user.freemium_trial_ends_at):
+            return current_user
+
+        try:
+            from app.services.freemium_service import (
+                check_chat_quota,
+                check_lesson_quota,
+                check_listening_quota,
+                check_reading_quota,
+                check_voice_quota,
+            )
+
+            check_map = {
+                "chat": check_chat_quota,
+                "lessons": check_lesson_quota,
+                "listening": check_listening_quota,
+                "reading": check_reading_quota,
+                "voice": check_voice_quota,
+            }
+            checker = check_map.get(feature)
+            if checker is None:
+                raise HTTPException(status_code=402, detail="subscription_required")
+
+            result = await checker(redis, current_user.id)
+            if result.limit == 0:
+                raise HTTPException(status_code=402, detail="subscription_required")
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "reason": "freemium_unavailable",
+                    "feature": feature,
+                    "remaining": 0,
+                    "limit": 0,
+                },
+            ) from None
+
+        return current_user
+
+    return _check
+
+
 async def require_not_maintenance(
     current_user: User = Depends(get_current_user),
     redis: Redis = Depends(get_redis),

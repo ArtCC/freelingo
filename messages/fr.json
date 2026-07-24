@@ -99,7 +99,7 @@
     "myPlan": "Mon plan",
     "progress": "Progrès",
     "flashcards": "Fiches",
-    "tutor": "Tuteur",
+    "tutor": "Chat avec tuteur",
     "assessment": "Évaluation",
     "resources": "Ressources",
     "grammar": "Grammaire",
@@ -307,7 +307,7 @@
       "pageTitle": "Conditions d'utilisation",
       "updated": "Dernière mise à jour : juin 2026",
       "s1Title": "1. À propos de FreeLingo",
-      "s1Body": "FreeLingo est une plateforme d'apprentissage des langues propulsée par l'IA, disponible en deux modes : (1) auto-hébergé, où vous l'exécutez sur votre propre infrastructure sans frais, et (2) comme service hébergé opéré par l'équipe FreeLingo, disponible via abonnement payant. En utilisant ce service dans l'un ou l'autre mode, vous acceptez ces Conditions d'utilisation.",
+      "s1Body": "FreeLingo est une plateforme d'apprentissage des langues propulsée par l'IA, disponible en deux modes : (1) auto-hébergé, où vous l'exécutez sur votre propre infrastructure sans frais, et (2) comme service hébergé opéré par l'équipe FreeLingo, avec un forfait gratuit et des abonnements payants. En utilisant ce service dans l'un ou l'autre mode, vous acceptez ces Conditions d'utilisation.",
       "s2Title": "2. Utilisation acceptable",
       "s2Intro": "Vous ne pouvez utiliser FreeLingo qu'à des fins personnelles d'apprentissage des langues. Vous acceptez de ne pas :",
       "s2i1": "Tenter d'obtenir un accès non autorisé à toute partie du système.",
@@ -319,9 +319,9 @@
       "s4Title": "4. Contenu et interactions avec l'IA",
       "s4Body": "Les conversations avec le tuteur IA sont stockées dans la base de données pour la continuité de l'apprentissage. Dans le service hébergé, le chat et les fonctionnalités vocales sont traités via l'API d'OpenAI, et votre contenu est soumis aux politiques d'utilisation d'OpenAI. L'IA peut produire des réponses inexactes — faites toujours preuve de discernement. FreeLingo n'est pas responsable du contenu généré par les modèles de langage sous-jacents. Le contenu généré par le tuteur IA (exercices, corrections, explications et autres supports) vous appartient pour votre usage personnel. FreeLingo ne revendique aucun droit de propriété sur vos conversations ni sur le contenu généré à partir de celles-ci.",
       "s5Title": "5. Modalités du service",
-      "s5Body": "Les déploiements auto-hébergés sont gratuits et l'opérateur conserve le contrôle total de ses données et de son infrastructure. Le service hébergé opéré par l'équipe FreeLingo est proposé via un abonnement payant, disponible en formule mensuelle ou annuelle. Dans le service hébergé, vos données sont stockées sur des serveurs opérés par l'équipe FreeLingo. Le service hébergé applique des limites d'utilisation aux fonctionnalités de tutorat IA ; votre utilisation actuelle est disponible dans les paramètres du compte.",
+      "s5Body": "Les déploiements auto-hébergés sont gratuits et l'opérateur conserve le contrôle total de ses données et de son infrastructure. Le service hébergé opéré par l'équipe FreeLingo propose un forfait gratuit avec des limites d'utilisation et des abonnements payants pour un accès illimité, disponibles en formule mensuelle ou annuelle. Le forfait gratuit inclut un essai de 7 jours en accès complet (sans moyen de paiement requis) puis des quotas quotidiens limités pour les leçons et le chat IA, ainsi que des quotas hebdomadaires pour les exercices d'écoute, de lecture et les conversations vocales. Les abonnements payants suppriment toutes les limites d'utilisation de ces fonctionnalités. Dans le service hébergé, vos données sont stockées sur des serveurs opérés par l'équipe FreeLingo. Les limites d'utilisation actuelles de votre compte sont disponibles sur votre tableau de bord.",
       "s6Title": "6. Abonnement et facturation",
-      "s6Body": "Les abonnements sont disponibles en cycle de facturation mensuel ou annuel et se renouvellent automatiquement sauf annulation avant la date de renouvellement. Les nouveaux abonnés bénéficient d'une période d'essai gratuite (coordonnées de paiement requises ; aucun prélèvement n'est effectué pendant l'essai). Vous pouvez annuler à tout moment depuis les paramètres de votre compte, avec effet à la fin de la période de facturation en cours. Si vous annulez dans les 14 jours suivant votre premier paiement et n'avez pas utilisé le service de manière significative, vous pouvez demander un remboursement complet au titre du droit de rétractation de l'UE. Aucun remboursement partiel n'est accordé pour le temps non utilisé au-delà de ce droit. Les prix actuels des abonnements sont affichés lors du paiement.",
+      "s6Body": "Le forfait gratuit inclut un accès limité aux fonctionnalités d'IA avec un essai de 7 jours en accès complet pour les nouveaux utilisateurs (sans moyen de paiement requis). Les abonnements payants sont disponibles en cycle de facturation mensuel ou annuel et se renouvellent automatiquement sauf annulation avant la date de renouvellement. Les nouveaux abonnés à un forfait payant bénéficient d'une période d'essai gratuite (coordonnées de paiement requises ; aucun prélèvement n'est effectué pendant l'essai). Vous pouvez annuler à tout moment depuis les paramètres de votre compte, avec effet à la fin de la période de facturation en cours. Si vous annulez dans les 14 jours suivant votre premier paiement et n'avez pas utilisé le service de manière significative, vous pouvez demander un remboursement complet au titre du droit de rétractation de l'UE. Aucun remboursement partiel n'est accordé pour le temps non utilisé au-delà de ce droit. Les prix actuels des abonnements sont affichés lors du paiement.",
       "s7Title": "7. Disponibilité",
       "s7Body": "Ce service est fourni sans garantie de disponibilité. L'opérateur peut suspendre ou interrompre le service pour maintenance, mises à jour ou toute autre raison, avec un préavis raisonnable dans la mesure du possible.",
       "s8Title": "8. Limitation de responsabilité",
@@ -429,7 +429,9 @@
     "premiumBannerCtaTrialUsed": "Voir les offres",
     "premiumBannerPastDueTitle": "Paiement en attente",
     "premiumBannerPastDueDesc": "Mettez à jour votre moyen de paiement pour rétablir l'accès Premium au chat, à la conversation vocale, au reading et au listening.",
-    "premiumBannerPastDueCta": "Rétablir Premium"
+    "premiumBannerPastDueCta": "Rétablir Premium",
+    "freemiumTrialTitle": "{days, plural, one {# jour d'essai gratuit} other {# jours d'essai gratuit}}",
+    "freemiumTrialDesc": "Profitez d'un accès illimité au chat, à la voix, au listening et au reading. Essayez tout Premium gratuitement."
   },
   "assessment": {
     "title": "Évaluation",
@@ -686,7 +688,9 @@
     "send": "Envoyer",
     "sending": "Envoi...",
     "noConversation": "Sélectionnez ou démarrez une conversation",
-    "newConversation": "Nouvelle conversation",
+    "newConversation": "Nouveau",
+    "toggleSidebarShow": "Afficher les chats",
+    "toggleSidebarHide": "Masquer les chats",
     "conversations": "Conversations",
     "loading": "Chargement...",
     "thinking": "Réflexion...",
@@ -1061,6 +1065,7 @@
     "quotaExceededSessions": "Vous avez utilisé toutes vos séances de la semaine.",
     "quotaExceededTime": "Vous avez utilisé tout votre temps de pratique quotidien.",
     "quotaExceededTokens": "Vous avez utilisé tous vos tokens IA mensuels.",
+    "freemiumVoiceRemaining": "Voix gratuite : {remaining}/{limit} min cette semaine",
     "quotaTokens": "Tokens ce mois-ci",
     "memoryUpdated": "Mémoire mise à jour",
     "trialBanner": "Free assessment conversation · {minutes} min",
@@ -1212,6 +1217,13 @@
     "trialNoCharge": "Aucun débit aujourd'hui. Carte requise, annulation possible à tout moment.",
     "trialNoChargeTrialUsed": "Vérifiez le montant avant l'abonnement. Annulez à tout moment.",
     "trialError": "Impossible de lancer le paiement. Réessayez.",
+    "freemiumTrialTitle": "Votre essai gratuit a commencé",
+    "freemiumTrialDesc": "Profitez d'un accès illimité à toutes les fonctionnalités pendant 7 jours. Sans carte. Passez à Premium à tout moment depuis le tableau de bord.",
+    "freemiumChatLabel": "Chat avec le tuteur IA",
+    "freemiumVoiceLabel": "Conversations vocales",
+    "freemiumListeningLabel": "Exercices d'écoute",
+    "freemiumReadingLabel": "Exercices de lecture",
+    "goToDashboard": "Aller au tableau de bord",
     "newLanguageHeadline": "Quelle nouvelle langue voulez-vous apprendre ?",
     "newLanguageSubtitle": "Un nouveau plan d'étude sera créé pour cette langue."
   },
@@ -1263,6 +1275,8 @@
     "paywallDescTrialUsed": "Débloquez toute la pratique Premium et vérifiez le montant avant de confirmer.",
     "paywallChatTitle": "Pratiquez avec Lingu sans limites",
     "paywallChatDesc": "Posez des questions, recevez des corrections et gardez des conversations naturelles par texte avec votre tuteur IA.",
+    "paywallLessonsTitle": "Terminez des leçons en illimité",
+    "paywallLessonsDesc": "Grammaire, vocabulaire, lecture et écriture — terminez autant de leçons que vous le souhaitez chaque jour.",
     "paywallConversationTitle": "Parlez en temps réel avec Lingu",
     "paywallConversationDesc": "Pratiquez l'oral avec transcription, réponses rapides et feedback pour gagner en fluidité.",
     "paywallListeningTitle": "Entraînez votre oreille à votre niveau",
@@ -1285,11 +1299,8 @@
     "month": "mois",
     "year": "an",
     "planFeature": {
-      "feature1": "Chat avec ton tuteur IA",
-      "feature2": "Conversations vocales",
-      "feature3": "Exercices de listening",
-      "feature4": "Exercices de reading",
-      "feature5": "2 mois offerts"
+      "feature1": "Accès illimité — sans limites quotidiennes ni hebdomadaires",
+      "feature2": "2 mois offerts"
     },
     "planFreeName": "Gratuit",
     "trialBadge": "Essai gratuit",
@@ -1301,7 +1312,12 @@
       "f2": "Leçons & plan d'étude",
       "f3": "Grammaire & vocabulaire",
       "f4": "Tableau de bord & progression",
-      "f5": "Cartes mémoire & répétition espacée"
+      "f5": "Cartes mémoire & répétition espacée",
+      "l1": "Chat avec le tuteur IA",
+      "l2": "Conversations vocales",
+      "l3": "Exercices d'écoute",
+      "l4": "Exercices de lecture",
+      "l5": "Essai complet de 7 jours"
     },
     "successLabel": "Paiement confirmé",
     "successTitle": "Bienvenue dans FreeLingo Premium !",
@@ -1326,6 +1342,7 @@
     "section": "Abonnement",
     "status": "Statut",
     "statusActive": "Actif",
+    "statusCanceling": "En cours d'annulation",
     "statusCanceled": "Annulé",
     "statusTrialing": "Essai",
     "statusPastDue": "Paiement en retard",
@@ -1349,24 +1366,32 @@
     "priceAmount": "{amount}€",
     "pricePerPeriod": "€/{period}",
     "priceOriginal": "{price}€ / {period}",
-    "planFreeDesc": "Tout l'essentiel pour commencer à apprendre",
-    "planFreeCta": "Commencer"
+    "planFreeDesc": "Essai complet de 7 jours, puis gratuit avec des limites quotidiennes et hebdomadaires",
+    "planFreeCta": "Commencer",
+    "limitedLabel": "Limité"
+  },
+  "freemium": {
+    "chatLabel": "Chat",
+    "lessonsLabel": "Leçons",
+    "listeningLabel": "Écoute",
+    "readingLabel": "Lecture",
+    "voiceLabel": "Voix (min)",
+    "freeLimit": "Passer Premium",
+    "trialDaysLeft": "{days, plural, one {# jour d'essai gratuit} other {# jours d'essai gratuit}}",
+    "trialUnlimited": "Accès illimité",
+    "requiresSubscription": "Premium uniquement"
   },
   "whatsNew": {
     "title": "Nouveautés",
-    "version": "v1.8.24",
+    "version": "v1.8.25",
     "cta": "Compris",
     "entry1": {
-      "label": "Notifications de feedback non lu",
-      "desc": "Feedback affiche désormais un petit compteur de non-lus dans le menu latéral, pour repérer les nouvelles suggestions, les bugs et les réponses sans recevoir plus d’e-mails. Ouvrir un fil de feedback marque uniquement ce fil comme lu."
+      "label": "Essayez tout gratuitement",
+      "desc": "Vous pouvez maintenant discuter avec Lingu, pratiquer l'écoute et la lecture, et essayer les conversations vocales sans saisir de données de paiement. Commencez par un essai gratuit, puis continuez à utiliser toutes les fonctionnalités avec des limites quotidiennes et hebdomadaires. Passez à la version supérieure à tout moment depuis le tableau de bord."
     },
     "entry2": {
-      "label": "Démo vocale gratuite après l’évaluation",
-      "desc": "Après la création de votre plan d’étude, vous pouvez essayer gratuitement une conversation vocale en temps réel avec Lingu pendant 5 minutes. À la fin de la démo, Premium débloque la pratique vocale complète et les autres modes guidés."
-    },
-    "entry3": {
       "label": "Corrections de bugs",
-      "desc": "Diverses corrections de bugs mineurs et améliorations de stabilité sur toute la plateforme."
+      "desc": "Diverses corrections de bugs mineurs et améliorations de la stabilité sur l'ensemble de la plateforme."
     }
   },
   "contact": {

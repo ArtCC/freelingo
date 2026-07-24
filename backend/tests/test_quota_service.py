@@ -66,6 +66,20 @@ class EnhancedMockRedis:
             return -2  # key does not exist
         return self._ttls.get(key, -1)  # -1 = no expiry
 
+    async def eval(self, script: str, numkeys: int, *args: str) -> list[int]:
+        """Minimal Lua interpreter for _CHECK_AND_INCR_SESSIONS_LUA."""
+        key = args[0]
+        limit = int(args[1])
+        ttl = int(args[2])
+        current = int(self.store.get(key) or 0)
+        if limit > 0 and current >= limit:
+            return [0, current]
+        new_val = current + 1
+        self.store[key] = str(new_val)
+        if new_val == 1:
+            self._ttls[key] = ttl
+        return [1, current]
+
 
 @pytest.fixture
 def redis_mock() -> EnhancedMockRedis:

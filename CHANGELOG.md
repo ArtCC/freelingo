@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.25] - 2026-07-24
+
+### Added
+
+- **Freemium access to AI features**: unsubscribed users on the hosted service now get limited daily quotas for chat and lessons, plus weekly quotas for listening, reading, and voice conversations, replacing the previous hard paywall. New users also receive a 7-day full-access trial without entering payment details. Self-hosted deployments are unaffected.
+
+### Changed
+
+- **Quota-based paywall**: chat, listening, reading, conversation, and lesson endpoints now use `require_subscription_or_freemium` instead of the previous hard `require_subscription` dependency. Unsubscribed users can access these features within their quotas; when a quota is exhausted the endpoint returns 402 with a structured `freemium_exhausted` detail.
+- **Dashboard and sidebar**: the premium banner and sidebar trial countdown now support the freemium trial state. Feature pages show a `FreemiumQuotaBanner` with remaining quota counts.
+- **New `GET /api/freemium/status`** endpoint returns per-user quota status and trial details.
+- **Seven new environment variables**: `FREEMIUM_CHAT_DAILY_MESSAGES`, `FREEMIUM_LESSONS_DAILY`, `FREEMIUM_LISTENING_WEEKLY`, `FREEMIUM_READING_WEEKLY`, `FREEMIUM_VOICE_WEEKLY_MINUTES`, `FREEMIUM_TRIAL_ENABLED`, `FREEMIUM_TRIAL_DAYS` — all settable in `.env` and docker-compose. A quota value of 0 blocks the feature entirely for free users.
+- **Terms of Service** updated to reflect the free plan and 7-day no-card trial.
+- **What's New version marker**: bumped to `v1.8.25`.
+
+### Fixed
+
+- **Freemium trial persistence**: the 7-day trial is now committed to the database on registration (previously it was set in memory but never persisted).
+- **Docker multi-architecture builds**: CI/CD now publishes backend and frontend images for both `linux/amd64` and `linux/arm64`, resolving "no matching manifest for linux/arm64/v8" on Apple Silicon. Each architecture builds on its own native GitHub Actions runner (`ubuntu-latest` for amd64, `ubuntu-24.04-arm` for arm64), eliminating unreliable QEMU emulation.
+- **Docker actions upgraded**: `docker/login-action` (v3→v4), `docker/setup-buildx-action` (v3→v4), and `docker/build-push-action` (v5→v7) to remove Node.js 20 deprecation warnings.
+- **Backend Dockerfile**: CMD converted to JSON exec form to silence Docker build check warnings.
+
 ## [1.8.24] - 2026-07-10
 
 ### Changed

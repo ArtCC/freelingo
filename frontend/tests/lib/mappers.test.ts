@@ -20,6 +20,10 @@ describe('mapUser', () => {
     subscription_status: 'active' as const,
     subscription_ends_at: '2025-12-31',
     trial_used: true,
+    assessment_voice_trial_used: false,
+    freemium_trial_ends_at: null,
+    freemium_trial_used: false,
+    cancel_at_period_end: false,
   }
 
   it('maps snake_case API response to camelCase User', () => {
@@ -43,7 +47,10 @@ describe('mapUser', () => {
       subscription_ends_at: '2025-12-31',
       trial_used: true,
       assessment_voice_trial_used: false,
+      freemium_trial_ends_at: null,
+      freemium_trial_used: false,
       ui_locale: null,
+      cancel_at_period_end: false,
     })
   })
 
@@ -62,6 +69,8 @@ describe('mapUser', () => {
       subscription_status: 'trialing',
       subscription_ends_at: '2025-06-01',
       trial_used: true,
+      freemium_trial_ends_at: '2026-07-15T00:00:00',
+      freemium_trial_used: true,
     }
 
     const patchResponse = {
@@ -82,6 +91,8 @@ describe('mapUser', () => {
     expect(user.subscription_status).toBe('trialing')
     expect(user.subscription_ends_at).toBe('2025-06-01')
     expect(user.trial_used).toBe(true)
+    expect(user.freemium_trial_ends_at).toBe('2026-07-15T00:00:00')
+    expect(user.freemium_trial_used).toBe(true)
   })
 
   it('uses safe defaults when no current user and optional fields missing', () => {
@@ -104,6 +115,8 @@ describe('mapUser', () => {
     expect(user.subscription_ends_at).toBeNull()
     expect(user.trial_used).toBe(false)
     expect(user.assessment_voice_trial_used).toBe(false)
+    expect(user.freemium_trial_ends_at).toBeNull()
+    expect(user.freemium_trial_used).toBe(false)
   })
 
   it('prefers API data over current user when both present', () => {

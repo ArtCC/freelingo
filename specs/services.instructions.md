@@ -1,5 +1,5 @@
 ---
-description: "Service layer reference for FreeLingo: 20 backend services covering LLM, TTS/STT, study plan, lessons, static-resource native help, flashcards, listening, reading, reviews, memory, progress, quotas, subscriptions, post-assessment voice trial, and voice conversation pipeline."
+description: "Service layer reference for FreeLingo: 21 backend services covering LLM, TTS/STT, study plan, lessons, static-resource native help, flashcards, listening, reading, reviews, memory, progress, quotas, subscriptions, freemium, post-assessment voice trial, and voice conversation pipeline."
 applyTo: "backend/app/services/**, backend/app/core/app_logger.py"
 ---
 
@@ -216,6 +216,20 @@ Single source of truth for subscription-based access control (Phase 5):
 Stripe lifecycle states such as `past_due`, `unpaid`, `paused`, `incomplete`, `incomplete_expired`, and `canceled` never grant access. The frontend distinguishes payment-recovery states (`past_due`, `unpaid`, `paused`) from normal plan-selection states (`none`, `incomplete`, `incomplete_expired`, `canceled`).
 
 Used by `require_subscription` in `core/deps.py`, which gates subscription-only access. Maintenance mode is handled separately by `require_not_maintenance` on chat, listening, reading, and conversation warmup endpoints. Memory-management endpoints use only `require_subscription`, so they stay subscription-gated but are not blocked during maintenance mode.
+
+## Freemium Service (`freemium_service.py`)
+
+Manages freemium quota checking, usage recording, trial state, and status response building:
+
+- Quota keys are stored in Redis with auto-expiring TTL: `freemium:{feature}:{user_id}:{date_or_week}` where `feature` is `chat`, `lessons`, `listening`, `reading`, or `voice`. Daily features (`chat`, `lessons`) use date-based keys; weekly features (`listening`, `reading`, `voice`) use ISO week-based keys.
+- Atomic increment via a Lua script (`check_and_increment.lua`) that reads the current count, returns it, and increments if under the limit — avoiding race conditions with concurrent access.
+- `get_freemium_status(db, user)` — builds the complete `GET /api/freemium/status` response: trial active/expired flag, trial end date, and remaining quota counts for all 5 features (`chat_remaining`, `lessons_remaining`, `listening_remaining`, `reading_remaining`, `voice_minutes_remaining`). A quota value of `0` means the feature is blocked for free-tier users.
+- `check_freemium_quota(user, feature, db)` — checks if the user has remaining quota for the given feature. Returns `True` if quota is available. Considers: trial active → unlimited access; quota value `0` → blocked; otherwise checks Redis counter against the configured limit.
+- `record_freemium_usage(user, feature, db, amount=1)` — atomically increments the Redis counter for the given feature after successful usage.
+- `is_freemium_trial_active(user)` — returns `True` when the user's `freemium_trial_ends_at` is in the future.
+- Trial is set on registration: when `STRIPE_ENABLED=true` and `FREEMIUM_TRIAL_ENABLED=true`, the user model's `freemium_trial_ends_at` is set to `now + FREEMIUM_TRIAL_DAYS` days and `freemium_trial_used` is set to `true`.
+
+Quota limits are environment-driven and return `0` (blocked) when the corresponding feature is premium-only for free-tier users.
 
 ## Conversation Pipeline (`conversation_pipeline.py`)
 

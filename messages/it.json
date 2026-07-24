@@ -99,7 +99,7 @@
     "myPlan": "Il mio piano",
     "progress": "Progressi",
     "flashcards": "Schede",
-    "tutor": "Tutor",
+    "tutor": "Chat con tutor",
     "assessment": "Valutazione",
     "resources": "Risorse",
     "grammar": "Grammatica",
@@ -307,7 +307,7 @@
       "pageTitle": "Termini di servizio",
       "updated": "Ultimo aggiornamento: giugno 2026",
       "s1Title": "1. Informazioni su FreeLingo",
-      "s1Body": "FreeLingo è una piattaforma open source per l'apprendimento delle lingue con IA, disponibile in due modalità: (1) self-hosted, dove la esegui sulla tua infrastruttura senza costi, e (2) come servizio ospitato gestito dal team FreeLingo, disponibile tramite abbonamento a pagamento. Utilizzando il servizio in entrambe le modalità, accetti questi Termini di servizio.",
+      "s1Body": "FreeLingo è una piattaforma open source per l'apprendimento delle lingue con IA, disponibile in due modalità: (1) self-hosted, dove la esegui sulla tua infrastruttura senza costi, e (2) come servizio ospitato gestito dal team FreeLingo, con un piano gratuito e abbonamenti a pagamento. Utilizzando il servizio in entrambe le modalità, accetti questi Termini di servizio.",
       "s2Title": "2. Utilizzo accettabile",
       "s2Intro": "Puoi utilizzare FreeLingo esclusivamente per scopi personali di apprendimento delle lingue. Accetti di non:",
       "s2i1": "Tentare di ottenere accesso non autorizzato a qualsiasi parte del sistema.",
@@ -319,9 +319,9 @@
       "s4Title": "4. Contenuti e interazioni con l'IA",
       "s4Body": "Le conversazioni con il tutor IA vengono archiviate nel database per la continuità dell'apprendimento. Nel servizio ospitato, la chat e le funzionalità vocali vengono elaborate tramite le API di OpenAI e il tuo contenuto è soggetto alle politiche d'uso di OpenAI. L'IA può produrre risposte imprecise — usa sempre il tuo giudizio. FreeLingo non è responsabile per i contenuti generati dai modelli linguistici sottostanti. I contenuti generati dal tutor IA (esercizi, correzioni, spiegazioni e altri materiali) ti appartengono per uso personale. FreeLingo non rivendica alcun diritto di proprietà sulle tue conversazioni né sui contenuti generati a partire da esse.",
       "s5Title": "5. Modalità del servizio",
-      "s5Body": "Le installazioni self-hosted sono gratuite e l'operatore mantiene il pieno controllo sui propri dati e infrastruttura. Il servizio ospitato gestito dal team FreeLingo è disponibile tramite abbonamento a pagamento, con ciclo di fatturazione mensile o annuale. Nel servizio ospitato, i tuoi dati sono memorizzati su server gestiti dal team FreeLingo. Il servizio ospitato applica limiti di utilizzo alle funzionalità di tutoraggio IA; il tuo utilizzo attuale è disponibile nelle impostazioni dell'account.",
+      "s5Body": "Le installazioni self-hosted sono gratuite e l'operatore mantiene il pieno controllo sui propri dati e infrastruttura. Il servizio ospitato gestito dal team FreeLingo offre un piano gratuito con limiti di utilizzo e abbonamenti a pagamento per accesso illimitato, con ciclo di fatturazione mensile o annuale. Il piano gratuito include una prova di 7 giorni ad accesso completo (senza metodo di pagamento richiesto) e successivamente quote giornaliere limitate per lezioni e chat IA, più quote settimanali per esercizi di ascolto, lettura e conversazioni vocali. Gli abbonamenti a pagamento rimuovono tutti i limiti di utilizzo su queste funzionalità. Nel servizio ospitato, i tuoi dati sono memorizzati su server gestiti dal team FreeLingo. I limiti di utilizzo attuali del tuo account sono disponibili nella tua dashboard.",
       "s6Title": "6. Abbonamento e fatturazione",
-      "s6Body": "Gli abbonamenti sono disponibili con ciclo di fatturazione mensile o annuale e si rinnovano automaticamente salvo disdetta prima della data di rinnovo. I nuovi iscritti usufruiscono di un periodo di prova gratuito (dati di pagamento richiesti; non viene addebitato nulla fino alla scadenza del periodo di prova). Puoi disdire in qualsiasi momento dalle impostazioni del tuo account, con effetto alla fine del periodo di fatturazione corrente. Se disdici entro 14 giorni dal primo pagamento e non hai utilizzato significativamente il servizio, puoi richiedere un rimborso completo ai sensi del diritto di recesso dell'UE. Non vengono emessi rimborsi parziali per il tempo non utilizzato oltre a questo diritto. I prezzi attuali degli abbonamenti sono visualizzati al momento del pagamento.",
+      "s6Body": "Il piano gratuito include accesso limitato alle funzionalità IA con una prova di 7 giorni ad accesso completo per i nuovi utenti (senza metodo di pagamento richiesto). Gli abbonamenti a pagamento sono disponibili con ciclo di fatturazione mensile o annuale e si rinnovano automaticamente salvo disdetta prima della data di rinnovo. I nuovi iscritti a un piano a pagamento usufruiscono di un periodo di prova gratuito (dati di pagamento richiesti; non viene addebitato nulla fino alla scadenza del periodo di prova). Puoi disdire in qualsiasi momento dalle impostazioni del tuo account, con effetto alla fine del periodo di fatturazione corrente. Se disdici entro 14 giorni dal primo pagamento e non hai utilizzato significativamente il servizio, puoi richiedere un rimborso completo ai sensi del diritto di recesso dell'UE. Non vengono emessi rimborsi parziali per il tempo non utilizzato oltre a questo diritto. I prezzi attuali degli abbonamenti sono visualizzati al momento del pagamento.",
       "s7Title": "7. Disponibilità",
       "s7Body": "Questo servizio è fornito senza garanzie di disponibilità. L'operatore può sospendere o interrompere il servizio per manutenzione, aggiornamenti o altre ragioni, con ragionevole preavviso ove possibile.",
       "s8Title": "8. Limitazione di responsabilità",
@@ -429,7 +429,9 @@
     "premiumBannerCtaTrialUsed": "Vedi piani",
     "premiumBannerPastDueTitle": "Pagamento in sospeso",
     "premiumBannerPastDueDesc": "Aggiorna il metodo di pagamento per ripristinare l'accesso Premium a chat, conversazione vocale, reading e listening.",
-    "premiumBannerPastDueCta": "Ripristina Premium"
+    "premiumBannerPastDueCta": "Ripristina Premium",
+    "freemiumTrialTitle": "{days, plural, one {# giorno di prova gratuita} other {# giorni di prova gratuita}}",
+    "freemiumTrialDesc": "Goditi accesso illimitato a chat, voce, listening e reading. Prova tutto Premium gratuitamente."
   },
   "assessment": {
     "title": "Valutazione",
@@ -686,7 +688,9 @@
     "send": "Invia",
     "sending": "Invio...",
     "noConversation": "Seleziona o avvia una conversazione",
-    "newConversation": "Nuova conversazione",
+    "newConversation": "Nuova",
+    "toggleSidebarShow": "Mostra chat",
+    "toggleSidebarHide": "Nascondi chat",
     "conversations": "Conversazioni",
     "loading": "Caricamento...",
     "thinking": "Sto pensando...",
@@ -1061,6 +1065,7 @@
     "quotaExceededSessions": "Hai esaurito tutte le sessioni di questa settimana.",
     "quotaExceededTime": "Hai esaurito il tuo tempo di pratica giornaliero.",
     "quotaExceededTokens": "Hai esaurito tutti i tuoi token IA mensili.",
+    "freemiumVoiceRemaining": "Voce gratis: {remaining}/{limit} min questa settimana",
     "quotaTokens": "Token questo mese",
     "memoryUpdated": "Memoria aggiornata",
     "trialBanner": "Free assessment conversation · {minutes} min",
@@ -1212,6 +1217,13 @@
     "trialNoCharge": "Nessun addebito oggi. Carta richiesta, annulla quando vuoi.",
     "trialNoChargeTrialUsed": "Controlla l'importo prima dell'abbonamento. Annulla quando vuoi.",
     "trialError": "Impossibile avviare il pagamento. Riprova.",
+    "freemiumTrialTitle": "La tua prova gratuita è iniziata",
+    "freemiumTrialDesc": "Goditi l'accesso illimitato a tutte le funzionalità per 7 giorni. Senza carta. Passa a Premium quando vuoi dalla dashboard.",
+    "freemiumChatLabel": "Chat con il tutor IA",
+    "freemiumVoiceLabel": "Conversazioni vocali",
+    "freemiumListeningLabel": "Esercizi di ascolto",
+    "freemiumReadingLabel": "Esercizi di lettura",
+    "goToDashboard": "Vai alla dashboard",
     "newLanguageHeadline": "Quale nuova lingua vuoi imparare?",
     "newLanguageSubtitle": "Verrà creato un nuovo piano di studio per questa lingua."
   },
@@ -1263,6 +1275,8 @@
     "paywallDescTrialUsed": "Sblocca tutta la pratica Premium e controlla l'importo prima di confermare.",
     "paywallChatTitle": "Pratica con Lingu senza limiti",
     "paywallChatDesc": "Fai domande, ricevi correzioni e mantieni conversazioni naturali via testo con il tuo tutor IA.",
+    "paywallLessonsTitle": "Completa lezioni illimitate",
+    "paywallLessonsDesc": "Grammatica, vocabolario, lettura e scrittura — completa tutte le lezioni che vuoi ogni giorno.",
     "paywallConversationTitle": "Parla in tempo reale con Lingu",
     "paywallConversationDesc": "Pratica la conversazione orale con trascrizione, risposte rapide e feedback per aumentare la fluidità.",
     "paywallListeningTitle": "Allena l'orecchio al tuo livello",
@@ -1285,11 +1299,8 @@
     "month": "mese",
     "year": "anno",
     "planFeature": {
-      "feature1": "Chat con il tuo tutor IA",
-      "feature2": "Conversazioni vocali",
-      "feature3": "Esercizi di listening",
-      "feature4": "Esercizi di reading",
-      "feature5": "2 mesi gratis"
+      "feature1": "Accesso illimitato — senza limiti giornalieri o settimanali",
+      "feature2": "2 mesi gratis"
     },
     "planFreeName": "Gratuito",
     "trialBadge": "Prova gratuita",
@@ -1301,7 +1312,12 @@
       "f2": "Lezioni & piano di studio",
       "f3": "Grammatica & vocabolario",
       "f4": "Dashboard & monitoraggio progressi",
-      "f5": "Flashcard & ripetizione spaziata"
+      "f5": "Flashcard & ripetizione spaziata",
+      "l1": "Chat con il tutor IA",
+      "l2": "Conversazioni vocali",
+      "l3": "Esercizi di ascolto",
+      "l4": "Esercizi di lettura",
+      "l5": "Prova completa di 7 giorni"
     },
     "successLabel": "Pagamento confermato",
     "successTitle": "Benvenuto in FreeLingo Premium!",
@@ -1326,6 +1342,7 @@
     "section": "Abbonamento",
     "status": "Stato",
     "statusActive": "Attivo",
+    "statusCanceling": "In cancellazione",
     "statusCanceled": "Annullato",
     "statusTrialing": "Prova",
     "statusPastDue": "Pagamento in ritardo",
@@ -1349,22 +1366,30 @@
     "priceAmount": "{amount}€",
     "pricePerPeriod": "€/{period}",
     "priceOriginal": "{price}€ / {period}",
-    "planFreeDesc": "Tutto l'essenziale per iniziare a imparare",
-    "planFreeCta": "Inizia"
+    "planFreeDesc": "Prova completa di 7 giorni, poi gratis con limiti giornalieri e settimanali",
+    "planFreeCta": "Inizia",
+    "limitedLabel": "Limitato"
+  },
+  "freemium": {
+    "chatLabel": "Chat",
+    "lessonsLabel": "Lezioni",
+    "listeningLabel": "Ascolto",
+    "readingLabel": "Lettura",
+    "voiceLabel": "Voce (min)",
+    "freeLimit": "Passa a Premium",
+    "trialDaysLeft": "{days, plural, one {# giorno di prova gratuita} other {# giorni di prova gratuita}}",
+    "trialUnlimited": "Accesso illimitato",
+    "requiresSubscription": "Solo Premium"
   },
   "whatsNew": {
     "title": "Novità",
-    "version": "v1.8.24",
+    "version": "v1.8.25",
     "cta": "Capito",
     "entry1": {
-      "label": "Notifiche di feedback non letto",
-      "desc": "Feedback ora mostra un piccolo contatore dei non letti nel menu laterale, così puoi vedere nuove proposte, bug e risposte senza altre email. Aprendo un thread di feedback, solo quel thread viene segnato come letto."
+      "label": "Prova tutto gratis",
+      "desc": "Ora puoi chattare con Lingu, esercitarti nell'ascolto e nella lettura e provare le conversazioni vocali senza inserire dati di pagamento. Inizia con una prova gratuita, poi continua a usare tutte le funzionalità con limiti giornalieri e settimanali. Passa a Premium quando vuoi dalla dashboard."
     },
     "entry2": {
-      "label": "Demo vocale gratuita dopo la valutazione",
-      "desc": "Dopo aver creato il tuo piano di studio, puoi provare gratis una conversazione vocale in tempo reale con Lingu per 5 minuti. Al termine della demo, Premium sblocca la pratica vocale completa e gli altri modi guidati."
-    },
-    "entry3": {
       "label": "Correzioni di bug",
       "desc": "Varie correzioni di bug minori e miglioramenti della stabilità su tutta la piattaforma."
     }

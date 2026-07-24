@@ -8,6 +8,7 @@ describe('useConfigStore', () => {
     useConfigStore.setState({
       stripeEnabled: false,
       stripeTrialDays: 7,
+      freemiumTrialEnabled: true,
       ttsProvider: 'local',
       openaiTtsVoice: 'nova',
       maintenanceMode: false,
@@ -30,6 +31,7 @@ describe('useConfigStore', () => {
           tts_provider: 'openai',
           openai_tts_voice: 'alloy',
           maintenance_mode: true,
+          freemium_trial_enabled: false,
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       )
@@ -42,6 +44,7 @@ describe('useConfigStore', () => {
     expect(useConfigStore.getState().ttsProvider).toBe('openai')
     expect(useConfigStore.getState().openaiTtsVoice).toBe('alloy')
     expect(useConfigStore.getState().maintenanceMode).toBe(true)
+    expect(useConfigStore.getState().freemiumTrialEnabled).toBe(false)
     expect(useConfigStore.getState().loaded).toBe(true)
   })
 
@@ -95,5 +98,6 @@ describe('useConfigStore', () => {
     expect(useConfigStore.getState().ttsProvider).toBe('local')
     expect(useConfigStore.getState().openaiTtsVoice).toBe('nova')
     expect(useConfigStore.getState().maintenanceMode).toBe(false)
+    expect(useConfigStore.getState().freemiumTrialEnabled).toBe(true)
   })
 })

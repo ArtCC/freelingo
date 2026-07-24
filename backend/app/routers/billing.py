@@ -215,6 +215,10 @@ def _subscription_period_end(sub: object) -> datetime | None:
                 period_end = _sget(data[0], "current_period_end")
     if period_end is not None:
         return datetime.fromtimestamp(int(period_end), UTC).replace(tzinfo=None)
+    logger.warning(
+        "[billing] Could not determine current_period_end for subscription %s",
+        _sget(sub, "id"),
+    )
     return None
 
 
@@ -315,6 +319,7 @@ async def _handle_checkout_completed(db: AsyncSession, session: object) -> None:
 
     user.subscription_status = status
     user.subscription_ends_at = ends_at
+    user.cancel_at_period_end = False
     if status == "trialing":
         user.trial_used = True
     await apply_subscription_quotas(user, db)
@@ -342,15 +347,19 @@ async def _handle_subscription_updated(db: AsyncSession, subscription: object) -
     user.subscription_status = _normalize_subscription_status(
         _sget(subscription, "status"), user.subscription_status
     )
+    cancel_period_end = bool(_sget(subscription, "cancel_at_period_end", False))
+    cancel_at = _sget(subscription, "cancel_at")
+    user.cancel_at_period_end = cancel_period_end or (cancel_at is not None and cancel_at != 0)
     ends_at = _subscription_period_end(subscription)
     if ends_at is not None:
         user.subscription_ends_at = ends_at
 
     await db.commit()
     logger.info(
-        "[billing] User %s subscription updated — status=%s",
+        "[billing] User %s subscription updated — status=%s cancel_at_period_end=%s",
         user.id,
         user.subscription_status,
+        user.cancel_at_period_end,
     )
 
 
@@ -372,6 +381,7 @@ async def _handle_subscription_deleted(db: AsyncSession, subscription: object) -
         return
 
     user.subscription_status = "canceled"
+    user.cancel_at_period_end = False
     await db.commit()
     logger.info("[billing] User %s subscription canceled", user.id)
 

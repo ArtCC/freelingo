@@ -32,11 +32,17 @@ export function mapUser(
       data.subscription_status ?? current?.subscription_status ?? 'none',
     subscription_ends_at:
       data.subscription_ends_at ?? current?.subscription_ends_at ?? null,
+    cancel_at_period_end:
+      data.cancel_at_period_end ?? current?.cancel_at_period_end ?? false,
     trial_used: data.trial_used ?? current?.trial_used ?? false,
     assessment_voice_trial_used:
       data.assessment_voice_trial_used ??
       current?.assessment_voice_trial_used ??
       false,
+    freemium_trial_ends_at:
+      data.freemium_trial_ends_at ?? current?.freemium_trial_ends_at ?? null,
+    freemium_trial_used:
+      data.freemium_trial_used ?? current?.freemium_trial_used ?? false,
   }
 }
 

@@ -1,41 +1,61 @@
 'use client'
 
 import { useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { BookOpen, Headphones, MessageSquare, Mic } from 'lucide-react'
+import {
+  BookOpen,
+  GraduationCap,
+  Headphones,
+  MessageSquare,
+  Mic,
+} from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { splitYearlyCta, type BillingInterval } from '@/lib/billing-copy'
 import { useConfigStore } from '@/store/config'
 import { useAuthStore, isSubscribed, needsPaymentRecovery } from '@/store/auth'
 
 const PAYWALL_CONTEXT = {
-  '/chat': {
+  chat: {
     icon: MessageSquare,
     title: 'paywallChatTitle',
     desc: 'paywallChatDesc',
   },
-  '/conversation': {
+  voice: {
     icon: Mic,
     title: 'paywallConversationTitle',
     desc: 'paywallConversationDesc',
   },
-  '/listening': {
+  listening: {
     icon: Headphones,
     title: 'paywallListeningTitle',
     desc: 'paywallListeningDesc',
   },
-  '/reading': {
+  reading: {
     icon: BookOpen,
     title: 'paywallReadingTitle',
     desc: 'paywallReadingDesc',
   },
+  lessons: {
+    icon: GraduationCap,
+    title: 'paywallLessonsTitle',
+    desc: 'paywallLessonsDesc',
+  },
 } as const
 
-export function PaywallBanner() {
+type FeatureContext = keyof typeof PAYWALL_CONTEXT
+
+interface PaywallBannerProps {
+  feature?: FeatureContext
+  compact?: boolean
+}
+
+export function PaywallBanner({
+  feature = 'chat',
+  compact = false,
+}: PaywallBannerProps) {
   const t = useTranslations('billing')
   const router = useRouter()
-  const pathname = usePathname()
   const user = useAuthStore((s) => s.user)
   const stripeEnabled = useConfigStore((s) => s.stripeEnabled)
   const trialDays = useConfigStore((s) => s.stripeTrialDays)
@@ -49,11 +69,10 @@ export function PaywallBanner() {
     t('planYearly', { price: String(priceYearly) })
   )
 
-  // If stripe is disabled or user is subscribed, render nothing (children show normally)
   if (!stripeEnabled || isSubscribed(user, stripeEnabled)) return null
 
-  const context = PAYWALL_CONTEXT[pathname as keyof typeof PAYWALL_CONTEXT]
-  const Icon = context?.icon ?? Mic
+  const context = PAYWALL_CONTEXT[feature] ?? PAYWALL_CONTEXT.chat
+  const Icon = context.icon
   const trialEligible = !user?.trial_used
 
   async function handleCheckout(interval: BillingInterval) {
@@ -91,36 +110,48 @@ export function PaywallBanner() {
     }
   }
 
+  const containerClass = compact
+    ? 'border-fl-border bg-fl-surface w-full border p-5 text-center'
+    : 'flex min-h-[60vh] flex-col items-center justify-center px-6 py-16 text-center'
+
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-16 text-center">
-      <div className="border-fl-border bg-fl-surface w-full max-w-md border p-8">
+    <div className={containerClass}>
+      {compact ? (
+        <div className="border-fl-border bg-fl-surface mx-auto w-full max-w-md border p-8">
+          <PaywallContent />
+        </div>
+      ) : (
+        <div className="border-fl-border bg-fl-surface w-full max-w-md border p-8">
+          <PaywallContent />
+        </div>
+      )}
+    </div>
+  )
+
+  function PaywallContent() {
+    return (
+      <>
         <Icon
           className="text-fl-muted-2 mx-auto mb-4 h-6 w-6"
           aria-hidden="true"
         />
 
-        {/* Headline */}
         <p className="text-fl-label text-fl-muted-2 mb-2 font-mono tracking-widest uppercase">
           {t('paywallLabel')}
         </p>
         <h2 className="text-fl-fg mb-3 font-mono text-base font-bold">
-          {t(
-            paymentRecovery
-              ? 'premiumBannerPastDueTitle'
-              : (context?.title ?? 'paywallTitle')
-          )}
+          {t(paymentRecovery ? 'premiumBannerPastDueTitle' : context.title)}
         </h2>
         <p className="text-fl-muted-1 mb-6 font-mono text-xs leading-relaxed">
           {paymentRecovery
             ? t('premiumBannerPastDueDesc')
             : t(
-                context?.desc ??
+                context.desc ??
                   (trialEligible ? 'paywallDesc' : 'paywallDescTrialUsed'),
                 { days: trialDays }
               )}
         </p>
 
-        {/* Plan buttons */}
         {paymentRecovery ? (
           <button
             onClick={handleManageBilling}
@@ -177,17 +208,7 @@ export function PaywallBanner() {
         >
           {t('paywallSkip')}
         </button>
-      </div>
-    </div>
-  )
-}
-
-/** Wrap a page's content. Renders the paywall when Stripe is enabled and the user lacks an active subscription. */
-export function PaywallGate({ children }: { children: React.ReactNode }) {
-  const user = useAuthStore((s) => s.user)
-  const stripeEnabled = useConfigStore((s) => s.stripeEnabled)
-
-  if (!stripeEnabled || isSubscribed(user, stripeEnabled))
-    return <>{children}</>
-  return <PaywallBanner />
+      </>
+    )
+  }
 }

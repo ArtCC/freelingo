@@ -3,6 +3,7 @@ import { create } from 'zustand'
 interface ConfigStore {
   stripeEnabled: boolean
   stripeTrialDays: number
+  freemiumTrialEnabled: boolean
   ttsProvider: string
   openaiTtsVoice: string
   maintenanceMode: boolean
@@ -17,6 +18,7 @@ interface ConfigStore {
 export const useConfigStore = create<ConfigStore>((set, get) => ({
   stripeEnabled: false,
   stripeTrialDays: 7,
+  freemiumTrialEnabled: true,
   ttsProvider: 'local',
   openaiTtsVoice: 'nova',
   maintenanceMode: false,
@@ -34,6 +36,7 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
       set({
         stripeEnabled: data.stripe_enabled ?? false,
         stripeTrialDays: data.stripe_trial_days ?? 7,
+        freemiumTrialEnabled: data.freemium_trial_enabled ?? true,
         ttsProvider: data.tts_provider ?? 'local',
         openaiTtsVoice: data.openai_tts_voice ?? 'nova',
         maintenanceMode: data.maintenance_mode ?? false,

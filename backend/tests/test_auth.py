@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 
@@ -648,7 +650,37 @@ async def test_register_unsupported_native_language(client):
             "username": "testuser_zh",
             "email": "testuser_zh@example.com",
             "password": "ValidPass1!",
-            "native_language": "zh",
         },
     )
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_register_sets_freemium_trial(client):
+    """New user gets freemium trial persisted in DB when STRIPE_ENABLED=true."""
+    from app.core.config import settings
+
+    with (
+        patch.object(settings, "STRIPE_ENABLED", True),
+        patch.object(settings, "FREEMIUM_TRIAL_ENABLED", True),
+        patch.object(settings, "FREEMIUM_TRIAL_DAYS", 7),
+    ):
+        res = await client.post(
+            "/api/auth/register",
+            json={
+                "username": "freemiumtrial",
+                "email": "freemium@test.com",
+                "password": "Test1234!@",
+                "display_name": "Trial User",
+                "native_language": "es",
+            },
+        )
+    assert res.status_code == 200
+    token = res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    me = await client.get("/api/auth/me", headers=headers)
+    assert me.status_code == 200
+    body = me.json()
+    assert body["freemium_trial_used"] is True
+    assert body["freemium_trial_ends_at"] is not None

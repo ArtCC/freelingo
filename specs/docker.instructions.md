@@ -89,6 +89,7 @@ The canonical reference is `.env.example` at the repo root. The categories opera
 - TTS — Key variables: `TTS_PROVIDER`, `TTS_BASE_URL`, `TTS_VOICE`, `OPENAI_TTS_*`; Notes: `local` or `openai`
 - STT — Key variables: `STT_PROVIDER`, `STT_BASE_URL`, `STT_MODEL`, `STT_ENGINE`, `OPENAI_STT_MODEL`; Notes: `local` or `openai`
 - Stripe — Key variables: `STRIPE_ENABLED`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*`; Notes: Optional; disabled by default. Price IDs are configured manually from Stripe Dashboard when enabled
+- Freemium — Key variables: `FREEMIUM_CHAT_DAILY_MESSAGES`, `FREEMIUM_LESSONS_DAILY`, `FREEMIUM_LISTENING_WEEKLY`, `FREEMIUM_READING_WEEKLY`, `FREEMIUM_VOICE_WEEKLY_MINUTES`, `FREEMIUM_TRIAL_ENABLED`, `FREEMIUM_TRIAL_DAYS`; Notes: Daily/weekly quota limits for free-tier users and 7-day no-card trial toggle. Self-hosted deployments (`STRIPE_ENABLED=false`) ignore freemium settings and grant full access
 - Logging — Key variables: `LOG_LEVEL`; Notes: Default: `INFO`
 
 ---

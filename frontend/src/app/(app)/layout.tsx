@@ -125,6 +125,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
+    // Stripe trial countdown
     if (
       user?.subscription_status === 'trialing' &&
       user?.subscription_ends_at &&
@@ -138,10 +139,32 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )
       )
       setTrialDaysLeft(days)
-    } else {
-      setTrialDaysLeft(0)
+      return
     }
-  }, [user?.subscription_status, user?.subscription_ends_at, stripeEnabled])
+    // Freemium trial countdown
+    if (
+      user?.freemium_trial_ends_at &&
+      stripeEnabled &&
+      user?.subscription_status !== 'active' &&
+      user?.subscription_status !== 'trialing'
+    ) {
+      const end = new Date(user.freemium_trial_ends_at)
+      if (end > new Date()) {
+        const days = Math.max(
+          1,
+          Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        )
+        setTrialDaysLeft(days)
+        return
+      }
+    }
+    setTrialDaysLeft(0)
+  }, [
+    user?.subscription_status,
+    user?.subscription_ends_at,
+    user?.freemium_trial_ends_at,
+    stripeEnabled,
+  ])
 
   useEffect(() => {
     if (initializing) return
@@ -185,7 +208,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         : ''
 
   return (
-    <div className="bg-fl-bg flex min-h-screen">
+    <div className="bg-fl-bg flex min-h-screen md:h-screen md:overflow-hidden">
       {/* Sidebar */}
       <aside className="border-fl-border bg-fl-bg hidden w-52 shrink-0 flex-col border-r px-0 py-0 md:flex">
         {/* Logo area */}
@@ -356,7 +379,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <p className="text-fl-label text-fl-muted-4 mb-2 font-mono tracking-wider">
-            v1.8.24
+            v1.8.25
           </p>
           <button
             onClick={() => setContactOpen(true)}
@@ -550,7 +573,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </p>
               )}
               <p className="text-fl-label text-fl-muted-4 mb-2 font-mono tracking-wider">
-                v1.8.24
+                v1.8.25
               </p>
               <button
                 onClick={() => {
@@ -576,7 +599,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Main */}
-      <main className="min-h-screen flex-1 overflow-y-auto pt-14 md:pt-0">
+      <main className="flex min-h-[100dvh] flex-1 flex-col overflow-hidden pt-14 md:min-h-screen md:pt-0">
         {/* Email verification banner */}
         {user && user.is_verified === false && (
           <div className="border-fl-border bg-fl-surface flex flex-wrap items-center gap-x-4 gap-y-1 border-b px-4 py-2">
@@ -597,7 +620,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             )}
           </div>
         )}
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
       </main>
 
       <LoadingBar />

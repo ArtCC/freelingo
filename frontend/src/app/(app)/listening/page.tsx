@@ -4,11 +4,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/api'
 import { useLanguageStore } from '@/store/language'
-import { PaywallGate } from '@/components/billing/PaywallBanner'
+import { FreemiumQuotaBanner } from '@/components/billing/FreemiumQuotaBanner'
+import { PaywallBanner } from '@/components/billing/PaywallBanner'
 import { MaintenanceGate } from '@/components/billing/MaintenanceBanner'
 import { type ListeningExercise } from '@/types/api'
 import { WordTooltip, useWordSave } from '@/components/ui/WordTooltip'
 import { PageLoading } from '@/components/ui/page-loading'
+import { useFreemiumStore } from '@/store/freemium'
+import { useConfigStore } from '@/store/config'
+import { useAuthStore, isSubscribed, isFreemiumTrialActive } from '@/store/auth'
 import { Pagination } from '@/components/ui/pagination'
 import { ExerciseAudioPlayer } from '@/components/ui/exercise-audio-player'
 import { TargetLanguageText } from '@/components/TargetLanguageText'
@@ -76,6 +80,24 @@ function ListeningPage() {
   const [historyPage, setHistoryPage] = useState(0)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const user = useAuthStore((s) => s.user)
+  const stripeEnabled = useConfigStore((s) => s.stripeEnabled)
+  const fetchFreemium = useFreemiumStore((s) => s.fetchStatus)
+  const decrementFreemium = useFreemiumStore((s) => s.decrement)
+  const freemiumStatus = useFreemiumStore((s) => s.status)
+  const freemiumExhausted =
+    stripeEnabled &&
+    !isSubscribed(user, stripeEnabled) &&
+    !isFreemiumTrialActive(user, stripeEnabled) &&
+    freemiumStatus &&
+    freemiumStatus.listening_remaining <= 0
+
+  useEffect(() => {
+    if (stripeEnabled && !isSubscribed(user, stripeEnabled)) {
+      fetchFreemium()
+    }
+  }, [stripeEnabled, user, fetchFreemium])
   const [submitting, setSubmitting] = useState(false)
   const [reviewPromptOpen, setReviewPromptOpen] = useState(false)
   const [isReplay, setIsReplay] = useState(false)
@@ -216,6 +238,12 @@ function ListeningPage() {
       setResult(data)
       setPageState('results')
       if (
+        !isSubscribed(user, stripeEnabled) &&
+        !isFreemiumTrialActive(user, stripeEnabled)
+      ) {
+        decrementFreemium('listening_remaining')
+      }
+      if (
         shouldShowExerciseReviewPrompt(getReviewPromptDismissal(), !isReplay)
       ) {
         setReviewPromptOpen(true)
@@ -280,7 +308,7 @@ function ListeningPage() {
   // ── History ───────────────────────────────────────────────────────────────
   if (pageState === 'history') {
     return (
-      <div className="mx-auto min-h-screen max-w-4xl px-4 py-6 md:min-h-0 md:px-8">
+      <div className="mx-auto max-w-4xl px-4 py-6 md:px-8">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-fl-fg font-mono text-sm font-bold tracking-widest uppercase">
             {t('historyTitle')}
@@ -385,7 +413,7 @@ function ListeningPage() {
   // ── Results ───────────────────────────────────────────────────────────────
   if (pageState === 'results' && result && exercise) {
     return (
-      <div className="mx-auto min-h-screen max-w-4xl space-y-5 px-4 py-6 md:min-h-0 md:px-8">
+      <div className="mx-auto max-w-4xl space-y-5 px-4 py-6 md:px-8">
         {/* Score card */}
         <div className="border-fl-border bg-fl-surface border p-5">
           <div className="flex items-center justify-between">
@@ -529,7 +557,7 @@ function ListeningPage() {
   // ── Idle (no exercises available) ─────────────────────────────────────────
   if (pageState === 'idle') {
     return (
-      <div className="mx-auto min-h-screen max-w-4xl px-4 py-6 md:min-h-0 md:px-8">
+      <div className="mx-auto max-w-4xl px-4 py-6 md:px-8">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-fl-fg font-mono text-sm font-bold tracking-widest uppercase">
             {t('title')}
@@ -546,17 +574,23 @@ function ListeningPage() {
           <p className="text-fl-label mb-4 font-mono text-red-500">{error}</p>
         )}
 
-        <div className="border-fl-border bg-fl-surface flex flex-col items-center gap-5 border p-8 text-center">
-          <p className="text-fl-muted-2 font-mono text-xs tracking-wide">
-            {t('noExercises')}
-          </p>
-          <button
-            onClick={handleGenerate}
-            className="border-fl-border bg-fl-surface text-fl-fg hover:bg-fl-surface-2 border px-8 py-3 font-mono text-xs tracking-widest uppercase transition-colors"
-          >
-            {t('generate')}
-          </button>
-        </div>
+        <FreemiumQuotaBanner feature="listening" className="mb-4" />
+
+        {freemiumExhausted ? (
+          <PaywallBanner feature="listening" compact />
+        ) : (
+          <div className="border-fl-border bg-fl-surface flex flex-col items-center gap-5 border p-8 text-center">
+            <p className="text-fl-muted-2 font-mono text-xs tracking-wide">
+              {t('noExercises')}
+            </p>
+            <button
+              onClick={handleGenerate}
+              className="border-fl-border bg-fl-surface text-fl-fg hover:bg-fl-surface-2 border px-8 py-3 font-mono text-xs tracking-widest uppercase transition-colors"
+            >
+              {t('generate')}
+            </button>
+          </div>
+        )}
       </div>
     )
   }
@@ -565,7 +599,7 @@ function ListeningPage() {
   if (!exercise) return null
 
   return (
-    <div className="mx-auto min-h-screen max-w-4xl space-y-5 px-4 py-6 md:min-h-0 md:px-8">
+    <div className="mx-auto max-w-4xl space-y-5 px-4 py-6 md:px-8">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -584,102 +618,109 @@ function ListeningPage() {
         </button>
       </div>
 
-      {/* Topic */}
-      <div className="border-fl-border bg-fl-surface border px-4 py-3">
-        <p className="text-fl-label text-fl-muted-3 font-mono tracking-widest uppercase">
-          {t('topic')}
-        </p>
-        <p className="text-fl-fg mt-1 font-mono text-xs font-bold">
-          {exercise.topic}
-        </p>
-      </div>
+      <FreemiumQuotaBanner feature="listening" />
 
-      {/* Audio player */}
-      <div>
-        <p className="text-fl-label text-fl-muted-3 mb-2 font-mono tracking-widest uppercase">
-          {t('listenLabel')}
-        </p>
-        <ExerciseAudioPlayer exerciseId={exercise.id} />
-      </div>
+      {freemiumExhausted ? (
+        <PaywallBanner feature="listening" compact />
+      ) : (
+        <>
+          {/* Topic */}
+          <div className="border-fl-border bg-fl-surface border px-4 py-3">
+            <p className="text-fl-label text-fl-muted-3 font-mono tracking-widest uppercase">
+              {t('topic')}
+            </p>
+            <p className="text-fl-fg mt-1 font-mono text-xs font-bold">
+              {exercise.topic}
+            </p>
+          </div>
 
-      {/* Questions */}
-      <div>
-        <p className="text-fl-label text-fl-muted-3 mb-3 font-mono tracking-widest uppercase">
-          {t('questionsLabel')}
-        </p>
-        <div className="space-y-4">
-          {exercise.questions.map((q) => (
-            <div
-              key={q.index}
-              className="border-fl-border bg-fl-surface border p-4"
-            >
-              <TargetLanguageText
-                as="p"
-                languageCode={exercise.target_language}
-                className="text-fl-fg mb-3"
-              >
-                {q.index + 1}. {q.question}
-              </TargetLanguageText>
-              <div className="space-y-2">
-                {Object.entries(q.options).map(([k, v]) => {
-                  const selected = answers[String(q.index)] === k
-                  return (
-                    <button
-                      key={k}
-                      onClick={() =>
-                        setAnswers((prev) => ({
-                          ...prev,
-                          [String(q.index)]: k,
-                        }))
-                      }
-                      className={`w-full border px-3 py-2 text-left transition-colors ${
-                        selected
-                          ? 'border-fl-accent bg-fl-surface-2 text-fl-fg'
-                          : 'border-fl-border text-fl-muted-2 hover:border-fl-border-2 hover:text-fl-fg hover:bg-fl-surface-2'
-                      }`}
-                    >
-                      <span className="text-fl-label font-mono font-bold">
-                        {k}.
-                      </span>{' '}
-                      <TargetLanguageText
-                        languageCode={exercise.target_language}
-                      >
-                        {v}
-                      </TargetLanguageText>
-                    </button>
-                  )
-                })}
-              </div>
+          {/* Audio player */}
+          <div>
+            <p className="text-fl-label text-fl-muted-3 mb-2 font-mono tracking-widest uppercase">
+              {t('listenLabel')}
+            </p>
+            <ExerciseAudioPlayer exerciseId={exercise.id} />
+          </div>
+
+          {/* Questions */}
+          <div>
+            <p className="text-fl-label text-fl-muted-3 mb-3 font-mono tracking-widest uppercase">
+              {t('questionsLabel')}
+            </p>
+            <div className="space-y-4">
+              {exercise.questions.map((q) => (
+                <div
+                  key={q.index}
+                  className="border-fl-border bg-fl-surface border p-4"
+                >
+                  <TargetLanguageText
+                    as="p"
+                    languageCode={exercise.target_language}
+                    className="text-fl-fg mb-3"
+                  >
+                    {q.index + 1}. {q.question}
+                  </TargetLanguageText>
+                  <div className="space-y-2">
+                    {Object.entries(q.options).map(([k, v]) => {
+                      const selected = answers[String(q.index)] === k
+                      return (
+                        <button
+                          key={k}
+                          onClick={() =>
+                            setAnswers((prev) => ({
+                              ...prev,
+                              [String(q.index)]: k,
+                            }))
+                          }
+                          className={`w-full border px-3 py-2 text-left transition-colors ${
+                            selected
+                              ? 'border-fl-accent bg-fl-surface-2 text-fl-fg'
+                              : 'border-fl-border text-fl-muted-2 hover:border-fl-border-2 hover:text-fl-fg hover:bg-fl-surface-2'
+                          }`}
+                        >
+                          <span className="text-fl-label font-mono font-bold">
+                            {k}.
+                          </span>{' '}
+                          <TargetLanguageText
+                            languageCode={exercise.target_language}
+                          >
+                            {v}
+                          </TargetLanguageText>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* Error */}
-      {error && <p className="text-fl-label font-mono text-red-500">{error}</p>}
+          {/* Error */}
+          {error && (
+            <p className="text-fl-label font-mono text-red-500">{error}</p>
+          )}
 
-      {/* Submit */}
-      <button
-        onClick={handleSubmit}
-        disabled={!allAnswered || submitting}
-        className="border-fl-border bg-fl-surface text-fl-fg hover:bg-fl-surface-2 w-full border py-3 font-mono text-xs tracking-widest uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        {submitting ? tCommon('checking') : t('submit')}
-      </button>
+          {/* Submit */}
+          <button
+            onClick={handleSubmit}
+            disabled={!allAnswered || submitting}
+            className="border-fl-border bg-fl-surface text-fl-fg hover:bg-fl-surface-2 w-full border py-3 font-mono text-xs tracking-widest uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {submitting ? tCommon('checking') : t('submit')}
+          </button>
+        </>
+      )}
     </div>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Export — wrapped in PaywallGate (requires subscription)
+// Export — Freemium compatible (no hard paywall)
 // ---------------------------------------------------------------------------
 
 export default function ListeningPageWrapper() {
   return (
     <MaintenanceGate>
-      <PaywallGate>
-        <ListeningPage />
-      </PaywallGate>
+      <ListeningPage />
     </MaintenanceGate>
   )
 }

@@ -18,8 +18,8 @@ freelingo/
 │   │   ├── core/                # Config, DB engine, security, deps, rate limiter (7 modules)
 │   │   ├── models/              # SQLAlchemy 2.0 ORM models (16 files, 22 model classes)
 │   │   ├── schemas/             # Pydantic v2 request/response schemas (15 modules)
-│   │   ├── routers/             # 23 routers (22 REST + 1 WebSocket)
-│   │   ├── services/            # Business logic + external service clients (20 modules + prompts package)
+│   │   ├── routers/             # 24 routers (23 REST + 1 WebSocket)
+│   │   ├── services/            # Business logic + external service clients (21 modules + prompts package)
 │   │   └── data/                # Static curriculum and content data (9 language modules)
 │   │       ├── en/              # English curriculum (A1–C2)
 │   │       ├── es/              # Spanish curriculum (A1–C2)
@@ -120,7 +120,7 @@ WebSocket connects to /ws/conversation
     ↓
 Client sends first JSON auth frame with access token
     ↓
-Backend validates auth, subscription, maintenance mode, TTS service, STT service, quota, and selected target language plan
+Backend validates auth, subscription, freemium trial/quota, maintenance mode, TTS service, STT service, quota, and selected target language plan
     ↓
 User speaks → VAD detects speech → sends WAV chunks via WS
     ↓
@@ -160,6 +160,7 @@ Stored as a simple Redis flag (`maintenance_mode` = `"1"` / `"0"`). Set explicit
 - `get_redis()` — centralized async Redis dependency.
 - `check_maintenance_mode()` — raises HTTP 503 when `maintenance_mode == "1"`. Swallows Redis errors to fail open.
 - `require_subscription` — checks only subscription status. It does not consult maintenance mode.
+- `require_subscription_or_freemium(feature: str)` — factory dependency that checks: 1) `STRIPE_ENABLED=false` → pass, 2) subscribed → pass, 3) freemium trial active → pass, 4) freemium quota available for the feature → pass, 5) else → HTTP 402 with `{reason: "freemium_exhausted"}`. Used on chat, listening, reading, conversation warmup, and lesson completion endpoints. Memories still uses plain `require_subscription`.
 - `require_not_maintenance` — checks only the `maintenance_mode` flag for operational feature availability. Non-admin users receive HTTP 503 when maintenance is active; admins bypass the guard so they can verify gated features during maintenance. Applied explicitly alongside `require_subscription` on chat, listening, reading, and conversation warmup endpoints. The WebSocket (`/ws/conversation`) performs the same maintenance check manually. Memory-management endpoints use only `require_subscription`.
 
 **Frontend**: `MaintenanceGate` component renders a static banner when `maintenance_mode` is true for non-admin users. Applied on top of `PaywallGate` in the four subscription-gated pages: `/chat`, `/conversation`, `/listening`, `/reading`. Administrators manage the flag from the dedicated `/admin/system` section; the admin overview keeps a read-only status summary linking to that page.

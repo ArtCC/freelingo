@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_subscription_or_freemium
 from app.core.limiter import limiter
 from app.models.lesson import Exercise, Lesson
 from app.models.study_plan import StudyPlan
@@ -264,7 +264,7 @@ async def start_lesson(
 async def complete_lesson(
     request: Request,
     lesson_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_subscription_or_freemium("lessons")),
     db: AsyncSession = Depends(get_db),
 ):
     lesson = await _get_lesson_for_user(lesson_id, current_user.id, db)
@@ -281,6 +281,12 @@ async def complete_lesson(
         skill=lesson.lesson_type,
         study_plan_id=lesson.study_plan_id,
     )
+
+    # Record freemium lesson usage (best-effort)
+    from app.services.freemium_service import maybe_record_freemium_usage
+
+    await maybe_record_freemium_usage(current_user, "lessons")
+
     if lesson.unit_id:
         from app.data.curriculum import get_curriculum_units  # noqa: PLC0415
         from app.models.study_plan import StudyPlan  # noqa: PLC0415

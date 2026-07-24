@@ -11,10 +11,14 @@ import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import type { ChatContextItem } from '@/lib/conversation-ws'
 import { PageLoading } from '@/components/ui/page-loading'
-import { PaywallGate } from '@/components/billing/PaywallBanner'
+import { FreemiumQuotaBanner } from '@/components/billing/FreemiumQuotaBanner'
+import { PaywallBanner } from '@/components/billing/PaywallBanner'
 import { MaintenanceGate } from '@/components/billing/MaintenanceBanner'
 import { apiFetch } from '@/lib/api'
 import { useLanguageStore } from '@/store/language'
+import { useConfigStore } from '@/store/config'
+import { useAuthStore, isSubscribed, isFreemiumTrialActive } from '@/store/auth'
+import { useFreemiumStore } from '@/store/freemium'
 
 function ConversationLoading() {
   return <PageLoading minHeight="min-h-[calc(100vh-56px)] md:min-h-screen" />
@@ -30,6 +34,30 @@ const ConversationMode = dynamic(
 
 export default function ConversationPage() {
   const activeLanguage = useLanguageStore((s) => s.activeLanguage)
+  const stripeEnabled = useConfigStore((s) => s.stripeEnabled)
+  const user = useAuthStore((s) => s.user)
+  const fetchFreemium = useFreemiumStore((s) => s.fetchStatus)
+  const freemiumStatus = useFreemiumStore((s) => s.status)
+  const freemiumExhausted =
+    stripeEnabled &&
+    !isSubscribed(user, stripeEnabled) &&
+    !isFreemiumTrialActive(user, stripeEnabled) &&
+    freemiumStatus &&
+    freemiumStatus.voice_remaining_seconds <= 0
+
+  const freemiumVoiceRemaining = freemiumStatus
+    ? Math.ceil(freemiumStatus.voice_remaining_seconds / 60)
+    : undefined
+  const freemiumVoiceLimit = freemiumStatus
+    ? Math.ceil(freemiumStatus.voice_limit_seconds / 60)
+    : undefined
+  const showFreemiumVoicePill =
+    stripeEnabled &&
+    !isSubscribed(user, stripeEnabled) &&
+    !isFreemiumTrialActive(user, stripeEnabled) &&
+    freemiumStatus &&
+    freemiumStatus.voice_limit_seconds > 0
+
   const [initialContext, setInitialContext] = useState<
     ChatContextItem[] | undefined
   >(undefined)
@@ -42,6 +70,12 @@ export default function ConversationPage() {
     cefrLevel?: string
     targetLanguage?: string
   } | null>(null)
+
+  useEffect(() => {
+    if (stripeEnabled && !isSubscribed(user, stripeEnabled)) {
+      fetchFreemium()
+    }
+  }, [stripeEnabled, user, fetchFreemium])
 
   useEffect(() => {
     const raw = sessionStorage.getItem('voice_context')
@@ -132,15 +166,24 @@ export default function ConversationPage() {
           voiceTrialDurationSeconds={voiceTrial.durationSeconds}
           trialMode
         />
+      ) : freemiumExhausted ? (
+        <>
+          <FreemiumQuotaBanner feature="voice" className="mb-4" />
+          <PaywallBanner feature="voice" compact />
+        </>
       ) : (
-        <PaywallGate>
-          <ConversationMode
-            initialContext={initialContext}
-            autoStart={autoStart}
-            cefrLevel={cefrLevel}
-            targetLanguage={activeLanguage?.code}
-          />
-        </PaywallGate>
+        <ConversationMode
+          initialContext={initialContext}
+          autoStart={autoStart}
+          cefrLevel={cefrLevel}
+          targetLanguage={activeLanguage?.code}
+          freemiumVoiceRemaining={
+            showFreemiumVoicePill ? freemiumVoiceRemaining : undefined
+          }
+          freemiumVoiceLimit={
+            showFreemiumVoicePill ? freemiumVoiceLimit : undefined
+          }
+        />
       )}
     </MaintenanceGate>
   )

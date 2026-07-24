@@ -68,6 +68,7 @@ Only endpoints with explicit `@limiter.limit()` decorators are listed here. Ever
 - `POST /api/billing/checkout` — Limit: 60/minute; Access: Authenticated; Rationale: Stripe Checkout creation
 - `POST /api/billing/portal` — Limit: 60/minute; Access: Authenticated; Rationale: Stripe Customer Portal creation
 - `POST /api/billing/webhook` — Limit: 200/minute; Access: Stripe signature; Rationale: Stripe webhook burst tolerance
+- `GET /api/freemium/status` — Limit: 60/minute; Access: Authenticated; Rationale: Freemium trial status and quota remaining
 - `GET /api/assessment/start` — Limit: 10/minute; Access: Authenticated; Rationale: Placement assessment start
 - `GET /api/assessment/bank` — Limit: 60/minute; Access: Authenticated; Rationale: Static bank fetch
 - `POST /api/assessment/submit` — Limit: 10/minute; Access: Authenticated; Rationale: Legacy placement submission
@@ -89,7 +90,7 @@ Only endpoints with explicit `@limiter.limit()` decorators are listed here. Ever
 - `GET /api/study-plan/pending-lessons` — Limit: 60/minute; Access: Authenticated; Rationale: Pending lessons
 - `GET /api/lessons/{lesson_id}` — Limit: 60/minute; Access: Authenticated; Rationale: Lesson detail
 - `POST /api/lessons/{lesson_id}/start` — Limit: 60/minute; Access: Authenticated; Rationale: Lesson status mutation
-- `POST /api/lessons/{lesson_id}/complete` — Limit: 60/minute; Access: Authenticated; Rationale: Lesson completion
+- `POST /api/lessons/{lesson_id}/complete` — Limit: 60/minute; Access: Subscription or freemium; Rationale: Lesson completion
 - `POST /api/lessons/exercises/{exercise_id}/answer` — Limit: 20/minute; Access: Authenticated; Rationale: Exercise answer evaluation
 - `POST /api/lessons/exercises/{exercise_id}/regenerate` — Limit: 5/hour; Access: Authenticated; Rationale: LLM-backed exercise repair
 - `POST /api/lessons/exercises/{exercise_id}/native-explanation` — Limit: 10/minute; Access: Authenticated; Rationale: LLM-backed native explanation
@@ -121,25 +122,25 @@ Only endpoints with explicit `@limiter.limit()` decorators are listed here. Ever
 - `GET /api/progress/summary` — Limit: 60/minute; Access: Authenticated; Rationale: Progress summary
 - `GET /api/progress/history` — Limit: 60/minute; Access: Authenticated; Rationale: Progress history
 - `GET /api/progress/competencies` — Limit: 60/minute; Access: Authenticated; Rationale: Competencies
-- `GET /api/chat/conversations` — Limit: 60/minute; Access: Subscription + no maintenance; Rationale: Conversations list
-- `POST /api/chat/conversations` — Limit: 60/minute; Access: Subscription + no maintenance; Rationale: Conversation creation
-- `DELETE /api/chat/conversations/{conversation_id}` — Limit: 60/minute; Access: Subscription + no maintenance; Rationale: Conversation deletion
-- `GET /api/chat/conversations/{conversation_id}/messages` — Limit: 60/minute; Access: Subscription + no maintenance; Rationale: Conversation messages
-- `POST /api/chat` — Limit: 30/minute; Access: Subscription + no maintenance; Rationale: SSE chat generation
-- `GET /api/chat/history` — Limit: 60/minute; Access: Subscription + no maintenance; Rationale: Legacy chat history
-- `POST /api/conversation/warmup` — Limit: 20/minute; Access: Subscription + no maintenance; Rationale: TTS/STT warmup
+- `GET /api/chat/conversations` — Limit: 60/minute; Access: Subscription or freemium + no maintenance; Rationale: Conversations list
+- `POST /api/chat/conversations` — Limit: 60/minute; Access: Subscription or freemium + no maintenance; Rationale: Conversation creation
+- `DELETE /api/chat/conversations/{conversation_id}` — Limit: 60/minute; Access: Subscription or freemium + no maintenance; Rationale: Conversation deletion
+- `GET /api/chat/conversations/{conversation_id}/messages` — Limit: 60/minute; Access: Subscription or freemium + no maintenance; Rationale: Conversation messages
+- `POST /api/chat` — Limit: 30/minute; Access: Subscription or freemium + no maintenance; Rationale: SSE chat generation
+- `GET /api/chat/history` — Limit: 60/minute; Access: Subscription or freemium + no maintenance; Rationale: Legacy chat history
+- `POST /api/conversation/warmup` — Limit: 20/minute; Access: Subscription or freemium + no maintenance; Rationale: TTS/STT warmup
 - `POST /api/tts` — Limit: 20/minute; Access: Authenticated; Rationale: Audio generation
 - `GET /api/tts/preview/{voice}` — Limit: 60/minute; Access: Authenticated; Rationale: Voice preview
 - `POST /api/stt` — Limit: 20/minute; Access: Authenticated; Rationale: Audio transcription
-- `GET /api/listening/next` — Limit: 10/minute; Access: Subscription + no maintenance; Rationale: Listening exercise pool
-- `POST /api/listening/generate` — Limit: 5/minute; Access: Subscription + no maintenance; Rationale: LLM+TTS exercise generation
-- `GET /api/listening/audio/{exercise_id}` — Limit: 60/minute; Access: Subscription + no maintenance; Rationale: Exercise audio
-- `POST /api/listening/attempt` — Limit: 20/minute; Access: Subscription + no maintenance; Rationale: Attempt scoring
-- `GET /api/listening/history` — Limit: 60/minute; Access: Subscription + no maintenance; Rationale: Attempt history
-- `GET /api/reading/next` — Limit: 10/minute; Access: Subscription + no maintenance; Rationale: Reading exercise pool
-- `POST /api/reading/generate` — Limit: 5/minute; Access: Subscription + no maintenance; Rationale: LLM exercise generation
-- `POST /api/reading/attempt` — Limit: 20/minute; Access: Subscription + no maintenance; Rationale: Attempt scoring
-- `GET /api/reading/history` — Limit: 60/minute; Access: Subscription + no maintenance; Rationale: Attempt history
+- `GET /api/listening/next` — Limit: 10/minute; Access: Subscription or freemium + no maintenance; Rationale: Listening exercise pool
+- `POST /api/listening/generate` — Limit: 5/minute; Access: Subscription or freemium + no maintenance; Rationale: LLM+TTS exercise generation
+- `GET /api/listening/audio/{exercise_id}` — Limit: 60/minute; Access: Subscription or freemium + no maintenance; Rationale: Exercise audio
+- `POST /api/listening/attempt` — Limit: 20/minute; Access: Subscription or freemium + no maintenance; Rationale: Attempt scoring
+- `GET /api/listening/history` — Limit: 60/minute; Access: Subscription or freemium + no maintenance; Rationale: Attempt history
+- `GET /api/reading/next` — Limit: 10/minute; Access: Subscription or freemium + no maintenance; Rationale: Reading exercise pool
+- `POST /api/reading/generate` — Limit: 5/minute; Access: Subscription or freemium + no maintenance; Rationale: LLM exercise generation
+- `POST /api/reading/attempt` — Limit: 20/minute; Access: Subscription or freemium + no maintenance; Rationale: Attempt scoring
+- `GET /api/reading/history` — Limit: 60/minute; Access: Subscription or freemium + no maintenance; Rationale: Attempt history
 - `GET /api/memories` — Limit: 60/minute; Access: Subscription; Rationale: Memory list
 - `DELETE /api/memories/{memory_id}` — Limit: 60/minute; Access: Subscription; Rationale: Single memory deletion
 - `DELETE /api/memories` — Limit: 10/minute; Access: Subscription; Rationale: Bulk memory deletion
