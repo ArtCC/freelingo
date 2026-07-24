@@ -288,7 +288,7 @@ export default function ChatPage() {
 
   return (
     <MaintenanceGate>
-      <div className="flex h-[calc(100dvh-56px)] w-full overflow-hidden md:h-screen">
+      <div className="flex h-full min-h-0 w-full overflow-hidden">
         {/* Memory updated toast */}
         {memoryToast && (
           <div className="pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center">
@@ -434,7 +434,7 @@ export default function ChatPage() {
           <FreemiumQuotaBanner feature="chat" />
 
           {/* Messages */}
-          <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
             {loadingMsgs ? (
               <div className="flex h-full items-center justify-center">
                 <PageLoading fullScreen={false} />

@@ -599,7 +599,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Main */}
-      <main className="min-h-screen flex-1 overflow-y-auto pt-14 md:pt-0">
+      <main className="flex min-h-screen flex-1 flex-col overflow-hidden pt-14 md:pt-0">
         {/* Email verification banner */}
         {user && user.is_verified === false && (
           <div className="border-fl-border bg-fl-surface flex flex-wrap items-center gap-x-4 gap-y-1 border-b px-4 py-2">
@@ -620,7 +620,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             )}
           </div>
         )}
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
       </main>
 
       <LoadingBar />

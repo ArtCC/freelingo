@@ -1002,7 +1002,7 @@ export default function ConversationMode({
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="mx-auto flex h-[calc(100dvh-56px)] max-w-4xl flex-col overflow-hidden p-4 md:h-screen md:p-6">
+    <div className="mx-auto flex h-full max-w-4xl flex-col overflow-hidden p-4 md:p-6">
       {/* Header */}
       <div className="border-fl-border mb-6 flex items-end justify-between border-b pb-4">
         <div>

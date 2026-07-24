@@ -308,7 +308,7 @@ function ListeningPage() {
   // ── History ───────────────────────────────────────────────────────────────
   if (pageState === 'history') {
     return (
-      <div className="mx-auto min-h-screen max-w-4xl px-4 py-6 md:min-h-0 md:px-8">
+      <div className="mx-auto max-w-4xl px-4 py-6 md:px-8">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-fl-fg font-mono text-sm font-bold tracking-widest uppercase">
             {t('historyTitle')}
@@ -413,7 +413,7 @@ function ListeningPage() {
   // ── Results ───────────────────────────────────────────────────────────────
   if (pageState === 'results' && result && exercise) {
     return (
-      <div className="mx-auto min-h-screen max-w-4xl space-y-5 px-4 py-6 md:min-h-0 md:px-8">
+      <div className="mx-auto max-w-4xl space-y-5 px-4 py-6 md:px-8">
         {/* Score card */}
         <div className="border-fl-border bg-fl-surface border p-5">
           <div className="flex items-center justify-between">
@@ -557,7 +557,7 @@ function ListeningPage() {
   // ── Idle (no exercises available) ─────────────────────────────────────────
   if (pageState === 'idle') {
     return (
-      <div className="mx-auto min-h-screen max-w-4xl px-4 py-6 md:min-h-0 md:px-8">
+      <div className="mx-auto max-w-4xl px-4 py-6 md:px-8">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-fl-fg font-mono text-sm font-bold tracking-widest uppercase">
             {t('title')}
@@ -599,7 +599,7 @@ function ListeningPage() {
   if (!exercise) return null
 
   return (
-    <div className="mx-auto min-h-screen max-w-4xl space-y-5 px-4 py-6 md:min-h-0 md:px-8">
+    <div className="mx-auto max-w-4xl space-y-5 px-4 py-6 md:px-8">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
