@@ -347,7 +347,9 @@ async def _handle_subscription_updated(db: AsyncSession, subscription: object) -
     user.subscription_status = _normalize_subscription_status(
         _sget(subscription, "status"), user.subscription_status
     )
-    user.cancel_at_period_end = bool(_sget(subscription, "cancel_at_period_end", False))
+    cancel_period_end = bool(_sget(subscription, "cancel_at_period_end", False))
+    cancel_at = _sget(subscription, "cancel_at")
+    user.cancel_at_period_end = cancel_period_end or (cancel_at is not None and cancel_at != 0)
     ends_at = _subscription_period_end(subscription)
     if ends_at is not None:
         user.subscription_ends_at = ends_at
