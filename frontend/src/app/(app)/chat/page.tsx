@@ -173,7 +173,7 @@ export default function ChatPage() {
     setMessages([])
     setError('')
     if (window.innerWidth < 768) setSidebarOpen(false)
-    inputRef.current?.focus()
+    requestAnimationFrame(() => inputRef.current?.focus())
   }
 
   function continueInVoice() {
@@ -289,7 +289,7 @@ export default function ChatPage() {
 
   return (
     <MaintenanceGate>
-      <div className="flex h-full min-h-0 w-full overflow-hidden">
+      <div className="flex h-[calc(100dvh-56px)] w-full overflow-hidden md:h-screen">
         {/* Memory updated toast */}
         {memoryToast && (
           <div className="pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center">
@@ -557,7 +557,7 @@ export default function ChatPage() {
                     }
                     disabled={sending || loadingMsgs}
                     placeholder={t('placeholder')}
-                    className="bg-fl-surface border-fl-border text-fl-fg placeholder:text-fl-border-2 focus:border-fl-border-2 flex-1 border px-4 py-3 font-mono text-sm transition-colors focus:outline-none disabled:opacity-40"
+                    className="bg-fl-surface border-fl-border text-fl-fg placeholder:text-fl-border-2 focus:border-fl-border-2 flex-1 border px-4 py-3 font-mono text-base transition-colors focus:outline-none disabled:opacity-40"
                   />
                   <button
                     onClick={sendMessage}
