@@ -172,6 +172,7 @@ export default function ChatPage() {
     setActiveId(null)
     setMessages([])
     setError('')
+    if (window.innerWidth < 768) setSidebarOpen(false)
     inputRef.current?.focus()
   }
 
