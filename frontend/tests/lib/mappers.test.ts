@@ -23,6 +23,7 @@ describe('mapUser', () => {
     assessment_voice_trial_used: false,
     freemium_trial_ends_at: null,
     freemium_trial_used: false,
+    cancel_at_period_end: false,
   }
 
   it('maps snake_case API response to camelCase User', () => {
@@ -49,6 +50,7 @@ describe('mapUser', () => {
       freemium_trial_ends_at: null,
       freemium_trial_used: false,
       ui_locale: null,
+      cancel_at_period_end: false,
     })
   })
 

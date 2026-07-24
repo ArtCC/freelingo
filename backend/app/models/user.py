@@ -63,6 +63,7 @@ class User(Base):
         # Values: "none" plus Stripe Subscription.status values used by Checkout.
     )
     subscription_ends_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     trial_used: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     assessment_voice_trial_used: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False

@@ -1335,6 +1335,7 @@
     "section": "Subscription",
     "status": "Status",
     "statusActive": "Active",
+    "statusCanceling": "Canceling",
     "statusCanceled": "Canceled",
     "statusTrialing": "Trial",
     "statusPastDue": "Past due",

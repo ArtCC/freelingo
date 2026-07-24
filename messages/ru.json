@@ -1335,6 +1335,7 @@
     "section": "Подписка",
     "status": "Статус",
     "statusActive": "Активна",
+    "statusCanceling": "Отменяется",
     "statusCanceled": "Отменена",
     "statusTrialing": "Пробный период",
     "statusPastDue": "Просроченный платёж",

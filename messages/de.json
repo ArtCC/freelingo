@@ -1335,6 +1335,7 @@
     "section": "Abonnement",
     "status": "Status",
     "statusActive": "Aktiv",
+    "statusCanceling": "Kündigung läuft",
     "statusCanceled": "Gekündigt",
     "statusTrialing": "Testphase",
     "statusPastDue": "Zahlung ausständig",

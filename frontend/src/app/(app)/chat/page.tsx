@@ -401,7 +401,9 @@ export default function ChatPage() {
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="text-fl-label text-fl-muted-2 hover:text-fl-fg mr-1 text-lg transition-colors"
-              title={sidebarOpen ? t('toggleSidebarHide') : t('toggleSidebarShow')}
+              title={
+                sidebarOpen ? t('toggleSidebarHide') : t('toggleSidebarShow')
+              }
             >
               {sidebarOpen ? '◀' : '☰'}
             </button>

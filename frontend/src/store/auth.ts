@@ -30,6 +30,7 @@ export interface User {
   learning_goals?: string[] | null
   subscription_status?: SubscriptionStatus
   subscription_ends_at?: string | null
+  cancel_at_period_end?: boolean
   trial_used?: boolean
   assessment_voice_trial_used?: boolean
   freemium_trial_ends_at?: string | null

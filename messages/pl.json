@@ -1335,6 +1335,7 @@
     "section": "Subskrypcja",
     "status": "Status",
     "statusActive": "Aktywna",
+    "statusCanceling": "Anulowanie",
     "statusCanceled": "Anulowana",
     "statusTrialing": "Wersja próbna",
     "statusPastDue": "Zaległa płatność",

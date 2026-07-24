@@ -1335,6 +1335,7 @@
     "section": "Abonnement",
     "status": "Statut",
     "statusActive": "Actif",
+    "statusCanceling": "En cours d'annulation",
     "statusCanceled": "Annulé",
     "statusTrialing": "Essai",
     "statusPastDue": "Paiement en retard",

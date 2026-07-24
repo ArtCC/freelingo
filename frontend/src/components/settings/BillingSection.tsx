@@ -50,16 +50,25 @@ export function BillingSection() {
           </span>
           <span
             className={`border px-2.5 py-1 font-mono text-xs font-bold tracking-widest uppercase ${
-              user?.subscription_status === 'active'
+              user?.subscription_status === 'active' &&
+              !user?.cancel_at_period_end
                 ? 'border-green-600/40 text-green-500'
-                : user?.subscription_status === 'trialing'
+                : user?.subscription_status === 'active' &&
+                    user?.cancel_at_period_end
                   ? 'border-fl-accent/40 text-fl-accent'
-                  : paymentRecovery
-                    ? 'border-yellow-500/40 text-yellow-500'
-                    : 'border-fl-border text-fl-muted-3'
+                  : user?.subscription_status === 'trialing'
+                    ? 'border-fl-accent/40 text-fl-accent'
+                    : paymentRecovery
+                      ? 'border-yellow-500/40 text-yellow-500'
+                      : 'border-fl-border text-fl-muted-3'
             }`}
           >
-            {user?.subscription_status === 'active' && tBilling('statusActive')}
+            {user?.subscription_status === 'active' &&
+              !user?.cancel_at_period_end &&
+              tBilling('statusActive')}
+            {user?.subscription_status === 'active' &&
+              user?.cancel_at_period_end &&
+              tBilling('statusCanceling')}
             {user?.subscription_status === 'trialing' &&
               tBilling('statusTrialing')}
             {user?.subscription_status === 'past_due' &&
@@ -85,11 +94,13 @@ export function BillingSection() {
             user.subscription_status === 'past_due' ||
             user.subscription_status === 'unpaid' ||
             user.subscription_status === 'paused' ||
-            (user.subscription_status === 'canceled' &&
-              new Date(user.subscription_ends_at) > new Date())) && (
+            user.subscription_status === 'canceled' ||
+            user.cancel_at_period_end) &&
+          new Date(user.subscription_ends_at) > new Date() && (
             <div className="flex items-center justify-between">
               <span className="text-fl-muted-1 font-mono text-xs tracking-widest uppercase">
-                {user.subscription_status === 'canceled'
+                {user.subscription_status === 'canceled' ||
+                user.cancel_at_period_end
                   ? tBilling('accessUntil')
                   : tBilling('nextBilling')}
               </span>

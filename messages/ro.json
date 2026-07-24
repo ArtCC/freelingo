@@ -1335,6 +1335,7 @@
     "section": "Abonament",
     "status": "Status",
     "statusActive": "Activ",
+    "statusCanceling": "Se anulează",
     "statusCanceled": "Anulat",
     "statusTrialing": "Perioadă de probă",
     "statusPastDue": "Plată restantă",

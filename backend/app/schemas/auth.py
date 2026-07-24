@@ -145,6 +145,7 @@ class UserResponse(BaseModel):
     learning_goals: list[str] | None = None
     subscription_status: str = "none"
     subscription_ends_at: datetime | None = None
+    cancel_at_period_end: bool = False
     trial_used: bool = False
     assessment_voice_trial_used: bool = False
     freemium_trial_ends_at: datetime | None = None
