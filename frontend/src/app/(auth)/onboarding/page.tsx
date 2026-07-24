@@ -316,33 +316,30 @@ export default function OnboardingPage() {
           {/* Step 3: Trial confirmation */}
           {step === 3 && freemiumTrialActive && (
             <div className="space-y-5 text-center">
-              <div className="mb-2 flex justify-center">
-                <span className="inline-flex h-12 w-12 items-center justify-center text-2xl">
-                  ★
-                </span>
-              </div>
               <h2 className="text-fl-fg font-mono text-base font-bold">
                 {t('freemiumTrialTitle')}
               </h2>
               <p className="text-fl-muted-1 font-mono text-xs leading-relaxed">
                 {t('freemiumTrialDesc')}
               </p>
-              <div className="border-fl-border bg-fl-surface-2 border px-4 py-3">
-                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-left font-mono text-[0.65rem]">
-                  <span className="text-fl-muted-2">
-                    ✓ {t('freemiumChatLabel')}
-                  </span>
-                  <span className="text-fl-muted-2">
-                    ✓ {t('freemiumVoiceLabel')}
-                  </span>
-                  <span className="text-fl-muted-2">
-                    ✓ {t('freemiumListeningLabel')}
-                  </span>
-                  <span className="text-fl-muted-2">
-                    ✓ {t('freemiumReadingLabel')}
-                  </span>
-                </div>
-              </div>
+              <ul className="text-fl-muted-2 space-y-1.5 text-left font-mono text-xs">
+                <li className="flex items-start gap-2">
+                  <span className="text-fl-accent shrink-0">✓</span>
+                  {t('freemiumChatLabel')}
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-fl-accent shrink-0">✓</span>
+                  {t('freemiumVoiceLabel')}
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-fl-accent shrink-0">✓</span>
+                  {t('freemiumListeningLabel')}
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-fl-accent shrink-0">✓</span>
+                  {t('freemiumReadingLabel')}
+                </li>
+              </ul>
               <button
                 type="button"
                 onClick={() => router.push('/dashboard')}
@@ -350,15 +347,6 @@ export default function OnboardingPage() {
               >
                 {t('goToDashboard')}
               </button>
-              {stripeEnabled && (
-                <button
-                  type="button"
-                  onClick={() => router.push('/dashboard')}
-                  className="text-fl-label text-fl-muted-4 hover:text-fl-muted-2 w-full py-1 font-mono tracking-widest uppercase transition-colors"
-                >
-                  {t('upgradeLater')}
-                </button>
-              )}
             </div>
           )}
 
