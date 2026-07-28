@@ -251,10 +251,6 @@
     "sectionLegal": "Legal",
     "termsOfService": "Termeni și condiții",
     "privacyPolicy": "Politică de confidențialitate",
-    "sectionAuthor": "Autor",
-    "authorDescription": "Creat de Arturo Carretero Calvo",
-    "websiteLink": "Site web",
-    "githubProfile": "Profil GitHub",
     "contactLink": "Contact",
     "deleteAccount": "Șterge contul",
     "deleteAccountTitle": "Șterge contul",
@@ -288,7 +284,6 @@
     "cardTutorVoice": "Vocea tutorelui",
     "cardCurrentUsage": "Utilizare curentă",
     "cardProductReview": "Recenzie produs",
-    "cardCreatedBy": "Creat de",
     "cardLegalDocuments": "Documente legale",
     "sectionReview": "Recenzie",
     "reviewDescription": "Împărtășește experiența ta cu FreeLingo. Dacă editezi o recenzie deja aprobată, aceasta va reveni la verificare înainte de a apărea public.",
@@ -335,7 +330,7 @@
       "linkPrivacy": "Politică de confidențialitate",
       "linkBack": "Înapoi la înregistrare",
       "linkBackSettings": "Înapoi la setări",
-      "linkContact": "Pentru întrebări referitoare la acești termeni, contactați-ne la contacto@arturocarreterocalvo.com."
+      "linkContact": "Pentru întrebări referitoare la acești termeni, contactați-ne prin formularul de contact de pe freelingo.app."
     },
     "privacy": {
       "pageTitle": "Politică de confidențialitate",
@@ -372,7 +367,7 @@
       "s7Title": "7. Retenția și ștergerea datelor",
       "s7Body": "Datele tale sunt păstrate atât timp cât contul tău există. Poți șterge permanent contul și toate datele asociate în orice moment din pagina setări.",
       "s8Title": "8. Contact",
-      "s8Body": "Pentru întrebări legate de confidențialitate, contactează-ne la: contacto@arturocarreterocalvo.com.",
+      "s8Body": "Pentru întrebări legate de confidențialitate, contactează-ne prin formularul de contact de pe freelingo.app.",
       "s9Title": "9. Separabilitate",
       "s9Body": "Dacă vreo dispoziție a acestei politici este considerată nulă sau inaplicabilă, aceasta va fi limitată în măsura minimă necesară, iar celelalte vor rămâne în vigoare.",
       "linkTerms": "Termeni și condiții",
@@ -1383,7 +1378,7 @@
   },
   "whatsNew": {
     "title": "Noutăți",
-    "version": "v1.8.26",
+    "version": "v1.8.27",
     "cta": "Am înțeles",
     "entry1": {
       "label": "Încearcă totul gratuit",

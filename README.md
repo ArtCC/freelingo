@@ -3,7 +3,7 @@
 ![Next.js](https://img.shields.io/badge/next.js-16-black?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.14-blue?style=flat-square)
 ![Self-hosted](https://img.shields.io/badge/self--hosted-yes-orange?style=flat-square)
-![Version](https://img.shields.io/badge/version-1.8.26-brightgreen?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.8.27-brightgreen?style=flat-square)
 
 <p align="left">
   <img src="assets/logo_large.png" alt="FreeLingo logo" />
@@ -51,7 +51,7 @@ Need FreeLingo for your team or organisation?
 - **Dedicated managed instance** — A turnkey deployment operated exclusively for your organisation: setup, hosting, maintenance, and updates included. Your data stays isolated in a dedicated environment.
 - **Commercial licence** — Organisations that need to deploy a customised or white-labelled version without the open-source obligations of the AGPL can obtain a commercial licence. See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) for details.
 
-[Get in touch](mailto:contacto@arturocarreterocalvo.com) to discuss your requirements.
+[Get in touch](https://freelingo.app) via the contact form to discuss your requirements.
 
 If FreeLingo is useful to you or your organisation, consider [**sponsoring the project on GitHub**](https://github.com/sponsors/artcc) to support continued development and keep the self-hosted version free for everyone.
 
@@ -295,7 +295,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting bugs and sugg
 
 Distributed under the [GNU Affero General Public License v3](LICENSE).
 
-Organisations that need to deploy FreeLingo without the AGPL's copyleft obligations can obtain a **commercial licence**. See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) or [get in touch](https://arturocarreterocalvo.com).
+Organisations that need to deploy FreeLingo without the AGPL's copyleft obligations can obtain a **commercial licence**. See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) or [get in touch](https://freelingo.app) via the contact form.
 
 ## Author
 

@@ -58,7 +58,10 @@ export const metadata: Metadata = {
     'learn English online',
   ],
   authors: [
-    { name: 'Arturo Carretero Calvo', url: 'https://arturocarreterocalvo.com' },
+    {
+      name: 'Arturo Carretero Calvo',
+      url: 'https://www.arturocarreterocalvo.com',
+    },
   ],
   creator: 'Arturo Carretero Calvo',
   icons: {

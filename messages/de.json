@@ -251,10 +251,6 @@
     "sectionLegal": "Rechtliches",
     "termsOfService": "Nutzungsbedingungen",
     "privacyPolicy": "Datenschutzerklärung",
-    "sectionAuthor": "Autor",
-    "authorDescription": "Erstellt von Arturo Carretero Calvo",
-    "websiteLink": "Website",
-    "githubProfile": "GitHub-Profil",
     "contactLink": "Kontakt",
     "deleteAccount": "Konto löschen",
     "deleteAccountTitle": "Konto löschen",
@@ -288,7 +284,6 @@
     "cardTutorVoice": "Tutor-Stimme",
     "cardCurrentUsage": "Aktuelle Nutzung",
     "cardProductReview": "Produktbewertung",
-    "cardCreatedBy": "Erstellt von",
     "cardLegalDocuments": "Rechtliche Dokumente",
     "sectionReview": "Bewertung",
     "reviewDescription": "Teile deine Erfahrung mit FreeLingo. Wenn du eine bereits freigegebene Bewertung bearbeitest, wird sie vor der öffentlichen Anzeige erneut geprüft.",
@@ -335,7 +330,7 @@
       "linkPrivacy": "Datenschutzerklärung",
       "linkBack": "Zurück zur Registrierung",
       "linkBackSettings": "Zurück zu Einstellungen",
-      "linkContact": "Bei Fragen zu diesen Bedingungen kontaktieren Sie uns unter contacto@arturocarreterocalvo.com."
+      "linkContact": "Bei Fragen zu diesen Bedingungen kontaktieren Sie uns über das Kontaktformular auf freelingo.app."
     },
     "privacy": {
       "pageTitle": "Datenschutzerklärung",
@@ -372,7 +367,7 @@
       "s7Title": "7. Datenspeicherung und Löschung",
       "s7Body": "Ihre Daten werden so lange gespeichert, wie Ihr Konto besteht. Sie können Ihr Konto und alle zugehörigen Daten jederzeit dauerhaft über die Einstellungsseite löschen. Die Löschung ist sofortig und unwiderruflich.",
       "s8Title": "8. Kontakt",
-      "s8Body": "Für datenschutzbezogene Anfragen zum gehosteten Dienst kontaktieren Sie uns unter: contacto@arturocarreterocalvo.com. Bei selbst gehosteten Installationen wenden Sie sich an den Administrator der von Ihnen genutzten Instanz. Für Fragen zum FreeLingo-Open-Source-Projekt besuchen Sie das Projektrepository auf GitHub.",
+      "s8Body": "Für datenschutzbezogene Anfragen zum gehosteten Dienst kontaktieren Sie uns über das Kontaktformular auf freelingo.app. Bei selbst gehosteten Installationen wenden Sie sich an den Administrator der von Ihnen genutzten Instanz. Für Fragen zum FreeLingo-Open-Source-Projekt besuchen Sie das Projektrepository auf GitHub.",
       "s9Title": "9. Salvatorische Klausel",
       "s9Body": "Sollte eine Bestimmung dieser Richtlinie für ungültig oder nicht durchsetzbar befunden werden, wird diese Bestimmung im geringstmöglichen Umfang eingeschränkt und die übrigen Bestimmungen bleiben wirksam.",
       "linkTerms": "Nutzungsbedingungen",
@@ -1383,7 +1378,7 @@
   },
   "whatsNew": {
     "title": "Neuigkeiten",
-    "version": "v1.8.26",
+    "version": "v1.8.27",
     "cta": "Verstanden",
     "entry1": {
       "label": "Alles kostenlos testen",
