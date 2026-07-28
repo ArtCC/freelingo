@@ -251,10 +251,6 @@
     "sectionLegal": "Juridisch",
     "termsOfService": "Gebruiksvoorwaarden",
     "privacyPolicy": "Privacybeleid",
-    "sectionAuthor": "Auteur",
-    "authorDescription": "Gebouwd door Arturo Carretero Calvo",
-    "websiteLink": "Website",
-    "githubProfile": "GitHub-profiel",
     "contactLink": "Contact",
     "deleteAccount": "Account verwijderen",
     "deleteAccountTitle": "Account verwijderen",
@@ -288,7 +284,6 @@
     "cardTutorVoice": "Tutorstem",
     "cardCurrentUsage": "Huidig gebruik",
     "cardProductReview": "Productreview",
-    "cardCreatedBy": "Gemaakt door",
     "cardLegalDocuments": "Juridische documenten",
     "sectionReview": "Review",
     "reviewDescription": "Deel je ervaring met FreeLingo. Als je een al goedgekeurde review bewerkt, gaat die opnieuw ter beoordeling voordat hij openbaar verschijnt.",
@@ -335,7 +330,7 @@
       "linkPrivacy": "Privacybeleid",
       "linkBack": "Terug naar registratie",
       "linkBackSettings": "Terug naar instellingen",
-      "linkContact": "Voor vragen over deze voorwaarden, neem contact met ons op via contacto@arturocarreterocalvo.com."
+      "linkContact": "Voor vragen over deze voorwaarden, neem contact met ons op via het contactformulier op freelingo.app."
     },
     "privacy": {
       "pageTitle": "Privacybeleid",
@@ -372,7 +367,7 @@
       "s7Title": "7. Bewaring en verwijdering van gegevens",
       "s7Body": "Je gegevens worden bewaard zolang je account bestaat. Je kunt je account en alle bijbehorende gegevens op elk moment permanent verwijderen via de pagina instellingen. Verwijdering is onmiddellijk en onomkeerbaar.",
       "s8Title": "8. Contact",
-      "s8Body": "Voor privacygerelateerde vragen over de gehoste service, neem contact met ons op via: contacto@arturocarreterocalvo.com.",
+      "s8Body": "Voor privacygerelateerde vragen over de gehoste service, neem contact met ons op via het contactformulier op freelingo.app.",
       "s9Title": "9. Scheidbaarheid",
       "s9Body": "Indien een bepaling van dit beleid ongeldig of niet-afdwingbaar wordt verklaard, wordt die bepaling in de minimaal noodzakelijke mate beperkt en blijven de overige bepalingen van kracht.",
       "linkTerms": "Gebruiksvoorwaarden",
@@ -1383,7 +1378,7 @@
   },
   "whatsNew": {
     "title": "Nieuw",
-    "version": "v1.8.26",
+    "version": "v1.8.27",
     "cta": "Begrepen",
     "entry1": {
       "label": "Probeer alles gratis",

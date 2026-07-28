@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation'
 import {
   Bot,
   CreditCard,
-  ExternalLink,
   Globe2,
   MessageSquareText,
   Palette,
@@ -49,7 +48,6 @@ export default function SettingsPage() {
     { href: '#voice', label: t('sectionConversation'), icon: Volume2 },
     { href: '#plan', label: t('sectionUsageLimits'), icon: CreditCard },
     { href: '#community', label: t('sectionReview'), icon: MessageSquareText },
-    { href: '#author', label: t('sectionAuthor'), icon: User },
     { href: '#legal', label: t('sectionLegal'), icon: Globe2 },
   ]
 
@@ -140,40 +138,6 @@ export default function SettingsPage() {
 
         <SettingsPanel id="community" title={t('sectionReview')}>
           <ReviewSection title={t('cardProductReview')} />
-        </SettingsPanel>
-
-        <SettingsPanel id="author" title={t('sectionAuthor')}>
-          <div className="border-fl-border bg-fl-surface border p-6">
-            <div className="border-fl-border mb-5 flex items-center gap-2 border-b pb-4">
-              <span className="text-fl-label text-fl-muted-2">●</span>
-              <span className="text-fl-label text-fl-muted-2 font-mono tracking-widest uppercase">
-                {t('cardCreatedBy')}
-              </span>
-            </div>
-            <p className="text-fl-fg font-mono text-sm">
-              {t('authorDescription')}
-            </p>
-            <div className="mt-3 flex flex-col gap-2">
-              <a
-                href="https://arturocarreterocalvo.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-fl-muted-2 hover:text-fl-fg inline-flex items-center gap-2 font-mono text-xs transition-colors hover:underline"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                {t('websiteLink')}
-              </a>
-              <a
-                href="https://github.com/artcc"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-fl-muted-2 hover:text-fl-fg inline-flex items-center gap-2 font-mono text-xs transition-colors hover:underline"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                {t('githubProfile')}
-              </a>
-            </div>
-          </div>
         </SettingsPanel>
 
         <SettingsPanel id="legal" title={t('sectionLegal')}>

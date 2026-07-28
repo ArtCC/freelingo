@@ -251,10 +251,6 @@
     "sectionLegal": "Prawne",
     "termsOfService": "Regulamin",
     "privacyPolicy": "Polityka prywatności",
-    "sectionAuthor": "Autor",
-    "authorDescription": "Zbudowane przez Arturo Carretero Calvo",
-    "websiteLink": "Strona internetowa",
-    "githubProfile": "Profil GitHub",
     "contactLink": "Kontakt",
     "deleteAccount": "Usuń konto",
     "deleteAccountTitle": "Usuń konto",
@@ -288,7 +284,6 @@
     "cardTutorVoice": "Głos tutora",
     "cardCurrentUsage": "Bieżące użycie",
     "cardProductReview": "Recenzja produktu",
-    "cardCreatedBy": "Utworzone przez",
     "cardLegalDocuments": "Dokumenty prawne",
     "sectionReview": "Recenzja",
     "reviewDescription": "Podziel się swoim doświadczeniem z FreeLingo. Jeśli edytujesz już zatwierdzoną recenzję, wróci ona do moderacji przed publicznym wyświetleniem.",
@@ -335,7 +330,7 @@
       "linkPrivacy": "Polityka prywatności",
       "linkBack": "Wróć do rejestracji",
       "linkBackSettings": "Wróć do ustawień",
-      "linkContact": "W sprawach dotyczących niniejszego regulaminu prosimy o kontakt na adres contacto@arturocarreterocalvo.com."
+      "linkContact": "W sprawach dotyczących niniejszego regulaminu prosimy o kontakt przez formularz kontaktowy na freelingo.app."
     },
     "privacy": {
       "pageTitle": "Polityka prywatności",
@@ -372,7 +367,7 @@
       "s7Title": "7. Przechowywanie i usuwanie danych",
       "s7Body": "Twoje dane są przechowywane przez cały czas istnienia konta. Możesz trwale usunąć swoje konto i wszystkie powiązane dane w dowolnym momencie ze strony ustawień. Usunięcie jest natychmiastowe i nieodwracalne.",
       "s8Title": "8. Kontakt",
-      "s8Body": "W sprawach dotyczących prywatności usługi hostowanej skontaktuj się z nami pod adresem: contacto@arturocarreterocalvo.com.",
+      "s8Body": "W sprawach dotyczących prywatności usługi hostowanej skontaktuj się z nami przez formularz kontaktowy na freelingo.app.",
       "s9Title": "9. Rozdzielność",
       "s9Body": "Jeśli którekolwiek postanowienie niniejszej polityki zostanie uznane za nieważne lub niewykonalne, zostanie ono ograniczone w minimalnym zakresie, a pozostałe pozostaną w mocy.",
       "linkTerms": "Regulamin",
@@ -1383,7 +1378,7 @@
   },
   "whatsNew": {
     "title": "Co nowego",
-    "version": "v1.8.26",
+    "version": "v1.8.27",
     "cta": "Rozumiem",
     "entry1": {
       "label": "Wypróbuj wszystko za darmo",
