@@ -295,7 +295,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting bugs and sugg
 
 Distributed under the [GNU Affero General Public License v3](LICENSE).
 
-Organisations that need to deploy FreeLingo without the AGPL's copyleft obligations can obtain a **commercial licence**. See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) or [get in touch](https://www.arturocarreterocalvo.com).
+Organisations that need to deploy FreeLingo without the AGPL's copyleft obligations can obtain a **commercial licence**. See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) or [get in touch](https://freelingo.app) via the contact form.
 
 ## Author
 
