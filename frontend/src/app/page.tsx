@@ -336,15 +336,17 @@ export default async function Home() {
             <h4 className="text-fl-label text-fl-muted-2 mb-3 font-sans text-sm font-semibold tracking-tight">
               {t('contact')}
             </h4>
-            <a
-              href="https://www.arturocarreterocalvo.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-fl-hint text-fl-muted-3 hover:text-fl-muted-1 font-mono tracking-widest uppercase transition-colors"
-            >
-              {t('aboutMe')}
-            </a>
-            <ContactButton />
+            <div className="flex flex-col gap-2">
+              <a
+                href="https://www.arturocarreterocalvo.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-fl-hint text-fl-muted-3 hover:text-fl-muted-1 font-mono tracking-widest uppercase transition-colors"
+              >
+                {t('aboutMe')}
+              </a>
+              <ContactButton />
+            </div>
           </div>
         </div>
       </footer>
