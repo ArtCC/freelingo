@@ -12,7 +12,7 @@ export function ContactButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="text-fl-hint text-fl-muted-3 hover:text-fl-muted-1 font-mono tracking-widest uppercase transition-colors"
+        className="text-fl-hint text-fl-muted-3 hover:text-fl-muted-1 font-mono tracking-widest uppercase transition-colors text-left w-full"
       >
         {t('contact')}
       </button>
