@@ -251,10 +251,6 @@
     "sectionLegal": "Legal",
     "termsOfService": "Términos de servicio",
     "privacyPolicy": "Política de privacidad",
-    "sectionAuthor": "Autor",
-    "authorDescription": "Creado por Arturo Carretero Calvo",
-    "websiteLink": "Sitio web",
-    "githubProfile": "Perfil de GitHub",
     "contactLink": "Contacto",
     "deleteAccount": "Eliminar cuenta",
     "deleteAccountTitle": "Eliminar cuenta",
@@ -288,7 +284,6 @@
     "cardTutorVoice": "Voz del tutor",
     "cardCurrentUsage": "Uso actual",
     "cardProductReview": "Reseña del producto",
-    "cardCreatedBy": "Creado por",
     "cardLegalDocuments": "Documentos legales",
     "sectionReview": "Reseña",
     "reviewDescription": "Comparte tu experiencia con FreeLingo. Si editas una reseña ya aprobada, volverá a revisión antes de mostrarse públicamente.",
@@ -335,7 +330,7 @@
       "linkPrivacy": "Política de privacidad",
       "linkBack": "Volver al registro",
       "linkBackSettings": "Volver a ajustes",
-      "linkContact": "Para cuestiones relacionadas con estos términos, contáctanos en contacto@arturocarreterocalvo.com."
+      "linkContact": "Para cuestiones relacionadas con estos términos, contáctanos a través del formulario de contacto en freelingo.app."
     },
     "privacy": {
       "pageTitle": "Política de privacidad",
@@ -372,7 +367,7 @@
       "s7Title": "7. Conservación y eliminación de datos",
       "s7Body": "Tus datos se conservan mientras exista tu cuenta. Puedes eliminar tu cuenta y todos los datos asociados de forma permanente en cualquier momento desde la página de ajustes. La eliminación es inmediata e irreversible.",
       "s8Title": "8. Contacto",
-      "s8Body": "Para consultas sobre privacidad en el servicio alojado, contáctanos en: contacto@arturocarreterocalvo.com. Para despliegues autoalojados, contacta con el administrador de la instancia que estás usando. Para preguntas sobre el proyecto de código abierto FreeLingo, visita el repositorio del proyecto en GitHub.",
+      "s8Body": "Para consultas sobre privacidad en el servicio alojado, contáctanos a través del formulario de contacto en freelingo.app. Para despliegues autoalojados, contacta con el administrador de la instancia que estás usando. Para preguntas sobre el proyecto de código abierto FreeLingo, visita el repositorio del proyecto en GitHub.",
       "s9Title": "9. Divisibilidad",
       "s9Body": "Si alguna disposición de esta política se considera inválida o inaplicable, dicha disposición se limitará en la medida mínima necesaria y las demás mantendrán plena vigencia.",
       "linkTerms": "Términos de servicio",
@@ -1383,7 +1378,7 @@
   },
   "whatsNew": {
     "title": "Novedades",
-    "version": "v1.8.26",
+    "version": "v1.8.27",
     "cta": "Entendido",
     "entry1": {
       "label": "Prueba todo gratis",

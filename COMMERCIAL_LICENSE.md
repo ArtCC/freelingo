@@ -34,10 +34,7 @@ You do **not** need a commercial licence if you:
 
 Commercial licences are negotiated individually based on deployment scope and requirements. Managed deployments are also available as a turnkey service.
 
-To request a commercial licence or discuss your needs, contact:
-
-**Arturo Carretero Calvo**
-[contacto@arturocarreterocalvo.com](mailto:contacto@arturocarreterocalvo.com)
+To request a commercial licence or discuss your needs, reach out via the contact form at [freelingo.app](https://freelingo.app).
 
 ---
 

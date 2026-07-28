@@ -251,10 +251,6 @@
     "sectionLegal": "Legal",
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy Policy",
-    "sectionAuthor": "Author",
-    "authorDescription": "Built by Arturo Carretero Calvo",
-    "websiteLink": "Website",
-    "githubProfile": "GitHub profile",
     "contactLink": "Contact",
     "deleteAccount": "Delete Account",
     "deleteAccountTitle": "Delete Account",
@@ -288,7 +284,6 @@
     "cardTutorVoice": "Tutor voice",
     "cardCurrentUsage": "Current usage",
     "cardProductReview": "Product review",
-    "cardCreatedBy": "Created by",
     "cardLegalDocuments": "Legal documents",
     "sectionReview": "Review",
     "reviewDescription": "Share your experience with FreeLingo. If you edit an already approved review, it will go back to review before appearing publicly.",
@@ -335,7 +330,7 @@
       "linkPrivacy": "Privacy Policy",
       "linkBack": "Back to Register",
       "linkBackSettings": "Back to Settings",
-      "linkContact": "For questions about these terms, contact us at contacto@arturocarreterocalvo.com."
+      "linkContact": "For questions about these terms, contact us via the contact form at freelingo.app."
     },
     "privacy": {
       "pageTitle": "Privacy Policy",
@@ -372,7 +367,7 @@
       "s7Title": "7. Data Retention & Deletion",
       "s7Body": "Your data is retained for as long as your account exists. You can permanently delete your account and all associated data at any time from the Settings page. Deletion is immediate and irreversible.",
       "s8Title": "8. Contact",
-      "s8Body": "For privacy-related concerns about the hosted service, contact us at: contacto@arturocarreterocalvo.com. For self-hosted deployments, contact the administrator of the instance you are using. For questions about the FreeLingo open-source project, visit the project repository on GitHub.",
+      "s8Body": "For privacy-related concerns about the hosted service, contact us via the contact form at freelingo.app. For self-hosted deployments, contact the administrator of the instance you are using. For questions about the FreeLingo open-source project, visit the project repository on GitHub.",
       "s9Title": "9. Severability",
       "s9Body": "If any provision of this policy is found to be invalid or unenforceable, that provision will be limited to the minimum extent necessary and the remaining provisions will remain in full force and effect.",
       "linkTerms": "Terms of Service",
@@ -1383,7 +1378,7 @@
   },
   "whatsNew": {
     "title": "What's New",
-    "version": "v1.8.26",
+    "version": "v1.8.27",
     "cta": "Got it",
     "entry1": {
       "label": "Try everything for free",

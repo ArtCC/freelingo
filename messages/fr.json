@@ -251,10 +251,6 @@
     "sectionLegal": "Légal",
     "termsOfService": "Conditions d'utilisation",
     "privacyPolicy": "Politique de confidentialité",
-    "sectionAuthor": "Auteur",
-    "authorDescription": "Créé par Arturo Carretero Calvo",
-    "websiteLink": "Site web",
-    "githubProfile": "Profil GitHub",
     "contactLink": "Contact",
     "deleteAccount": "Supprimer le compte",
     "deleteAccountTitle": "Supprimer le compte",
@@ -288,7 +284,6 @@
     "cardTutorVoice": "Voix du tuteur",
     "cardCurrentUsage": "Utilisation actuelle",
     "cardProductReview": "Avis produit",
-    "cardCreatedBy": "Créé par",
     "cardLegalDocuments": "Documents légaux",
     "sectionReview": "Avis",
     "reviewDescription": "Partagez votre expérience avec FreeLingo. Si vous modifiez un avis déjà approuvé, il sera de nouveau examiné avant d'apparaître publiquement.",
@@ -335,7 +330,7 @@
       "linkPrivacy": "Politique de confidentialité",
       "linkBack": "Retour à l'inscription",
       "linkBackSettings": "Retour aux paramètres",
-      "linkContact": "Pour toute question concernant ces conditions, contactez-nous à contacto@arturocarreterocalvo.com."
+      "linkContact": "Pour toute question concernant ces conditions, contactez-nous via le formulaire de contact sur freelingo.app."
     },
     "privacy": {
       "pageTitle": "Politique de confidentialité",
@@ -372,7 +367,7 @@
       "s7Title": "7. Conservation et suppression des données",
       "s7Body": "Vos données sont conservées aussi longtemps que votre compte existe. Vous pouvez supprimer définitivement votre compte et toutes les données associées à tout moment depuis la page Paramètres. La suppression est immédiate et irréversible.",
       "s8Title": "8. Contact",
-      "s8Body": "Pour toute question relative à la confidentialité du service hébergé, contactez-nous à : contacto@arturocarreterocalvo.com. Pour les déploiements auto-hébergés, contactez l'administrateur de l'instance que vous utilisez. Pour les questions sur le projet open source FreeLingo, visitez le dépôt du projet sur GitHub.",
+      "s8Body": "Pour toute question relative à la confidentialité du service hébergé, contactez-nous via le formulaire de contact sur freelingo.app. Pour les déploiements auto-hébergés, contactez l'administrateur de l'instance que vous utilisez. Pour les questions sur le projet open source FreeLingo, visitez le dépôt du projet sur GitHub.",
       "s9Title": "9. Divisibilité",
       "s9Body": "Si une disposition de cette politique est jugée invalide ou inapplicable, cette disposition sera limitée dans la mesure minimale nécessaire et les autres dispositions resteront pleinement en vigueur.",
       "linkTerms": "Conditions d'utilisation",
@@ -1383,7 +1378,7 @@
   },
   "whatsNew": {
     "title": "Nouveautés",
-    "version": "v1.8.26",
+    "version": "v1.8.27",
     "cta": "Compris",
     "entry1": {
       "label": "Essayez tout gratuitement",
