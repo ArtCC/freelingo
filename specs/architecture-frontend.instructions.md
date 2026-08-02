@@ -115,7 +115,7 @@ frontend/
 │   │
 │   └── middleware.ts            # Auth guard (redirect to /login) + locale detection
 │
-├── tests/                       # Vitest suite (30 test files, 405 tests; coverage not configured)
+├── tests/                       # Vitest suite (37 test files, 433 tests; coverage not configured)
 │   ├── setup.ts                 # Global mocks: localStorage, next/navigation, next-intl
 │   ├── middleware.test.ts
 │   ├── components/
@@ -191,7 +191,7 @@ frontend/
 - `/listening` — AI-generated listening comprehension exercises. Its attempt history uses the shared pagination component with 10 results per page and sends `skip`/`limit` to the backend. Free-tier users see a `FreemiumQuotaBanner` with weekly exercise counter; when quota is exhausted, a compact `PaywallBanner` is shown. Completing a new listening attempt may open the reusable review prompt, subject to duplicate-review checks and local dismissal cooldown; replay attempts from history do not trigger it.
 - `/reading` — AI-generated reading comprehension exercises. Its attempt history uses the shared pagination component with 10 results per page and sends `skip`/`limit` to the backend. Free-tier users see a `FreemiumQuotaBanner` with weekly exercise counter; when quota is exhausted, a compact `PaywallBanner` is shown. Completing a new reading attempt may open the reusable review prompt, subject to duplicate-review checks and local dismissal cooldown; replay attempts from history do not trigger it.
 - `/progress` — Skills tracker with radar chart and multi-level vocabulary progress toggle.
-- `/settings` — Settings hub with an admin-inspired header/nav, quick action cards, and grouped panels. Account contains profile/avatar/password plus legal/session actions; avatars are uploaded/deleted through authenticated profile endpoints and rendered through the authenticated `/api/auth/me/avatar-file` endpoint with a shared client-side blob cache. Avatar fetches retry once through the refresh-token flow after a 401, and UI surfaces use the same initial-letter placeholder while the private image blob is loading or unavailable. Avatar file references are not public static URLs. Learning links to My Languages and Memory; Voice contains conversation and TTS voice preferences; Plan contains billing and usage limits with shared subscription buttons that recommend yearly first for unsubscribed users; `past_due`, `unpaid`, and `paused` subscriptions show payment-recovery copy and a Stripe Customer Portal action instead of new plan buttons. `none`, `incomplete`, `incomplete_expired`, and `canceled` show normal monthly/yearly plan buttons. Community contains review creation/editing.
+- `/settings` — Settings hub with an admin-inspired header/nav, quick action cards, and grouped panels. Account contains profile/avatar/password plus legal/session actions; avatars are uploaded/deleted through authenticated profile endpoints and rendered through the authenticated `/api/auth/me/avatar-file` endpoint with a shared client-side blob cache. Avatar fetches retry once through the refresh-token flow after a 401, and UI surfaces use the same initial-letter placeholder while the private image blob is loading or unavailable. Avatar file references are not public static URLs. Learning links to My Languages and Memory; `/settings/memories` explains global cross-language memory and supports authenticated manual add, list, individual delete, and clear-all with explicit loading, retry, duplicate, busy, success, and error states. Voice contains conversation and TTS voice preferences; Plan contains billing and usage limits with shared subscription buttons that recommend yearly first for unsubscribed users; `past_due`, `unpaid`, and `paused` subscriptions show payment-recovery copy and a Stripe Customer Portal action instead of new plan buttons. `none`, `incomplete`, `incomplete_expired`, and `canceled` show normal monthly/yearly plan buttons. Community contains review creation/editing.
 - `/faq` — Frequently asked questions.
 - `/admin/reviews` — Admin-only review moderation with 10 reviews per page, status/rating filters, approve/unapprove, and delete confirmation.
 - Onboarding Checkout — If a user reloads onboarding after registration and the refresh cookie exists but no access token is in memory, onboarding refreshes `/api/auth/refresh` before creating the Stripe Checkout session for the selected monthly/yearly plan.
@@ -205,7 +205,7 @@ frontend/
 
 ### Legal routes — `(legal)/`
 
-- `/privacy` — Privacy policy
+- `/privacy` — Privacy policy, including global/manual memory storage and preservation when a learning language is deleted
 - `/terms` — Terms of service
 
 ### API route handlers
@@ -249,6 +249,7 @@ Seven Zustand stores hold all client-side state. No React Context is used for gl
 - `billing/` — Stripe subscription management UI; landing `PricingSection` hides for active/trialing subscribers; `MaintenanceGate` hides gated pages from non-admin users during maintenance. `FreemiumQuotaBanner` displays quota counters and trial badge for free-tier users. `PaywallBanner` supports a `compact` prop for inline upsell on freemium-exhausted pages; the `PaywallGate` wrapper component has been removed in favor of per-page freemium checks.
 - `chat/` — Message display, input, SSE stream handling
 - `conversation/` — `ConversationMode`, `MicButton`, `StatusIndicator`, `TranscriptBubble`, VAD integration
+- `memory/` — Shared accessible `MemorySavedToast` used by text and voice tutoring
 - `feedback/` — `AdminAuthorBadge`, a compact gold `ADMIN` marker rendered only for feedback authors whose embedded API role is `admin`
 - `flashcard/` — Flashcard flip animation, SM-2 rating buttons
 - `lesson/` — Exercise renderers (multiple choice, fill-in-blank, listening, reading)
@@ -270,6 +271,7 @@ Seven Zustand stores hold all client-side state. No React Context is used for gl
 - **`LanguageSwitcher.tsx`** — UI locale switcher
 - **`CookieBanner.tsx`** — GDPR cookie consent banner
 - **`ui/`** — shadcn/ui primitives (`button`, `card`, `input`, `progress`, `badge`, `separator`, `sheet`, `tabs`) + custom: `AudioPlayer`, `VoiceRecorder`, `confirm-dialog`
+- **Memory notification** — `useTransientToast` owns one resettable, unmount-safe timer and increments an announcement ID for every save. `MemorySavedToast` remounts its `role="status"`/`aria-live="polite"` region for consecutive announcements and tells the user the memory can be reviewed in Settings without exposing stored content or presenting a timed action.
 
 ---
 
@@ -334,10 +336,11 @@ User sends message → POST /api/chat (SSE proxy)
     ↓
 Next.js Route Handler forwards to backend SSE endpoint
     ↓
-Backend: LLM Adapter streams tokens → SSE events
+Backend: LLM Adapter streams tokens and memory status → SSE events
     ↓
-Frontend receives SSE events:
+Buffered `readSseData()` reassembles events across arbitrary network chunks:
   - token events → append to message accumulator
+  - memory_updated event → show the shared accessible memory toast
   - done event → finalize message, add to ChatHistory
   - error event → show error, stop streaming
 ```

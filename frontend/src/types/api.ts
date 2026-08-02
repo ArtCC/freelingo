@@ -91,3 +91,22 @@ export interface PaginatedReviewsResponse {
   skip: number
   limit: number
 }
+
+// ---------------------------------------------------------------------------
+// Memories
+// ---------------------------------------------------------------------------
+
+export interface Memory {
+  id: number
+  content: string
+  source: string
+  created_at: string
+}
+
+export interface MemoryListResponse {
+  memories: Memory[]
+}
+
+export interface ClearMemoriesResponse {
+  deleted: number
+}

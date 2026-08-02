@@ -20,6 +20,7 @@ from app.models.progress import Progress
 from app.models.study_plan import StudyPlan
 from app.models.user import User
 from app.models.user_language import UserLanguage
+from app.services.memory_service import get_user_memories
 
 # ═════════════════════════════════════════════════════════════════════════════
 # Helpers
@@ -188,8 +189,8 @@ class TestMultiLanguageIsolation:
         assert count_es == 1
 
     @pytest.mark.asyncio
-    async def test_memories_isolated_by_language(self, client, db_session):
-        """Memories are filtered by study_plan_id."""
+    async def test_memories_shared_across_languages(self, client, db_session):
+        """Plan provenance never limits global user memory retrieval."""
         user, _headers = await _make_user(db_session)
         await _add_language(db_session, user.id, "es-ES", active=False)
         plan_en = await _make_plan(db_session, user.id, language="en-US")
@@ -210,14 +211,11 @@ class TestMultiLanguageIsolation:
         db_session.add_all([mem_en, mem_es])
         await db_session.commit()
 
-        count_en = await db_session.scalar(
-            select(func.count()).where(Memory.study_plan_id == plan_en.id)
-        )
-        count_es = await db_session.scalar(
-            select(func.count()).where(Memory.study_plan_id == plan_es.id)
-        )
-        assert count_en == 1
-        assert count_es == 1
+        memories = await get_user_memories(db_session, user.id)
+        assert [memory.content for memory in memories] == [
+            "User likes dogs",
+            "Usuario prefiere gatos",
+        ]
 
     @pytest.mark.asyncio
     async def test_conversations_isolated_by_language(self, client, db_session):
@@ -401,9 +399,20 @@ class TestLanguageAPI:
 
     @pytest.mark.asyncio
     async def test_remove_language_cascades(self, client, db_session):
-        """DELETE /api/languages/{code} removes the language."""
+        """Language deletion removes scoped data but preserves global memories."""
         user, headers = await _make_user(db_session)
         await client.post("/api/languages", headers=headers, json={"target_language": "es-ES"})
+        plan_es = await _make_plan(db_session, user.id, language="es-ES")
+        memory = Memory(
+            user_id=user.id,
+            study_plan_id=plan_es.id,
+            content="User enjoys cooking",
+            source="chat",
+        )
+        db_session.add(memory)
+        await db_session.commit()
+        memory_id = memory.id
+        user_id = user.id
 
         # Switch away from es-ES first (can't delete active language)
         await client.put(
@@ -422,6 +431,11 @@ class TestLanguageAPI:
             .all()
         )
         assert all(lang.target_language != "es-ES" for lang in remaining)
+        db_session.expire_all()
+        preserved = await db_session.get(Memory, memory_id)
+        assert preserved is not None
+        assert preserved.user_id == user_id
+        assert preserved.study_plan_id is None
 
     @pytest.mark.asyncio
     async def test_cannot_remove_last_language(self, client, db_session):

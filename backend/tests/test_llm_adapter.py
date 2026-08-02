@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -1240,3 +1241,177 @@ class TestLLMStreamAnthropic:
         assert wrapped.prompt_tokens is None
         assert wrapped.completion_tokens is None
         assert wrapped.total_tokens is None
+
+
+# ---------------------------------------------------------------------------
+# Native tool streaming
+# ---------------------------------------------------------------------------
+
+
+class TestNativeToolStreaming:
+    @pytest.mark.asyncio
+    async def test_openai_tool_call_executes_and_continues(self, monkeypatch):
+        _make_ollama_settings(monkeypatch)
+        from app.services.llm_adapter import (
+            LLMAdapter,
+            LLMTool,
+            LLMToolResult,
+        )
+
+        def tool_chunk(arguments: str, *, tool_id: str | None = None, name: str | None = None):
+            function = SimpleNamespace(name=name, arguments=arguments)
+            tool_call = SimpleNamespace(index=0, id=tool_id, function=function)
+            delta = SimpleNamespace(content=None, tool_calls=[tool_call])
+            return SimpleNamespace(choices=[SimpleNamespace(delta=delta)], usage=None)
+
+        async def initial_stream():
+            yield tool_chunk('{"content":"Likes ', tool_id="call_1", name="save_user_memory")
+            yield tool_chunk('hiking"}')
+            yield FakeOpenAIChunk(None, usage=FakeUsage(10, 3))
+
+        async def continuation_stream():
+            yield FakeOpenAIChunk("I will remember that.")
+            yield FakeOpenAIChunk(None, usage=FakeUsage(12, 4))
+
+        adapter = LLMAdapter()
+        tool = LLMTool(
+            name="save_user_memory",
+            description="Save memory",
+            input_schema={"type": "object"},
+        )
+
+        async def executor(call):
+            assert call.arguments == {"content": "Likes hiking"}
+            return LLMToolResult(call=call, content={"saved": True})
+
+        with patch.object(
+            adapter.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            side_effect=[initial_stream(), continuation_stream()],
+        ) as create:
+            stream = await adapter.chat(
+                [{"role": "user", "content": "I like hiking"}],
+                stream=True,
+                tools=[tool],
+                tool_executor=executor,
+            )
+            assert [part async for part in stream] == ["I will remember that."]
+
+        assert stream.tool_results[0].content == {"saved": True}
+        assert stream.prompt_tokens == 22
+        assert stream.completion_tokens == 7
+        assert "tools" in create.call_args_list[0].kwargs
+        assert "tools" not in create.call_args_list[1].kwargs
+        continuation = create.call_args_list[1].kwargs["messages"]
+        assert continuation[-2]["role"] == "assistant"
+        assert continuation[-1]["role"] == "tool"
+
+    @pytest.mark.asyncio
+    async def test_anthropic_tool_call_uses_native_result_blocks(self, monkeypatch):
+        _make_anthropic_settings(monkeypatch)
+        from app.services.llm_adapter import LLMAdapter, LLMTool, LLMToolResult
+
+        async def initial_stream():
+            yield SimpleNamespace(
+                type="message_start",
+                message=SimpleNamespace(usage=SimpleNamespace(input_tokens=8)),
+            )
+            yield SimpleNamespace(
+                type="content_block_start",
+                index=0,
+                content_block=SimpleNamespace(
+                    type="tool_use",
+                    id="tool_1",
+                    name="save_user_memory",
+                    input={},
+                ),
+            )
+            yield SimpleNamespace(
+                type="content_block_delta",
+                index=0,
+                delta=SimpleNamespace(
+                    type="input_json_delta",
+                    partial_json='{"content":"Likes tea"}',
+                ),
+            )
+            yield SimpleNamespace(
+                type="message_delta",
+                usage=SimpleNamespace(output_tokens=2),
+            )
+
+        async def continuation_stream():
+            yield SimpleNamespace(
+                type="content_block_delta",
+                index=0,
+                delta=SimpleNamespace(type="text_delta", text="Thanks for sharing."),
+            )
+
+        adapter = LLMAdapter()
+        tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+
+        async def executor(call):
+            return LLMToolResult(call=call, content={"saved": True})
+
+        with patch.object(
+            adapter._anthropic.messages,
+            "create",
+            new_callable=AsyncMock,
+            side_effect=[initial_stream(), continuation_stream()],
+        ) as create:
+            stream = await adapter.chat(
+                [{"role": "user", "content": "I like tea"}],
+                stream=True,
+                tools=[tool],
+                tool_executor=executor,
+            )
+            assert [part async for part in stream] == ["Thanks for sharing."]
+
+        assert create.call_args_list[0].kwargs["tools"][0]["name"] == "save_user_memory"
+        continuation = create.call_args_list[1].kwargs["messages"]
+        assert continuation[-1]["content"][0]["type"] == "tool_result"
+
+    @pytest.mark.asyncio
+    async def test_tools_require_stream_and_executor(self, monkeypatch):
+        _make_ollama_settings(monkeypatch)
+        from app.services.llm_adapter import LLMAdapter, LLMTool
+
+        adapter = LLMAdapter()
+        tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+        with pytest.raises(ValueError, match="require streaming"):
+            await adapter.chat([], tools=[tool])
+
+    @pytest.mark.asyncio
+    async def test_stream_iteration_connection_error_is_typed(self, monkeypatch):
+        _make_ollama_settings(monkeypatch)
+        from app.services.llm_adapter import (
+            LLMAdapter,
+            LLMTool,
+            LLMToolResult,
+            LLMUnavailableError,
+        )
+
+        async def broken_stream():
+            yield FakeOpenAIChunk("Partial")
+            raise ConnectionError("connection lost")
+
+        adapter = LLMAdapter()
+        tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+
+        async def executor(call):
+            return LLMToolResult(call=call, content={"saved": True})
+
+        with patch.object(
+            adapter.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            return_value=broken_stream(),
+        ):
+            stream = await adapter.chat(
+                [{"role": "user", "content": "Hi"}],
+                stream=True,
+                tools=[tool],
+                tool_executor=executor,
+            )
+            with pytest.raises(LLMUnavailableError, match="unreachable"):
+                _ = [part async for part in stream]

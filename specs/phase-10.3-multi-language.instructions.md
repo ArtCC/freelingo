@@ -270,7 +270,7 @@ Use the active plan's `study_plan_id` to:
 
 - Determine `target_language` for the system prompt.
 - Store `study_plan_id` in `conversations` and `chat_history` rows.
-- Filter `memories` by `study_plan_id`.
+- Load memories globally by `user_id`; pass the active `study_plan_id` only as optional provenance when Lingu saves a new memory.
 
 ### `POST /api/lessons/{id}/complete` and `POST /api/lessons/exercises/{id}/answer`
 

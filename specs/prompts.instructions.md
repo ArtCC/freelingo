@@ -43,11 +43,11 @@ Service and router modules import builders from this package and pass runtime va
 - `ANTHROPIC_SYSTEM_ONLY_TRIGGER` — File: `prompts/common.py`; Purpose: Minimal user message for Anthropic calls where all task instructions are system messages.
 - `TUTOR_DISPLAY_NAME` — File: `prompts/common.py`; Purpose: Central display name for the AI tutor persona (`Lingu`).
 - `get_language_prompt_overlay()` — File: `prompts/common.py`; Purpose: Returns concise language/variant guidance for supported and readiness target languages. Injected into tutor, voice, lesson, evaluation, flashcard, comprehension, and assessment prompts. Supports canonical BCP-47 codes plus short aliases (`de`, `fr`, `es`, `it`, `pt`, `ja`, `ko`, `zh`).
-- `MEMORY_SYSTEM_INSTRUCTION_BASE` — File: `prompts/common.py`; Purpose: Shared memory marker instructions appended to text chat and voice tutor prompts.
-- `get_memory_system_instruction()` — File: `prompts/common.py`; Purpose: Formats the memory block for the current target language name.
+- `MEMORY_SYSTEM_INSTRUCTION_BASE` — File: `prompts/common.py`; Purpose: Shared native `save_user_memory` tool policy appended to text chat and voice tutor prompts.
+- `get_memory_system_instruction()` — File: `prompts/common.py`; Purpose: Returns the language-global native memory-tool policy.
 
-`memory_service.py` remains responsible for parsing, stripping, formatting, saving, and retrieving
-memories. It re-exports the memory instruction helper for backward compatibility.
+`memory_service.py` remains responsible for defining and executing the native tool, formatting untrusted
+memory context, and saving and retrieving global per-user memories. It re-exports the shared instruction helper.
 
 ## Language Prompt Overlays
 
@@ -93,7 +93,7 @@ ISO alias support (`ja`, `ko`, `zh`).
 
 - Text tutor — Template: `build_tutor_system_prompt()`; Current behavior: Lingu text tutor with mandatory scope, content policy, persona lock, progress context, optional user context, optional memories, target-language-only response, language-specific overlay guidance, and no emoji/pictographic output.
 - Voice tutor — Template: `build_conversation_system_prompt()`; Current behavior: Lingu voice conversation partner with the same safety core, language-specific overlay guidance, shorter spoken responses, restrained correction policy, follow-up questions, and TTS-safe plain text.
-- Memory — Template: `MEMORY_SYSTEM_INSTRUCTION_BASE`; Current behavior: Allows the LLM to append a hidden `<<MEMORY>>...<<ENDMEMORY>>` marker only when it learns a useful new student fact.
+- Memory — Template: `MEMORY_SYSTEM_INSTRUCTION_BASE`; Current behavior: Allows one native `save_user_memory` tool round for a new durable student fact, stores concise self-contained facts in the user's configured native language so Settings remains readable regardless of the learning language, and requires a visible continuation after the tool result.
 - Lesson generation — Template: `LESSON_GENERATION_PROMPT`; Current behavior: Generates structured lesson JSON constrained by CEFR level, target language, curriculum unit, grammar points, vocabulary sets, exercise schema, valid grammar slugs, and language-specific overlay guidance. The router passes the user's native language so the model can also return lesson-level `native_explanation` with translated explanation, common traps, and a mini-glossary; newly generated exercises remain in the target language and may include concise native-language `native_explanation` strings and non-answer-revealing `native_hint` strings. Lesson vocabulary keeps word/definition/example in the target language and can add native-language translation, example translation, note, plus optional reading/pronunciation guide.
 - Exercise regeneration — Template: `REGENERATE_EXERCISE_PROMPT`; Current behavior: Replaces one technically invalid unanswered lesson exercise using existing lesson explanation, vocabulary, and invalid exercise data as context. The replacement keeps the same exercise type, follows the same option/correct-answer constraints as lesson generation, and may include native-language support fields.
 - Native lesson explanation — Template: `NATIVE_EXPLANATION_ON_DEMAND`; Current behavior: Translates an existing lesson `explanation` JSON into the user's native language for lessons at any CEFR level, preserving target-language example sentences, adding native-language common traps and mini-glossary support, and caching the result on the lesson.
@@ -123,7 +123,7 @@ Common variables:
 - `native_language`: user's native language, converted from stored code to a human-readable name before prompt injection where relevant.
 - `student_name`: display name or username.
 - `user_context`: learning goals and bio; explicitly non-authoritative.
-- `memory_context`: saved memories; explicitly non-authoritative.
+- `memory_context`: global per-user saved memories, escaped and explicitly treated as non-authoritative data.
 - `language_prompt_overlay`: concise language/variant guidance injected into tutor, voice tutor, lesson, evaluation, flashcard, comprehension, and assessment prompts.
 - `length_guidance`: reading/listening length string derived from `language_helpers.get_comprehension_length_guidance()`, using word counts for word-spaced targets and character ranges for Japanese/Mainland Chinese.
 
@@ -167,7 +167,7 @@ instead of a Python object representation.
 The following prompts are behavior-critical and should not be changed casually:
 
 - Text tutor and voice tutor system prompts.
-- Memory marker instruction.
+- Native memory-tool instruction.
 - Lesson generation prompt and exercise schema.
 - Fill-blank, free-write, and pronunciation evaluation prompts.
 - Flashcard generation and word lookup prompts.
@@ -195,7 +195,7 @@ student-facing language. Treat such edits as product behavior changes.
 Prompt architecture is covered by:
 
 - `backend/tests/test_prompts.py` for builder/wrapper equivalence, shared block checks, target-language
-  injection, dynamic-data delimiter checks, legacy assessment payload JSON, and memory marker parsing.
+  injection, dynamic-data delimiter checks, legacy assessment payload JSON, and the global native-memory-tool policy.
 - Existing conversation pipeline prompt tests in `backend/tests/test_conversation_pipeline_service.py`.
 - Existing service tests that mock LLM calls and validate parsed outputs.
 

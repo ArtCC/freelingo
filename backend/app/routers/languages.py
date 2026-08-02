@@ -9,7 +9,6 @@ from app.core.limiter import limiter
 from app.models.chat_history import ChatHistory
 from app.models.conversation import Conversation
 from app.models.llm_usage import LLMUsage
-from app.models.memory import Memory
 from app.models.progress import Progress
 from app.models.study_plan import StudyPlan
 from app.models.user import User
@@ -221,7 +220,6 @@ async def delete_language(
     if plan_ids:
         await db.execute(delete(ChatHistory).where(ChatHistory.study_plan_id.in_(plan_ids)))
         await db.execute(delete(Conversation).where(Conversation.study_plan_id.in_(plan_ids)))
-        await db.execute(delete(Memory).where(Memory.study_plan_id.in_(plan_ids)))
         await db.execute(delete(LLMUsage).where(LLMUsage.study_plan_id.in_(plan_ids)))
 
     # ── Delete UserLanguage → CASCADE deletes StudyPlan →

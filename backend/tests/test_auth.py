@@ -615,14 +615,20 @@ async def test_patch_me_ui_locale_valid(client, test_user):
 
 
 @pytest.mark.asyncio
-async def test_patch_me_ui_locale_unsupported(client, test_user):
-    """An unsupported ui_locale code must be rejected with 422."""
+async def test_patch_me_rejects_unsupported_languages(client, test_user):
+    """Unsupported UI and native language codes must be rejected with 422."""
     _, headers = test_user
 
     response = await client.patch(
         "/api/auth/me",
         headers=headers,
         json={"ui_locale": "zh"},
+    )
+    assert response.status_code == 422
+    response = await client.patch(
+        "/api/auth/me",
+        headers=headers,
+        json={"native_language": "xx"},
     )
     assert response.status_code == 422
 

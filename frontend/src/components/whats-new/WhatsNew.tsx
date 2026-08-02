@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslations, useMessages } from 'next-intl'
 import { CircleDot, Sparkles } from 'lucide-react'
 
-const WHATS_NEW_VERSION = 'v1.8.27'
+const WHATS_NEW_VERSION = 'v1.8.28'
 const STORAGE_KEY = `fl_whats_new_seen_${WHATS_NEW_VERSION}`
 const TOUR_KEY = 'fl_tour_done'
 

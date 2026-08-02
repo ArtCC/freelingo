@@ -34,7 +34,7 @@ Most REST endpoints are prefixed under `/api`. The public health check is at `/h
 - **POST `/refresh`** — Rate limit: 60/min. Rotates refresh token, returns new access_token
 - **POST `/logout`** — Rate limit: 60/min. Deletes refresh token from Redis, clears cookie
 - **GET `/me`** — Rate limit: 60/min. Returns authenticated user profile, including subscription fields (`subscription_status`, `subscription_ends_at`, `trial_used`, `assessment_voice_trial_used`) and freemium fields (`freemium_trial_ends_at`, `freemium_trial_used`) so the frontend can distinguish Stripe trial eligibility, freemium trial state, post-assessment voice-demo eligibility, and active subscription state.
-- **PATCH `/me`** — Rate limit: 60/min. Updates display_name, email, password, target_language, conversation settings
+- **PATCH `/me`** — Rate limit: 60/min. Updates display name, email, password, native language, target language, UI locale, bio, learning goals, and conversation settings. `native_language` is validated against the same supported UI-language codes used at registration (`en`, `es`, `fr`, `pt`, `de`, `it`, `ru`, `nl`, `pl`, `ro`); unsupported codes return HTTP 422 even when the API is called outside the selector-based frontend.
 - **POST `/me/avatar`** — Rate limit: 60/min. Uploads the authenticated user's profile avatar (JPEG/PNG, max 2 MB). Validates the declared content type, image signature, and minimal image structure, stores the image on disk under `/app/avatars` using a non-predictable UUID filename, and returns the user profile with `avatar` set to a cache-busted internal reference (`/api/avatars/{uuid}.{ext}?v={ms}`). The file reference is not publicly served.
 - **GET `/me/avatar-file`** — Rate limit: 60/min. Authenticated current-user avatar retrieval endpoint. Returns only the authenticated user's own avatar file; this is the supported image retrieval path used by the frontend. Responses are marked `Cache-Control: private, no-store`; client-side avatar reuse is handled by the frontend blob cache keyed by the stored avatar reference.
 - **DELETE `/me/avatar`** — Rate limit: 60/min. Removes profile avatar (sets to null)
@@ -180,7 +180,7 @@ All endpoints require `get_current_user`.
 
 ## Chat — `/api/chat`
 
-All endpoints require `require_subscription_or_freemium("chat")`. Memories endpoints still use `require_subscription`.
+All endpoints require `require_subscription_or_freemium("chat")`. Memory management is documented separately and requires authentication only.
 
 - GET — Path: `/conversations`; Description: Rate limit: 60/min. Lists user's conversations (text + voice), ordered by `updated_at` desc. Response includes `source` (`chat` or `voice`).
 - POST — Path: `/conversations`; Description: Rate limit: 60/min. Creates new conversation
@@ -311,11 +311,12 @@ User review endpoints. Admin moderation endpoints live under `/api/admin/reviews
 
 ## Memories — `/api/memories`
 
-All endpoints require `require_subscription`: users still need subscription access when Stripe is enabled, but maintenance mode does not block memory management.
+All endpoints require `get_current_user` only. Memory management is not subscription-gated or maintenance-gated so every authenticated user can inspect and control stored personal context.
 
-- GET — Path: ``; Rate limit: 60/min; Auth: require_subscription; Description: Returns all memories for the authenticated user. Response: `{memories: [{id, content, source, created_at}]}`.
-- DELETE — Path: `/{id}`; Rate limit: 60/min; Auth: require_subscription; Description: Deletes a single memory by ID. Returns HTTP 204. Returns 404 if not found or not owned by the user.
-- DELETE — Path: ``; Rate limit: 10/min; Auth: require_subscription; Description: Clears all memories for the authenticated user. Response: `{deleted: int}`.
+- GET — Path: ``; Rate limit: 60/min; Auth: get_current_user; Description: Returns all global memories for the authenticated user, oldest-first. Response: `{memories: [{id, content, source, created_at}]}`.
+- POST — Path: ``; Rate limit: 10/min; Auth: get_current_user; Description: Creates one trimmed 1-200 character memory with source `manual`. Returns HTTP 201, or 409 `memory_already_exists` for an exact duplicate.
+- DELETE — Path: `/{id}`; Rate limit: 60/min; Auth: get_current_user; Description: Deletes a single memory by ID. Returns HTTP 204. Returns 404 if not found or not owned by the user.
+- DELETE — Path: ``; Rate limit: 10/min; Auth: get_current_user; Description: Clears all global memories for the authenticated user. Response: `{deleted: int}`.
 
 ---
 

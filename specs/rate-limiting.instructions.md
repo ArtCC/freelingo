@@ -39,7 +39,7 @@ Only endpoints with explicit `@limiter.limit()` decorators are listed here. Ever
 - `POST /api/auth/refresh` — Limit: 60/minute; Access: Refresh cookie; Rationale: Normal SPA token rotation
 - `POST /api/auth/logout` — Limit: 60/minute; Access: Refresh cookie; Rationale: Logout endpoint protection
 - `GET /api/auth/me` — Limit: 60/minute; Access: Authenticated; Rationale: Profile fetch
-- `PATCH /api/auth/me` — Limit: 60/minute; Access: Authenticated; Rationale: Profile updates
+- `PATCH /api/auth/me` — Limit: 60/minute; Access: Authenticated; Rationale: Profile updates. Native-language validation does not change this limit; unsupported codes return 422.
 - `POST /api/auth/me/avatar` — Limit: 60/minute; Access: Authenticated; Rationale: Avatar upload
 - `GET /api/auth/me/avatar-file` — Limit: 60/minute; Access: Authenticated; Rationale: Private avatar retrieval
 - `DELETE /api/auth/me/avatar` — Limit: 60/minute; Access: Authenticated; Rationale: Avatar deletion
@@ -141,9 +141,10 @@ Only endpoints with explicit `@limiter.limit()` decorators are listed here. Ever
 - `POST /api/reading/generate` — Limit: 5/minute; Access: Subscription or freemium + no maintenance; Rationale: LLM exercise generation
 - `POST /api/reading/attempt` — Limit: 20/minute; Access: Subscription or freemium + no maintenance; Rationale: Attempt scoring
 - `GET /api/reading/history` — Limit: 60/minute; Access: Subscription or freemium + no maintenance; Rationale: Attempt history
-- `GET /api/memories` — Limit: 60/minute; Access: Subscription; Rationale: Memory list
-- `DELETE /api/memories/{memory_id}` — Limit: 60/minute; Access: Subscription; Rationale: Single memory deletion
-- `DELETE /api/memories` — Limit: 10/minute; Access: Subscription; Rationale: Bulk memory deletion
+- `GET /api/memories` — Limit: 60/minute; Access: Authenticated; Rationale: Global memory list
+- `POST /api/memories` — Limit: 10/minute; Access: Authenticated; Rationale: Manual memory creation
+- `DELETE /api/memories/{memory_id}` — Limit: 60/minute; Access: Authenticated; Rationale: Single memory deletion
+- `DELETE /api/memories` — Limit: 10/minute; Access: Authenticated; Rationale: Bulk global memory deletion
 - `GET /api/feedback` — Limit: 60/minute; Access: Authenticated; Rationale: Feedback list
 - `POST /api/feedback` — Limit: 10/hour; Access: Authenticated; Rationale: Feedback creation
 - `GET /api/feedback/unread-summary` — Limit: 60/minute; Access: Authenticated; Rationale: Feedback unread thread counter

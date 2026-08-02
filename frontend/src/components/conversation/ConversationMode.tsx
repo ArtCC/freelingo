@@ -26,6 +26,8 @@ import {
   getReviewPromptDismissal,
 } from '@/components/reviews/ReviewPrompt'
 import { shouldShowVoiceReviewPrompt } from '@/lib/review-prompt-triggers'
+import { MemorySavedToast } from '@/components/memory/MemorySavedToast'
+import { useTransientToast } from '@/hooks/useTransientToast'
 
 interface TranscriptEntry {
   id: number
@@ -298,7 +300,11 @@ export default function ConversationMode({
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [userSpeaking, setUserSpeaking] = useState(false)
   const [assistantSpeaking, setAssistantSpeaking] = useState(false)
-  const [memoryToast, setMemoryToast] = useState(false)
+  const {
+    visible: memoryToast,
+    announcementId: memoryToastId,
+    show: showMemoryToast,
+  } = useTransientToast()
   const [quota, setQuota] = useState<QuotaStatus | null>(null)
   const [reviewPromptOpen, setReviewPromptOpen] = useState(false)
 
@@ -779,8 +785,7 @@ export default function ConversationMode({
               break
 
             case 'memory_updated':
-              setMemoryToast(true)
-              setTimeout(() => setMemoryToast(false), 3500)
+              showMemoryToast()
               break
           }
         } catch {
@@ -821,6 +826,7 @@ export default function ConversationMode({
       trialMode,
       refreshCurrentUser,
       finalizeSession,
+      showMemoryToast,
     ]
   )
 
@@ -1031,14 +1037,7 @@ export default function ConversationMode({
         </div>
       )}
 
-      {/* Memory updated toast */}
-      {memoryToast && (
-        <div className="pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center">
-          <div className="border-fl-border bg-fl-surface text-fl-muted-1 animate-in fade-in slide-in-from-top-2 pointer-events-auto border px-4 py-2 font-mono text-xs tracking-widest uppercase shadow-lg">
-            {t('memoryUpdated')}
-          </div>
-        </div>
-      )}
+      <MemorySavedToast visible={memoryToast} announcementId={memoryToastId} />
 
       {/* Transcript area */}
       <div className="mb-4 min-h-0 flex-1 space-y-3 overflow-y-auto px-2">
