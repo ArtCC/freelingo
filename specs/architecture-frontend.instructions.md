@@ -115,7 +115,7 @@ frontend/
 │   │
 │   └── middleware.ts            # Auth guard (redirect to /login) + locale detection
 │
-├── tests/                       # Vitest suite (37 test files, 433 tests; coverage not configured)
+├── tests/                       # Vitest suite (37 test files, 434 tests; coverage not configured)
 │   ├── setup.ts                 # Global mocks: localStorage, next/navigation, next-intl
 │   ├── middleware.test.ts
 │   ├── components/
@@ -271,7 +271,7 @@ Seven Zustand stores hold all client-side state. No React Context is used for gl
 - **`LanguageSwitcher.tsx`** — UI locale switcher
 - **`CookieBanner.tsx`** — GDPR cookie consent banner
 - **`ui/`** — shadcn/ui primitives (`button`, `card`, `input`, `progress`, `badge`, `separator`, `sheet`, `tabs`) + custom: `AudioPlayer`, `VoiceRecorder`, `confirm-dialog`
-- **Memory notification** — `useTransientToast` owns one resettable, unmount-safe timer and increments an announcement ID for every save. `MemorySavedToast` remounts its `role="status"`/`aria-live="polite"` region for consecutive announcements and tells the user the memory can be reviewed in Settings without exposing stored content or presenting a timed action.
+- **Memory notification** — `useTransientToast` owns one resettable, unmount-safe timer and increments an announcement ID for every confirmed save. `MemorySavedToast` remounts its `role="status"`/`aria-live="polite"` region for consecutive announcements and tells the user the memory can be reviewed in Settings without exposing stored content or presenting a timed action. Failed, skipped, duplicate, or unsupported automatic memory work produces no user-facing message.
 
 ---
 
@@ -343,6 +343,7 @@ Buffered `readSseData()` reassembles events across arbitrary network chunks:
   - memory_updated event → show the shared accessible memory toast
   - done event → finalize message, add to ChatHistory
   - error event → show error, stop streaming
+  - missing terminal done/error or truncated final JSON → show a generic interrupted-conversation error
 ```
 
 ---

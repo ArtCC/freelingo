@@ -364,6 +364,7 @@ async def chat(
 
     async def event_stream():
         full_response = ""
+        stream = None
         try:
             yield f"data: {json.dumps({'conversation_id': conversation_id})}\n\n"
 
@@ -393,6 +394,13 @@ async def chat(
                     full_response += token
                     yield f"data: {json.dumps({'token': token})}\n\n"
 
+            memory_updated = any(
+                result.content.get("saved") is True
+                for result in getattr(stream, "tool_results", [])
+            )
+            if memory_updated:
+                yield f"data: {json.dumps({'memory_updated': True})}\n\n"
+
             db.add(
                 ChatHistory(
                     user_id=current_user.id,
@@ -406,14 +414,6 @@ async def chat(
             conv.updated_at = datetime.now(UTC).replace(tzinfo=None)
             await db.commit()
 
-            memory_updated = any(
-                result.content.get("saved") is True
-                for result in getattr(stream, "tool_results", [])
-            )
-
-            if memory_updated:
-                yield f"data: {json.dumps({'memory_updated': True})}\n\n"
-
             yield f"data: {json.dumps({'done': True})}\n\n"
 
             # Record freemium chat usage (best-effort)
@@ -421,25 +421,6 @@ async def chat(
 
             await maybe_record_freemium_usage(current_user, "chat")
 
-            # Persist token usage best-effort in a separate transaction
-            if isinstance(stream, LLMStream) and (
-                stream.prompt_tokens is not None or stream.completion_tokens is not None
-            ):
-                try:
-                    db.add(
-                        LLMUsage(
-                            user_id=current_user.id,
-                            source="chat",
-                            prompt_tokens=stream.prompt_tokens,
-                            completion_tokens=stream.completion_tokens,
-                            total_tokens=stream.total_tokens,
-                            study_plan_id=study_plan_id,
-                        )
-                    )
-                    await db.commit()
-                except Exception:
-                    await db.rollback()
-                    logger.debug("Failed to save LLM usage — ignored")
         except LLMTimeoutError:
             logger.warning(
                 "LLM timeout for user %s conversation %s",
@@ -457,6 +438,25 @@ async def chat(
                 conversation_id,
             )
             yield f"data: {json.dumps({'error': 'Something went wrong. Please try again.'})}\n\n"
+        finally:
+            if isinstance(stream, LLMStream) and (
+                stream.prompt_tokens is not None or stream.completion_tokens is not None
+            ):
+                try:
+                    async with db_session() as usage_db:
+                        usage_db.add(
+                            LLMUsage(
+                                user_id=current_user.id,
+                                source="chat",
+                                prompt_tokens=stream.prompt_tokens,
+                                completion_tokens=stream.completion_tokens,
+                                total_tokens=stream.total_tokens,
+                                study_plan_id=study_plan_id,
+                            )
+                        )
+                        await usage_db.commit()
+                except Exception:
+                    logger.debug("Failed to save LLM usage — ignored")
 
     return StreamingResponse(
         event_stream(),

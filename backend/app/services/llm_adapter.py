@@ -53,6 +53,30 @@ class LLMContextOverflowError(LLMError):
     pass
 
 
+class LLMToolsUnsupportedError(LLMError):
+    pass
+
+
+def _is_tools_unsupported_error(exc: BaseException) -> bool:
+    current: BaseException | None = exc
+    messages: list[str] = []
+    while current is not None:
+        messages.append(str(current).lower())
+        current = current.__cause__
+    message = " ".join(messages)
+    return any(
+        marker in message
+        for marker in (
+            "does not support tools",
+            "doesn't support tools",
+            "tools are not supported",
+            "tool use is not supported",
+            "unsupported parameter: 'tools'",
+            'unsupported parameter: "tools"',
+        )
+    )
+
+
 @dataclass(frozen=True)
 class LLMTool:
     name: str
@@ -92,8 +116,12 @@ async def _safe_stream_events(stream: object, provider: str) -> AsyncGenerator:
     except _anthropic.RateLimitError as exc:
         raise LLMUnavailableError(f"{provider} rate limit exceeded") from exc
     except _anthropic.APIStatusError as exc:
+        if _is_tools_unsupported_error(exc):
+            raise LLMToolsUnsupportedError(f"{provider} does not support tools") from exc
         raise LLMError(f"{provider} streaming error: {exc}") from exc
     except Exception as exc:
+        if _is_tools_unsupported_error(exc):
+            raise LLMToolsUnsupportedError(f"{provider} does not support tools") from exc
         message = str(exc)
         if "connection" in message.lower():
             raise LLMUnavailableError(f"{provider} is unreachable") from exc
@@ -184,6 +212,8 @@ class LLMToolStream(LLMStream):
         messages: list[dict],
         tools: list[LLMTool],
         tool_executor: ToolExecutor,
+        *,
+        tools_unsupported: bool = False,
     ) -> None:
         super().__init__(stream)
         self._adapter = adapter
@@ -192,6 +222,7 @@ class LLMToolStream(LLMStream):
         self._tool_executor = tool_executor
         self.tool_calls: list[LLMToolCall] = []
         self.tool_results: list[LLMToolResult] = []
+        self.tools_unsupported = tools_unsupported
 
     def _add_usage(self, prompt: int | None, completion: int | None) -> None:
         if prompt is not None:
@@ -295,14 +326,40 @@ class LLMToolStream(LLMStream):
                 )
 
     async def _iterate(self):
-        initial_text = ""
-        async for text in self._provider_text_and_calls(self._stream, collect_calls=True):
-            initial_text += text
-            yield text
-        if not self.tool_calls:
+        initial_parts: list[str] = []
+        try:
+            async for text in self._provider_text_and_calls(self._stream, collect_calls=True):
+                initial_parts.append(text)
+        except LLMToolsUnsupportedError:
+            logger.info(
+                "%s model rejected native tools; continuing without them", self._adapter.provider
+            )
+            self.tools_unsupported = True
+            fallback = await self._adapter._call_with_retry(
+                self._adapter._do_chat,
+                self._messages,
+                True,
+                None,
+            )
+            async for text in self._provider_text_and_calls(fallback, collect_calls=False):
+                yield text
             return
 
-        for call in self.tool_calls:
+        if not self.tool_calls:
+            for text in initial_parts:
+                yield text
+            return
+
+        for index, call in enumerate(self.tool_calls):
+            if index > 0:
+                self.tool_results.append(
+                    LLMToolResult(
+                        call=call,
+                        content={"saved": False, "error": "tool_limit_exceeded"},
+                        is_error=True,
+                    )
+                )
+                continue
             try:
                 result = await self._tool_executor(call)
             except Exception:
@@ -314,19 +371,46 @@ class LLMToolStream(LLMStream):
                 )
             self.tool_results.append(result)
 
+        initial_text = "".join(initial_parts)
         continuation_messages = self._adapter._build_tool_continuation(
             self._messages,
             initial_text,
             self.tool_calls,
             self.tool_results,
         )
-        continuation = await self._adapter._call_with_retry(
-            self._adapter._do_chat,
-            continuation_messages,
-            True,
-            None,
-        )
-        async for text in self._provider_text_and_calls(continuation, collect_calls=False):
+        try:
+            continuation = await self._adapter._call_with_retry(
+                self._adapter._do_chat,
+                continuation_messages,
+                True,
+                None,
+            )
+            continuation_parts = [
+                text
+                async for text in self._provider_text_and_calls(
+                    continuation,
+                    collect_calls=False,
+                )
+            ]
+        except LLMError:
+            logger.warning(
+                "%s tool continuation failed; retrying the turn without tools",
+                self._adapter.provider,
+                exc_info=True,
+            )
+            fallback = await self._adapter._call_with_retry(
+                self._adapter._do_chat,
+                self._messages,
+                True,
+                None,
+            )
+            async for text in self._provider_text_and_calls(fallback, collect_calls=False):
+                yield text
+            return
+
+        for text in initial_parts:
+            yield text
+        for text in continuation_parts:
             yield text
 
 
@@ -358,12 +442,14 @@ class LLMAdapter:
             self.client = None
             self.model = settings.ANTHROPIC_MODEL
 
-    async def _call_with_retry(self, fn, *args, **kwargs):
+    async def _call_with_retry(self, fn, *args, tools_requested: bool = False, **kwargs):
         last_error = None
         for attempt in range(MAX_RETRIES + 1):
             try:
                 return await fn(*args, **kwargs)
             except LLMError as e:
+                if tools_requested and _is_tools_unsupported_error(e):
+                    raise LLMToolsUnsupportedError(f"{self.provider} does not support tools") from e
                 # Already a typed LLM error raised by a provider-specific
                 # handler (e.g. _anthropic_chat). Preserve the type instead of
                 # re-wrapping into a generic LLMError.
@@ -371,6 +457,8 @@ class LLMAdapter:
             except TimeoutError:
                 last_error = LLMTimeoutError(f"{self.provider} timed out after {REQUEST_TIMEOUT}s")
             except Exception as e:
+                if tools_requested and _is_tools_unsupported_error(e):
+                    raise LLMToolsUnsupportedError(f"{self.provider} does not support tools") from e
                 error_msg = str(e)
                 if "connection" in error_msg.lower():
                     last_error = LLMUnavailableError(
@@ -398,11 +486,30 @@ class LLMAdapter:
     ) -> str | AsyncGenerator:
         if tools and (not stream or tool_executor is None):
             raise ValueError("Native tools require streaming and a tool executor")
-        result = await self._call_with_retry(self._do_chat, messages, stream, tools)
+        tools_unsupported = False
+        try:
+            result = await self._call_with_retry(
+                self._do_chat,
+                messages,
+                stream,
+                tools,
+                tools_requested=bool(tools),
+            )
+        except LLMToolsUnsupportedError:
+            logger.info("%s model rejected native tools; continuing without them", self.provider)
+            result = await self._call_with_retry(self._do_chat, messages, stream, None)
+            tools_unsupported = True
         if not stream:
             return result
         if tools and tool_executor:
-            return LLMToolStream(self, result, messages, tools, tool_executor)
+            return LLMToolStream(
+                self,
+                result,
+                messages,
+                tools,
+                tool_executor,
+                tools_unsupported=tools_unsupported,
+            )
         if self.provider == "anthropic":
             return AnthropicLLMStream(result)
         return LLMStream(result)

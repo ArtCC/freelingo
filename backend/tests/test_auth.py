@@ -656,6 +656,7 @@ async def test_register_unsupported_native_language(client):
             "username": "testuser_zh",
             "email": "testuser_zh@example.com",
             "password": "ValidPass1!",
+            "native_language": "xx",
         },
     )
     assert response.status_code == 422

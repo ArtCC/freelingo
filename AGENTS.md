@@ -6,6 +6,8 @@
 
 ## Architecture at a glance
 
+Automatic LLM memory is best-effort: text and voice continue without user-visible memory errors, only confirmed saves emit the memory toast, at most one memory tool call executes per turn, and explicit tool incompatibility is remembered only for the current voice WebSocket session.
+
 Monorepo: `backend/` (Python 3.14 FastAPI) + `frontend/` (Next.js 16 App Router) deployed via Docker Compose with PostgreSQL 16 and Redis 7. The backend proxies all external services (Ollama, Kokoro, Whisper) — the frontend never calls them directly.
 
 ## Key constraints

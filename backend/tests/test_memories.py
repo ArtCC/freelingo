@@ -268,6 +268,19 @@ async def test_save_memories_enforces_hard_cap(db_session, memory_user):
 
 
 @pytest.mark.asyncio
+async def test_save_memories_evicts_oldest_existing_items(db_session, memory_user):
+    existing = [f"Old fact {index}" for index in range(MAX_MEMORIES_PER_USER - 1)]
+    await save_memories(db_session, memory_user.id, existing, "chat")
+
+    await save_memories(db_session, memory_user.id, ["New fact 1", "New fact 2"], "voice")
+
+    memories = await get_user_memories(db_session, memory_user.id)
+    assert len(memories) == MAX_MEMORIES_PER_USER
+    assert memories[0].content == "Old fact 1"
+    assert [memory.content for memory in memories[-2:]] == ["New fact 1", "New fact 2"]
+
+
+@pytest.mark.asyncio
 async def test_native_tool_saves_global_memory(db_session, memory_user):
     call = LLMToolCall(
         id="call_1",

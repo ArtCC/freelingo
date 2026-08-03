@@ -39,8 +39,11 @@ export async function* readSseData<T>(
       if (done) break
     }
 
-    const remaining = parseEvent<T>(buffer)
-    if (remaining !== null) yield remaining
+    if (buffer.trim()) {
+      const remaining = parseEvent<T>(buffer)
+      if (remaining === null) throw new Error('Incomplete SSE event')
+      yield remaining
+    }
   } finally {
     reader.releaseLock()
   }

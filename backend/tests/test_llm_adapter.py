@@ -1250,6 +1250,39 @@ class TestLLMStreamAnthropic:
 
 class TestNativeToolStreaming:
     @pytest.mark.asyncio
+    async def test_unsupported_tools_fall_back_without_retrying_them(self, monkeypatch):
+        _make_ollama_settings(monkeypatch)
+        from app.services.llm_adapter import LLMAdapter, LLMTool, LLMToolResult
+
+        async def fallback_stream():
+            yield FakeOpenAIChunk("Normal response.")
+
+        adapter = LLMAdapter()
+        tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+
+        async def executor(call):
+            return LLMToolResult(call=call, content={"saved": True})
+
+        with patch.object(
+            adapter.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            side_effect=[RuntimeError("model does not support tools"), fallback_stream()],
+        ) as create:
+            stream = await adapter.chat(
+                [{"role": "user", "content": "Hi"}],
+                stream=True,
+                tools=[tool],
+                tool_executor=executor,
+            )
+            assert [part async for part in stream] == ["Normal response."]
+
+        assert stream.tools_unsupported is True
+        assert len(create.call_args_list) == 2
+        assert "tools" in create.call_args_list[0].kwargs
+        assert "tools" not in create.call_args_list[1].kwargs
+
+    @pytest.mark.asyncio
     async def test_openai_tool_call_executes_and_continues(self, monkeypatch):
         _make_ollama_settings(monkeypatch)
         from app.services.llm_adapter import (
@@ -1370,6 +1403,97 @@ class TestNativeToolStreaming:
         assert create.call_args_list[0].kwargs["tools"][0]["name"] == "save_user_memory"
         continuation = create.call_args_list[1].kwargs["messages"]
         assert continuation[-1]["content"][0]["type"] == "tool_result"
+
+    @pytest.mark.asyncio
+    async def test_tool_continuation_failure_falls_back_without_tools(self, monkeypatch):
+        _make_ollama_settings(monkeypatch)
+        from app.services.llm_adapter import LLMAdapter, LLMTool, LLMToolResult
+
+        def tool_chunk(index: int, content: str):
+            function = SimpleNamespace(name="save_user_memory", arguments=content)
+            tool_call = SimpleNamespace(index=index, id=f"call_{index}", function=function)
+            delta = SimpleNamespace(content=None, tool_calls=[tool_call])
+            return SimpleNamespace(choices=[SimpleNamespace(delta=delta)], usage=None)
+
+        async def initial_stream():
+            yield tool_chunk(0, '{"content":"Likes tea"}')
+
+        async def broken_continuation():
+            raise ConnectionError("connection lost")
+            yield  # pragma: no cover
+
+        async def fallback_stream():
+            yield FakeOpenAIChunk("Thanks for sharing.", usage=FakeUsage(9, 3))
+
+        adapter = LLMAdapter()
+        tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+
+        async def executor(call):
+            return LLMToolResult(call=call, content={"saved": True})
+
+        with patch.object(
+            adapter.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            side_effect=[initial_stream(), broken_continuation(), fallback_stream()],
+        ) as create:
+            stream = await adapter.chat(
+                [{"role": "user", "content": "I like tea"}],
+                stream=True,
+                tools=[tool],
+                tool_executor=executor,
+            )
+            assert [part async for part in stream] == ["Thanks for sharing."]
+
+        assert stream.tool_results[0].content == {"saved": True}
+        assert stream.total_tokens == 12
+        assert "tools" not in create.call_args_list[2].kwargs
+
+    @pytest.mark.asyncio
+    async def test_executes_only_first_tool_call(self, monkeypatch):
+        _make_ollama_settings(monkeypatch)
+        from app.services.llm_adapter import LLMAdapter, LLMTool, LLMToolResult
+
+        async def initial_stream():
+            for index in range(2):
+                function = SimpleNamespace(
+                    name="save_user_memory",
+                    arguments=f'{{"content":"Fact {index}"}}',
+                )
+                tool_call = SimpleNamespace(index=index, id=f"call_{index}", function=function)
+                delta = SimpleNamespace(content=None, tool_calls=[tool_call])
+                yield SimpleNamespace(choices=[SimpleNamespace(delta=delta)], usage=None)
+
+        async def continuation_stream():
+            yield FakeOpenAIChunk("Understood.")
+
+        adapter = LLMAdapter()
+        tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+        executed: list[str] = []
+
+        async def executor(call):
+            executed.append(call.id)
+            return LLMToolResult(call=call, content={"saved": True})
+
+        with patch.object(
+            adapter.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            side_effect=[initial_stream(), continuation_stream()],
+        ):
+            stream = await adapter.chat(
+                [{"role": "user", "content": "Remember these"}],
+                stream=True,
+                tools=[tool],
+                tool_executor=executor,
+            )
+            assert [part async for part in stream] == ["Understood."]
+
+        assert executed == ["call_0"]
+        assert stream.tool_results[1].content == {
+            "saved": False,
+            "error": "tool_limit_exceeded",
+        }
 
     @pytest.mark.asyncio
     async def test_tools_require_stream_and_executor(self, monkeypatch):

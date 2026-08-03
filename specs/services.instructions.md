@@ -19,7 +19,7 @@ Singleton providing provider-agnostic LLM access. Supports four providers select
 **Key capabilities:**
 
 - `chat(messages, stream=False, tools=None, tool_executor=None)` — returns a string or normalized async stream; native tools require streaming and an executor
-- Native tool streaming supports OpenAI-compatible and Anthropic event formats, executes one tool round, then performs one provider-native continuation without re-offering tools. The returned stream exposes normalized `tool_results` and combined token usage.
+- Native tool streaming supports OpenAI-compatible and Anthropic event formats, executes at most the first tool call, then performs one provider-native continuation without re-offering tools. Explicitly unsupported tools and failed continuations fall back once to the original turn without tools. Executor failures stay internal, the returned stream exposes normalized `tool_results` and combined token usage, and memory-specific failures never replace the visible tutor response.
 - `structured_output(messages, schema)` — returns validated Pydantic model (JSON mode + retry on parse failure)
 - `parse_llm_json(raw)` — module-level utility; strips optional code fences and parses JSON from LLM output. Kept for lower-level parsing tests and any legacy callers; reading/listening generation now uses `structured_output()`.
 - 2 automatic retries with exponential backoff, 60 s timeout
@@ -241,7 +241,7 @@ WebSocket-based voice conversation orchestrator:
 3. Barge-in protocol: explicit interrupts or new audio while a backend task is active can cancel the current greeting or LLM+TTS generation and send `barge_in` to the client. The current frontend ignores VAD detections during active assistant turns for stability.
 4. Sends audio to STT service for transcription; empty/whitespace transcriptions are ignored and do not call the LLM.
 5. Builds prompt with system message + last 20 message history.
-6. Executes any native memory tool call, collects the visible continuation, and validates the speech text.
+6. Executes at most one native memory tool call, collects the visible continuation, and validates the speech text. An explicit tool-capability rejection disables tools only for the remainder of that voice WebSocket session; failed memory work remains invisible to the user.
 7. Splits the complete assistant response on full stops and synthesizes ordered sentence chunks through TTS, with one retry per sentence.
 8. Sends each MP3 binary frame to the client as soon as that sentence audio is ready; failed sentence chunks are skipped so later chunks can still play.
 9. Emits the complete final assistant transcript after the first successful audio chunk; if every TTS chunk fails, emits the transcript as a text-only fallback. Then sends `status=listening` and `turn_complete` after all chunks have been processed.

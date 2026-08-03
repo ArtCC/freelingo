@@ -711,6 +711,37 @@ async def test_process_memory_tool_failure_does_not_crash() -> None:
 
 
 @pytest.mark.asyncio
+async def test_process_disables_memory_tools_only_for_current_voice_session() -> None:
+    pipeline = _make_pipeline()
+    pipeline.stt.transcribe = AsyncMock(side_effect=["first", "second"])
+    pipeline.tts.synthesize = AsyncMock(return_value=b"audio")
+
+    class ToolFallbackStream:
+        tools_unsupported = True
+
+        def __aiter__(self):
+            return self.iterate()
+
+        async def iterate(self):
+            yield "First response."
+
+    async def normal_stream():
+        yield "Second response."
+
+    pipeline.llm.chat = AsyncMock(side_effect=[ToolFallbackStream(), normal_stream()])
+    ws = FakeWS()
+
+    await pipeline._process(b"audio", ws)
+    await pipeline._process(b"audio", ws)
+
+    first_kwargs = pipeline.llm.chat.call_args_list[0].kwargs
+    second_kwargs = pipeline.llm.chat.call_args_list[1].kwargs
+    assert "tools" in first_kwargs
+    assert "tools" not in second_kwargs
+    assert _make_pipeline()._memory_tools_available is True
+
+
+@pytest.mark.asyncio
 async def test_process_long_audio_silent_stt() -> None:
     """Large audio buffer (simulating long speech) should not break the pipeline."""
     pipeline = _make_pipeline()

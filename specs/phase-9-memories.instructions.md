@@ -49,14 +49,16 @@ Migration `0022_memory` created the table. Phase 10 migration `0029_multi_langua
 
 `LLMAdapter.chat(..., stream=True, tools=[...], tool_executor=...)` normalizes native streaming tool calls for OpenAI-compatible providers and Anthropic:
 
-1. The initial stream can emit visible text and one or more tool call fragments.
+1. The initial stream can emit visible text and one or more tool call fragments; text is buffered until the tool path is known so a fallback cannot duplicate partial output.
 2. Tool arguments are assembled and normalized into `LLMToolCall` objects.
-3. The supplied executor runs the calls once.
+3. The supplied executor runs at most the first call; additional calls receive a controlled error result without being executed.
 4. The adapter makes one continuation request with provider-native assistant tool-call and tool-result messages.
 5. Tools are omitted from the continuation request, so only one tool round is possible.
 6. Callers receive a single async text stream plus accumulated usage and `tool_results` metadata.
 
 Native tools require streaming and an executor. OpenAI-compatible continuation uses `assistant.tool_calls` followed by `tool` messages; Anthropic uses `tool_use` and `tool_result` content blocks.
+
+Memory is best-effort and never blocks the tutor response. If a provider explicitly rejects native tools, the same turn is retried once without tools. If tool execution fails, the error is logged and returned only to the model as a failed tool result. If the provider-native continuation fails, the original turn is retried without tools. None of these memory-specific failures are exposed to the user.
 
 ## Prompt Policy
 
@@ -70,13 +72,13 @@ The old `<<MEMORY>>...<<ENDMEMORY>>` marker parser and stream-stripping flow no 
 
 **File:** `backend/app/routers/chat.py`
 
-Each request loads the user's global memories, builds the untrusted context block, and enables `save_user_memory` with source `chat` and the active plan ID as optional provenance. After the one native tool round and continuation, the clean visible response is persisted and streamed normally. A successful tool result emits `{"memory_updated": true}` immediately before the normal done event. The frontend's buffered SSE reader preserves this event even when its JSON is split across network chunks.
+Each request loads the user's global memories, builds the untrusted context block, and enables `save_user_memory` with source `chat` and the active plan ID as optional provenance. After the one native tool round and continuation, the clean visible response is persisted and streamed normally. A successful committed save emits `{"memory_updated": true}`; failed or skipped memory work emits no user-visible event. The frontend's buffered SSE reader preserves events split across network chunks, rejects a truncated final event, and requires a terminal `done` or conversation `error` event.
 
 ## Voice Conversation
 
 **File:** `backend/app/services/conversation_pipeline.py`
 
-Voice uses the same native tool and provider-normalized continuation with source `voice`. The pipeline refreshes the user's complete global memory collection at the start of every turn, so memories saved manually or in another language/session are available without reconnecting. Tool payloads never enter TTS or transcript text. A successful save emits `{"type": "memory_updated"}` before `turn_complete`.
+Voice uses the same native tool and provider-normalized continuation with source `voice`. The pipeline refreshes the user's complete global memory collection at the start of every turn, so memories saved manually or in another language/session are available without reconnecting. If the model explicitly rejects tools, the pipeline omits them for the remaining turns of that WebSocket session and tries them again in a new voice session. Tool payloads and memory errors never enter TTS, transcript text, or user-facing error events. A successful committed save emits `{"type": "memory_updated"}` before `turn_complete`.
 
 Text and voice render the same informational `MemorySavedToast` after a confirmed save. The toast says that Lingu saved a new memory and that it can be reviewed in Settings, uses a polite live region for assistive technology, hides after 3.5 seconds, restarts its single cleanup-safe timer, and remounts the live status so consecutive saves are announced. It does not expose the stored fact on screen or require interaction before disappearing.
 
@@ -112,4 +114,4 @@ No environment variables are added. The 20-context, 200-character, and 150-stora
 
 ## Test Coverage
 
-Existing backend and frontend tests cover the strict tool schema, escaped context, manual creation and duplicate handling, validation, ownership, global retrieval, in-batch deduplication, hard-cap behavior, native text/voice tool events, provider-native continuation, global cross-language behavior, language-deletion preservation, memory API helpers, and robust Settings states. Documented aggregate test totals and measured coverage remain unchanged until the full validation suite is run.
+Backend and frontend tests cover the strict tool schema, escaped context, manual creation and duplicate handling, validation, ownership, global retrieval, in-batch deduplication, FIFO hard-cap behavior, native text/voice tool events, provider-native continuation, unsupported-tool fallback, continuation fallback, one-call execution, per-session voice capability state, global cross-language behavior, language-deletion preservation, memory API helpers, robust Settings states, and truncated SSE detection.

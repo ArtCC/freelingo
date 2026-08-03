@@ -39,4 +39,12 @@ describe('readSseData', () => {
     }
     expect(events).toEqual([{ done: true }])
   })
+
+  it('rejects a truncated final event', async () => {
+    const stream = streamFrom(['data: {"memory_updated":tru'])
+
+    await expect(async () => {
+      for await (const event of readSseData(stream)) void event
+    }).rejects.toThrow('Incomplete SSE event')
+  })
 })

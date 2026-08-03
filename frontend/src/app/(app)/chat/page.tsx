@@ -248,38 +248,43 @@ export default function ChatPage() {
       }
 
       let assistantContent = ''
+      let streamCompleted = false
       setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
 
-      if (res.body) {
-        for await (const data of readSseData<ChatSseEvent>(res.body)) {
-          if (data.conversation_id && !activeId) {
-            setActiveId(data.conversation_id)
-            loadConversations().then((list) => list && setConversations(list))
-          }
-          if (data.token) {
-            assistantContent += data.token
-            setMessages((prev) => {
-              const copy = [...prev]
-              copy[copy.length - 1] = {
-                role: 'assistant',
-                content: assistantContent,
-              }
-              return copy
-            })
-          }
-          if (data.error) setError(data.error)
-          if (data.done) {
-            if (
-              !isSubscribed(user, stripeEnabled) &&
-              !isFreemiumTrialActive(user, stripeEnabled)
-            ) {
-              decrementFreemium('chat_remaining')
-            }
-            loadConversations().then((list) => list && setConversations(list))
-          }
-          if (data.memory_updated) showMemoryToast()
+      if (!res.body) throw new Error(t('errorMessage'))
+      for await (const data of readSseData<ChatSseEvent>(res.body)) {
+        if (data.conversation_id && !activeId) {
+          setActiveId(data.conversation_id)
+          loadConversations().then((list) => list && setConversations(list))
         }
+        if (data.token) {
+          assistantContent += data.token
+          setMessages((prev) => {
+            const copy = [...prev]
+            copy[copy.length - 1] = {
+              role: 'assistant',
+              content: assistantContent,
+            }
+            return copy
+          })
+        }
+        if (data.error) {
+          streamCompleted = true
+          setError(data.error)
+        }
+        if (data.done) {
+          streamCompleted = true
+          if (
+            !isSubscribed(user, stripeEnabled) &&
+            !isFreemiumTrialActive(user, stripeEnabled)
+          ) {
+            decrementFreemium('chat_remaining')
+          }
+          loadConversations().then((list) => list && setConversations(list))
+        }
+        if (data.memory_updated) showMemoryToast()
       }
+      if (!streamCompleted) throw new Error(t('errorMessage'))
     } catch (e) {
       setError(e instanceof Error ? e.message : t('errorMessage'))
     } finally {

@@ -135,6 +135,7 @@ class ConversationPipeline:
         self._redis: object | None = None  # injected after construction
         self._recorded = False
         self._freemium_voice = False
+        self._memory_tools_available = True
 
         self.current_task: asyncio.Task | None = None
         # Pre-populate history from optional chat context
@@ -570,6 +571,7 @@ class ConversationPipeline:
 
         full_response = ""
         clean_full_response = ""
+        llm_stream = None
         try:
             await self._send_status(ws, turn_id, "thinking")
 
@@ -587,16 +589,26 @@ class ConversationPipeline:
                         study_plan_id=self._study_plan_id,
                     )
 
-            llm_stream = await self.llm.chat(
-                messages,
-                stream=True,
-                tools=[build_save_user_memory_tool(str(self._prompt_args["native_language"]))],
-                tool_executor=execute_memory_tool,
-            )
+            memory_kwargs = {}
+            if self._memory_tools_available:
+                memory_kwargs = {
+                    "tools": [
+                        build_save_user_memory_tool(str(self._prompt_args["native_language"]))
+                    ],
+                    "tool_executor": execute_memory_tool,
+                }
+            llm_stream = await self.llm.chat(messages, stream=True, **memory_kwargs)
             async for chunk in llm_stream:
                 token = self._stream_text(chunk)
                 full_response += token
             llm_ms = (time.perf_counter() - llm_t0) * 1000
+
+            memory_updated = any(
+                result.content.get("saved") is True
+                for result in getattr(llm_stream, "tool_results", [])
+            )
+            if memory_updated:
+                await self._send_json(ws, {"type": "memory_updated", "turn_id": turn_id})
 
             clean_full_response = self._extract_speech_text(full_response)
             if clean_full_response:
@@ -643,9 +655,6 @@ class ConversationPipeline:
                 await self._send_status(ws, turn_id, "listening")
                 await self._send_json(ws, {"type": "turn_complete", "turn_id": turn_id})
                 return
-
-            # Persist token usage best-effort (never blocks the response)
-            self._pending_saves.append(asyncio.create_task(self._save_usage(llm_stream)))
 
         except asyncio.CancelledError:
             logger.warning(
@@ -701,17 +710,17 @@ class ConversationPipeline:
             if self.history and self.history[-1]["role"] == "user":
                 self.history.pop()
             return
+        finally:
+            if llm_stream is not None:
+                if getattr(llm_stream, "tools_unsupported", False):
+                    self._memory_tools_available = False
+                self._pending_saves.append(asyncio.create_task(self._save_usage(llm_stream)))
 
         self.history.append({"role": "assistant", "content": clean_full_response})
         # Persist both sides of the turn together — only reached on success.
         self._pending_saves.append(asyncio.create_task(self._save_message("user", user_text)))
         self._pending_saves.append(
             asyncio.create_task(self._save_message("assistant", clean_full_response))
-        )
-
-        memory_updated = any(
-            result.content.get("saved") is True
-            for result in getattr(llm_stream, "tool_results", [])
         )
 
         logger.info("[pipeline] Turn complete — assistant: %r", clean_full_response[:120])
@@ -726,9 +735,6 @@ class ConversationPipeline:
             turn_total_ms=round((time.perf_counter() - turn_t0) * 1000, 1),
         )
         await self._send_status(ws, turn_id, "listening")
-
-        if memory_updated:
-            await self._send_json(ws, {"type": "memory_updated", "turn_id": turn_id})
 
         await self._send_json(ws, {"type": "turn_complete", "turn_id": turn_id})
 
