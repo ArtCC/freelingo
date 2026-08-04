@@ -25,6 +25,7 @@ async def update_daily_progress(
     xp: int = 0,
     skill: str | None = None,
     skill_score: float | None = None,
+    commit: bool = True,
 ) -> Progress:
     today = date.today()
 
@@ -81,8 +82,11 @@ async def update_daily_progress(
         skills[skill] = round(old * 0.7 + skill_score * 0.3, 3)
         entry.skills = skills
 
-    await db.commit()
-    await db.refresh(entry)
+    if commit:
+        await db.commit()
+        await db.refresh(entry)
+    else:
+        await db.flush()
     return entry
 
 

@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Study-plan lesson actions**: unit drawers now use persisted lesson state to offer Start for the current lesson, Continue for skipped pending lessons, and read-only Review for completed lessons. Reviewing preserves saved answers and feedback without consuming quota or awarding progress again, and repeated lesson-completion requests are idempotent.
+- **Study-plan lesson actions**: unit drawers now use persisted lesson state to offer Start for the current lesson, Continue for skipped pending lessons, and read-only Review for completed lessons. Reviewing preserves saved answers and feedback without consuming quota or awarding progress again. Lesson completion now serializes concurrent requests, atomically commits completion with progress and competencies, permits quota-exhausted retries, blocks duplicate frontend submissions, and refreshes displayed freemium quota from the server.
 - **Progressive chat streaming with memory tools**: visible text from the initial response and the post-tool continuation is forwarded as soon as the provider emits it instead of being buffered until each generation completes. A no-tools fallback is only attempted when no visible text has been sent, preventing duplicate partial responses.
 - **Serialized memory deletion**: individual deletion and clear-all now use the same per-user database lock as memory creation, so an already-running save completes before the deletion transaction decides what to remove.
 

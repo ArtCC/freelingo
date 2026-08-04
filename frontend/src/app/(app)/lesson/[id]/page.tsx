@@ -83,7 +83,6 @@ export default function LessonPage() {
   const user = useAuthStore((s) => s.user)
   const stripeEnabled = useConfigStore((s) => s.stripeEnabled)
   const fetchFreemium = useFreemiumStore((s) => s.fetchStatus)
-  const decrementFreemium = useFreemiumStore((s) => s.decrement)
   const freemiumStatus = useFreemiumStore((s) => s.status)
   const freemiumExhausted =
     stripeEnabled &&
@@ -153,6 +152,8 @@ export default function LessonPage() {
   const [exerciseNativeHintErrorId, setExerciseNativeHintErrorId] = useState<
     number | null
   >(null)
+  const completingLessonRef = useRef(false)
+  const [completingLesson, setCompletingLesson] = useState(false)
   const isReview = lesson?.is_completed ?? false
 
   const loadLesson = useCallback(async () => {
@@ -373,46 +374,58 @@ export default function LessonPage() {
   }
 
   async function completeLessonHandler() {
-    const completedUnitId = getLessonUnitId(lesson)
-    const res = await apiFetch(`/api/lessons/${id}/complete`, {
-      method: 'POST',
-    })
-    if (!res.ok) return
-    if (
-      !isSubscribed(user, stripeEnabled) &&
-      !isFreemiumTrialActive(user, stripeEnabled)
-    ) {
-      decrementFreemium('lessons_remaining')
-    }
-    if (lesson) completeLesson(lesson.id)
-    // Detect if completing this lesson advanced the plan to the next day
+    if (completingLessonRef.current) return
+    completingLessonRef.current = true
+    setCompletingLesson(true)
+
     try {
-      const todayRes = await apiFetch('/api/study-plan/today')
-      if (todayRes.ok) {
-        const d = await todayRes.json()
-        if (progressDayAtStart >= 0 && d.progress_day > progressDayAtStart) {
-          setDayComplete(true)
-        }
-        const nextUnitId = d.lessons?.find(
-          (item: { unit_id?: string | null }) => item.unit_id
-        )?.unit_id
-        const planComplete =
-          typeof d.progress_day === 'number' &&
-          typeof d.total_days === 'number' &&
-          d.progress_day >= d.total_days
-        const unitCompleted =
-          !!completedUnitId &&
-          ((!!nextUnitId && nextUnitId !== completedUnitId) || planComplete)
-        if (
-          shouldShowUnitReviewPrompt(getReviewPromptDismissal(), unitCompleted)
-        ) {
-          setReviewPromptOpen(true)
-        }
+      const completedUnitId = getLessonUnitId(lesson)
+      const res = await apiFetch(`/api/lessons/${id}/complete`, {
+        method: 'POST',
+      })
+      if (!res.ok) return
+      if (
+        !isSubscribed(user, stripeEnabled) &&
+        !isFreemiumTrialActive(user, stripeEnabled)
+      ) {
+        await fetchFreemium(true)
       }
-    } catch {
-      // Non-fatal: failing to detect day-advance does not prevent lesson completion
+      if (lesson) completeLesson(lesson.id)
+      // Detect if completing this lesson advanced the plan to the next day
+      try {
+        const todayRes = await apiFetch('/api/study-plan/today')
+        if (todayRes.ok) {
+          const d = await todayRes.json()
+          if (progressDayAtStart >= 0 && d.progress_day > progressDayAtStart) {
+            setDayComplete(true)
+          }
+          const nextUnitId = d.lessons?.find(
+            (item: { unit_id?: string | null }) => item.unit_id
+          )?.unit_id
+          const planComplete =
+            typeof d.progress_day === 'number' &&
+            typeof d.total_days === 'number' &&
+            d.progress_day >= d.total_days
+          const unitCompleted =
+            !!completedUnitId &&
+            ((!!nextUnitId && nextUnitId !== completedUnitId) || planComplete)
+          if (
+            shouldShowUnitReviewPrompt(
+              getReviewPromptDismissal(),
+              unitCompleted
+            )
+          ) {
+            setReviewPromptOpen(true)
+          }
+        }
+      } catch {
+        // Non-fatal: failing to detect day-advance does not prevent lesson completion
+      }
+      setCompleted(true)
+    } finally {
+      completingLessonRef.current = false
+      setCompletingLesson(false)
     }
-    setCompleted(true)
   }
 
   if (loading) {
@@ -1065,7 +1078,8 @@ export default function LessonPage() {
                     ) : (
                       <button
                         onClick={completeLessonHandler}
-                        className="bg-fl-accent text-fl-accent-fg hover:bg-fl-accent/90 px-6 py-2 font-mono text-xs font-bold tracking-widest uppercase transition-colors"
+                        disabled={completingLesson}
+                        className="bg-fl-accent text-fl-accent-fg hover:bg-fl-accent/90 px-6 py-2 font-mono text-xs font-bold tracking-widest uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {t('completeLesson')}
                       </button>

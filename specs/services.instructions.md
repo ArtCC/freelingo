@@ -99,6 +99,7 @@ Handles global per-user persistent context across text and voice conversations:
 ## Progress Service (`progress_service.py`)
 
 - Atomic daily progress updates: XP (20 per lesson, 5 per correct exercise, 1 per wrong, 2 per flashcard)
+- `update_daily_progress(..., commit=False)` flushes without committing so callers such as lesson completion can include progress in a larger transaction; the default remains self-contained commit-and-refresh behavior.
 - Streak calculation: counts consecutive days with activity
 - Skill scoring: 0.7/0.3 exponential moving average per skill
 - Unit competency tracking: per-competency EMA, marked mastered at >=0.80

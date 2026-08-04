@@ -25,7 +25,7 @@ Fixes what can be fixed automatically: Python lint + format, JS/TS lint + format
 source .venv/bin/activate && cd backend && pytest -v
 ```
 
-940 backend tests, >= 70% backend coverage required. Current backend coverage is 84.31% last measured. SQLite in-memory, no Docker needed.
+943 backend tests, >= 70% backend coverage required. Current backend coverage is 84.36% last measured. SQLite in-memory, no Docker needed.
 
 Use a command timeout of at least 600 seconds for the full backend suite; the current run takes about 4 minutes and can exceed shorter 120-second tool defaults.
 
@@ -40,10 +40,10 @@ cd frontend && npm run lint && npx tsc --noEmit && npm run test:run
 - Step 0: `./scripts/format.sh` runs the canonical formatter from the repository root.
 - Step 0: backend formatting uses `ruff --fix` and `black` from `backend/pyproject.toml`.
 - Step 0: frontend formatting uses `eslint --fix` plus `prettier --write` from `frontend/.prettierrc` and `frontend/eslint.config.mjs`.
-- Step 1: `pytest` runs 940 backend tests with SQLite in-memory.
+- Step 1: `pytest` runs 943 backend tests with SQLite in-memory.
 - Step 2: `eslint` verifies no remaining JS/TS lint errors.
 - Step 2: `tsc --noEmit` runs TypeScript type checking.
-- Step 2: `vitest` runs 434 frontend tests; frontend coverage is not configured.
+- Step 2: `vitest` runs 436 frontend tests; frontend coverage is not configured.
 
 **Note:** CI does not run ruff/black checks — only pytest, eslint, tsc, and vitest. Backend lint (ruff/black) is kept in step 0 as auto-format only.
 

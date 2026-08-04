@@ -526,6 +526,47 @@ async def test_complete_lesson_already_completed(client, test_user, db_session):
 
 
 @pytest.mark.asyncio
+async def test_complete_lesson_rolls_back_when_progress_update_fails(client, test_user, db_session):
+    """Completion and progress updates commit atomically."""
+    user, headers = test_user
+    lesson = await _create_lesson_with_plan(db_session, user.id)
+
+    with (
+        patch(
+            "app.routers.lessons.update_daily_progress",
+            new_callable=AsyncMock,
+            side_effect=RuntimeError("progress failed"),
+        ),
+        pytest.raises(RuntimeError, match="progress failed"),
+    ):
+        await client.post(f"/api/lessons/{lesson.id}/complete", headers=headers)
+
+    await db_session.rollback()
+    await db_session.refresh(lesson)
+    assert lesson.is_completed is False
+    assert lesson.completed_at is None
+
+
+@pytest.mark.asyncio
+async def test_complete_lesson_retry_bypasses_quota_check(client, test_user, db_session):
+    """An already-completed lesson remains readable when no quota remains."""
+    user, headers = test_user
+    lesson = await _create_lesson_with_plan(db_session, user.id)
+    lesson.is_completed = True
+    await db_session.commit()
+
+    with patch(
+        "app.routers.lessons.check_subscription_or_freemium_access",
+        new_callable=AsyncMock,
+    ) as access_check:
+        response = await client.post(f"/api/lessons/{lesson.id}/complete", headers=headers)
+
+    assert response.status_code == 200
+    assert response.json()["is_completed"] is True
+    access_check.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_complete_lesson_sets_completed_at(client, test_user, db_session):
     """Complete sets completed_at to a non-null datetime."""
     user, headers = test_user

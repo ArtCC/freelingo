@@ -20,7 +20,7 @@ interface FreemiumStore {
   status: FreemiumStatus | null
   loaded: boolean
   lastFetch: number
-  fetchStatus: () => Promise<void>
+  fetchStatus: (force?: boolean) => Promise<void>
   /** Optimistically decrement a numeric quota counter on the client. */
   decrement: (feature: NumericFreemiumKey) => void
 }
@@ -35,10 +35,10 @@ export const useFreemiumStore = create<FreemiumStore>((set, get) => ({
   status: null,
   loaded: false,
   lastFetch: 0,
-  fetchStatus: async () => {
+  fetchStatus: async (force = false) => {
     const now = Date.now()
     // Cache for 60 seconds
-    if (get().loaded && now - get().lastFetch < 60_000) return
+    if (!force && get().loaded && now - get().lastFetch < 60_000) return
     try {
       const res = await apiFetch('/api/freemium/status')
       if (!res.ok) return

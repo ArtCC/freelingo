@@ -317,7 +317,7 @@ slot in generated_plan
   → if yes: progress_day += 1
 ```
 
-Calling `POST /api/lessons/{id}/complete` for an already-completed lesson is idempotent: it returns the existing lesson before updating timestamps, quota, progress, XP, or competencies.
+`POST /api/lessons/{id}/complete` locks the lesson row before checking completion. Completion, daily progress, XP, and unit competencies are flushed and committed in one database transaction; a failure rolls all of them back. Concurrent requests serialize on the same row, and retries for an already-completed lesson return the existing state before checking freemium quota or updating timestamps, quota, progress, XP, or competencies. Freemium usage is recorded best-effort only after the database transaction succeeds.
 
 ---
 
@@ -361,6 +361,8 @@ On mount, stores the current `progress_day` (fetched from `GET /today`) in `prog
 After `POST /lessons/{id}/complete` succeeds, calls `GET /today` again. If the returned `progress_day > progressDayAtStart`, it means the auto-advance fired — the day is complete. A **"Day complete"** banner is shown to the user.
 
 When `GET /lessons/{id}` returns `is_completed=true`, the player enters review mode: saved answers, scores, feedback, explanations, vocabulary, and navigation remain visible, but answering and regeneration controls are disabled, quota UI is hidden, and the final action returns to My Plan without calling the completion endpoint.
+
+The completion button is guarded by both an immediate in-memory lock and a disabled loading state. After any successful completion response, unsubscribed users refresh `/api/freemium/status` without the normal 60-second cache so retries or another browser tab cannot leave the displayed lesson quota stale.
 
 ---
 
