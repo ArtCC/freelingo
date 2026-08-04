@@ -97,3 +97,15 @@ class PendingLessonResponse(BaseModel):
     day_number: int
 
     model_config = {"from_attributes": True}
+
+
+class PlanLessonResponse(BaseModel):
+    id: int
+    title: str
+    lesson_type: str
+    week_number: int
+    day_number: int
+    unit_id: str | None
+    is_completed: bool
+
+    model_config = {"from_attributes": True}

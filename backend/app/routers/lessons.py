@@ -269,6 +269,9 @@ async def complete_lesson(
 ):
     lesson = await _get_lesson_for_user(lesson_id, current_user.id, db)
 
+    if lesson.is_completed:
+        return lesson
+
     lesson.is_completed = True
     lesson.completed_at = datetime.now(UTC).replace(tzinfo=None)
     await db.commit()

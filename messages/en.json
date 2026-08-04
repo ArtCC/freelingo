@@ -604,6 +604,8 @@
     "testScore": "Score:",
     "pendingLessons": "Pending lessons",
     "resume": "Resume",
+    "continueLesson": "Continue",
+    "reviewLesson": "Review",
     "noPlanLabel": "GET STARTED",
     "noPlanTitle": "Create your study plan",
     "noPlanDesc": "Take a quick assessment to discover your level and get a personalized learning path.",
@@ -1400,7 +1402,7 @@
   },
   "whatsNew": {
     "title": "What's New",
-    "version": "v1.8.28",
+    "version": "v1.8.30",
     "cta": "Got it",
     "entry1": {
       "label": "Memories that follow you",
@@ -1411,6 +1413,10 @@
       "desc": "Add your own memories or review, delete, and clear them anytime in Settings. Removing a learning language keeps your memories."
     },
     "entry3": {
+      "label": "Your lessons, always accessible",
+      "desc": "In My Plan, start your current lesson, continue skipped lessons, or review completed lessons with your saved answers and feedback."
+    },
+    "entry4": {
       "label": "A smoother experience",
       "desc": "Bug fixes and small improvements make FreeLingo more reliable and enjoyable to use."
     }

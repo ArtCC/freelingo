@@ -1,5 +1,5 @@
 ---
-description: "Testing strategy for FreeLingo: backend pytest suite (43 test files, 940 tests, 84.31% last measured coverage, with SQLite in-memory DB and Redis mocking), frontend Vitest suite (37 test files, 434 tests, no configured coverage, covering stores, components, lib, hooks, app pages, i18n, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, and middleware), E2E plan (Playwright, pending), CI integration, and coverage requirements."
+description: "Testing strategy for FreeLingo: backend pytest suite (43 test files, 941 tests, 84.34% last measured coverage, with SQLite in-memory DB and Redis mocking), frontend Vitest suite (37 test files, 434 tests, no configured coverage, covering stores, components, lib, hooks, app pages, i18n, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, and middleware), E2E plan (Playwright, pending), CI integration, and coverage requirements."
 applyTo: "**/*.test.*, **/*.spec.*, **/tests/**, **/__tests__/**"
 ---
 
@@ -7,11 +7,11 @@ applyTo: "**/*.test.*, **/*.spec.*, **/tests/**, **/__tests__/**"
 
 ## Overview
 
-- Backend unit + integration — Framework: pytest + pytest-asyncio; Scope: API endpoints, services, SM-2 algorithm, data integrity; Coverage: 84.31% last measured (target: 70%); Status: Implemented
+- Backend unit + integration — Framework: pytest + pytest-asyncio; Scope: API endpoints, services, SM-2 algorithm, data integrity; Coverage: 84.34% last measured (target: 70%); Status: Implemented
 - Frontend unit — Framework: Vitest; Scope: Stores, components, hooks, lib, middleware; Coverage: Not configured; Status: Implemented
 - E2E — Framework: Playwright; Scope: Critical user flows; Coverage: Smoke; Status: Pending
 
-All tests pass on every push. Backend coverage threshold configured at 70%, last measured at 84.31%. Frontend tests cover stores, critical components (VoiceRecorder, AudioPlayer, ProfileSection, UnitCard/UnitDrawer, LanguageSwitcher, TargetLanguageSelector, review UI, LanguageBubbles, billing paywall UI, memory toast), billing success verification, app pages, hooks, lib modules, SSE framing, i18n, and middleware. Frontend coverage is not currently reported because Vitest coverage is not configured and `@vitest/coverage-v8` is not installed.
+All tests pass on every push. Backend coverage threshold configured at 70%, last measured at 84.34%. Frontend tests cover stores, critical components (VoiceRecorder, AudioPlayer, ProfileSection, UnitCard/UnitDrawer, LanguageSwitcher, TargetLanguageSelector, review UI, LanguageBubbles, billing paywall UI, memory toast), billing success verification, app pages, hooks, lib modules, SSE framing, i18n, and middleware. Frontend coverage is not currently reported because Vitest coverage is not configured and `@vitest/coverage-v8` is not installed.
 
 ---
 
@@ -36,10 +36,10 @@ All tests pass on every push. Backend coverage threshold configured at 70%, last
 - **`test_avatar.py`** — Lines: 366. What it covers: Avatar upload, content-type/signature validation, UUID reference storage, private retrieval, non-public reference guard, replacement, deletion, and legacy retrieval compatibility
 - **`test_assessment.py`** — Lines: 165. What it covers: Quiz start (mocked LLM), submit and deterministic evaluation, legacy endpoints, LLM error handling
 - **`test_assessment_router.py`** — Lines: —. What it covers: Full assessment router: start, submit, evaluate, free-write, complete, post-assessment voice trial grant/regeneration, level-test questions/submit/result (58 tests, 51%→98% coverage)
-- **`test_study_plan.py`** — Lines: 459. What it covers: Plan generation, today's lessons, auto-generation on access, native-language lesson-generation context, unit progression
+- **`test_study_plan.py`** — Lines: 500+. What it covers: Plan generation, today's lessons, auto-generation on access, generated lesson metadata, native-language lesson-generation context, unit progression
 - **`test_lessons.py`** — Lines: 400+. What it covers: Lesson CRUD, exercise answering (multiple_choice, free_write, pronunciation), invalid exercise regeneration, completion flow, progress update on complete
 - **`test_lessons_extra.py`** — Lines: 106. What it covers: Additional lesson scenarios and edge cases
-- **`test_lessons_router.py`** — Lines: —. What it covers: Lesson router: get lesson with exercises, complete lesson, native-language explanation generation/caching, answer exercises (all 4 types), lifecycle, fill-blank sanitization (39 tests, 58%→99% coverage)
+- **`test_lessons_router.py`** — Lines: —. What it covers: Lesson router: get lesson with exercises, idempotent completion, native-language explanation generation/caching, answer exercises (all 4 types), lifecycle, fill-blank sanitization (39 tests, 58%→99% coverage)
 - **`test_flashcards.py`** — Lines: 136. What it covers: SM-2 algorithm (all quality levels 0–5, interval and ease_factor transitions, edge cases), card CRUD
 - **`test_flashcards_extra.py`** — Lines: 201. What it covers: Additional flashcard scenarios and SM-2 edge cases
 - **`test_chat.py`** — Lines: 54. What it covers: SSE streaming chunks, conversation creation and messaging
@@ -78,11 +78,11 @@ All tests pass on every push. Backend coverage threshold configured at 70%, last
 - **`test_lesson_generator.py`** — Lines: —. What it covers: Lesson generator service: `get_valid_grammar_slugs`, `generate_lesson`, exercise schema validation, fill-blank sanitization, grammar refs filtering, `evaluate_free_write`, `evaluate_pronunciation`, `evaluate_fill_blank` (16 tests, 51%→100% coverage)
 - **`test_listening_service.py`** — Lines: —. What it covers: Listening service DB layer and generation: `structured_output()` generation persistence, language-aware CJK length guidance, `get_available_exercise`, `submit_attempt` (correct/partial/duplicate/replay/not-found), `get_user_history` (empty/attempts/limit/language filter)
 
-**Total: 43 test files, 940 tests.**
+**Total: 43 test files, 941 tests.**
 
 ### Coverage
 
-- **Current coverage**: 84.31% last measured (above 70% target)
+- **Current coverage**: 84.34% last measured (above 70% target)
 - **Configured threshold**: 70% (enforced via `pytest --cov-fail-under=70`)
 
 ### Test patterns
@@ -192,7 +192,7 @@ pytest --cov-report=html
 - **`tests/components/AudioPlayer.test.tsx`** — Tests: 36. What it covers: AudioPlayer: idle/loading/playing/error states, TTS API call, play/pause/stop, voice resolution (prop > localStorage > default), audio queue, unmount safety
 - **`tests/components/ProfileSection.test.tsx`** — Tests: 48. What it covers: ProfileSection: form fields, save flow, avatar upload/remove (File/FileReader mock), password change (validation, mismatch), locale change with reload, API error states
 - **`tests/components/BillingPaywall.test.tsx`** — Tests: 11. What it covers: Billing UI: Settings payment-recovery states via Customer Portal, canceled/incomplete/unsubscribed plan buttons, dashboard recovery banner, gated-page paywall recovery copy, and logged-in landing pricing direct Checkout
-- **`tests/components/UnitCard.test.tsx`** — Tests: 41. What it covers: UnitCard: all 5 status states (completed/active/locked/level-test/default), progress bar, click interactions. UnitDrawer: grammar points, lesson list, completion states, escape/outside-click dismiss
+- **`tests/components/UnitCard.test.tsx`** — Tests: 41. What it covers: UnitCard: all 5 status states (completed/active/locked/level-test/default), progress bar, click interactions. UnitDrawer: grammar points, lesson list, Start/Continue/Review actions, completion states, escape/outside-click dismiss
 - **`tests/store/progress.test.ts`** — Tests: 48. What it covers: Progress store: 10 initial state fields, setProgress/setTodayLessons/completeLesson/setCurrentUnit/setPlanDuration/updateUnitProgress/unlockLevelTest/setLevelTestResult, state transition isolation
 - **`tests/lib/reviews.test.ts`** — Tests: 6. What it covers: Review API client helpers for my-review, create/update/delete, public, admin update, and delete calls
 - **`tests/lib/review-prompt-triggers.test.ts`** — Tests: 7. What it covers: Review prompt trigger helpers for voice sessions and unit completion: 5-minute voice threshold, unit-completed gate, dismissal cooldown expiry, and maximum dismissal count

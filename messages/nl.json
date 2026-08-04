@@ -604,6 +604,8 @@
     "testScore": "Score:",
     "pendingLessons": "Openstaande lessen",
     "resume": "Hervatten",
+    "continueLesson": "Doorgaan",
+    "reviewLesson": "Bekijken",
     "noPlanLabel": "BEGINNEN",
     "noPlanTitle": "Maak je studieplan",
     "noPlanDesc": "Doe een snelle evaluatie om je niveau te ontdekken en een persoonlijk leertraject te krijgen.",
@@ -1400,7 +1402,7 @@
   },
   "whatsNew": {
     "title": "Nieuw",
-    "version": "v1.8.28",
+    "version": "v1.8.30",
     "cta": "Begrepen",
     "entry1": {
       "label": "Herinneringen die met je meegaan",
@@ -1411,6 +1413,10 @@
       "desc": "Voeg zelf herinneringen toe of bekijk, verwijder en wis ze wanneer je wilt in Instellingen. Als je een leertaal verwijdert, blijven je herinneringen behouden."
     },
     "entry3": {
+      "label": "Je lessen, altijd toegankelijk",
+      "desc": "In Mijn plan kun je je huidige les starten, overgeslagen lessen voortzetten of voltooide lessen bekijken met je opgeslagen antwoorden en feedback."
+    },
+    "entry4": {
       "label": "Een soepelere ervaring",
       "desc": "Bugfixes en kleine verbeteringen maken FreeLingo betrouwbaarder en prettiger in gebruik."
     }

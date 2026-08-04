@@ -89,7 +89,7 @@ backend/
 │   │   ├── reading.py           # AI-generated reading exercises
 │   │   ├── reviews.py           # User reviews: create/state, public list, admin moderation
 │   │   ├── stt.py               # Speech-to-text proxy
-│   │   ├── study_plan.py        # Study plan generation + today's lessons
+│   │   ├── study_plan.py        # Study plan generation + current/pending/generated lesson metadata
 │   │   ├── tts.py               # Text-to-speech proxy
 │   │   └── vocabulary.py        # Static vocabulary data (per language + per level)
 │   │
@@ -138,7 +138,7 @@ backend/
 ├── alembic/
 │   └── versions/                # DB migrations (49 migrations)
 │
-└── tests/                       # pytest suite (43 test files, 940 tests)
+└── tests/                       # pytest suite (43 test files, 941 tests)
 ```
 
 ## Database models
@@ -210,8 +210,8 @@ Testing infrastructure and strategy are documented in [testing.instructions.md](
 
 - **Framework**: pytest + pytest-asyncio + httpx AsyncClient
 - **Test files**: 43 (plus conftest.py for shared fixtures)
-- **Tests**: 922
-- **Coverage**: 84.31% last measured (target: ≥70%)
+- **Tests**: 941
+- **Coverage**: 84.34% last measured (target: ≥70%)
 - **Key fixtures**: async database session, test client with auth headers, Redis mock, user_language fixture
 
 ---

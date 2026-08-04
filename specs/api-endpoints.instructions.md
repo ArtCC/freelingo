@@ -136,6 +136,7 @@ Auth required (`get_current_user`). Serves static vocabulary data across the bac
 - **GET `/today`** — Rate limit: 20/min. Today's lessons; auto-generates missing content via LLM on first access; auto-advances `progress_day` when all lessons for the current day are complete. Returns `plan_id`, `cefr_level`, `lessons`, `progress_day`, `total_days`, `pending_count`.
 - **POST `/skip-day`** — Rate limit: 60/min. Increments `progress_day` by 1 (capped at `total_days`). Returns `{progress_day, total_days}`.
 - **GET `/pending-lessons`** — Rate limit: 60/min. Returns incomplete lessons from days before `progress_day` (generated but not completed).
+- **GET `/lessons`** — Rate limit: 60/min. Returns lightweight metadata for every generated lesson in the active plan: `id`, title, type, week, day, unit, and completion state. It does not generate content or mutate progress.
 
 ---
 
@@ -144,8 +145,8 @@ Auth required (`get_current_user`). Serves static vocabulary data across the bac
 Lesson viewing and exercise answering use `get_current_user` (always free). Only completion is gated by `require_subscription_or_freemium("lessons")`.
 
 - **GET `/{lesson_id}`** — Rate limit: 60/min. Auth: get_current_user. Lesson detail with exercises. Exercise responses include optional `native_explanation` and `native_hint` copied from generated lesson JSON when available. Lesson content may include enriched vocabulary items with optional native-language translation, example translation, usage note, and reading fields.
-- **POST `/{lesson_id}/start`** — Rate limit: 60/min. Auth: get_current_user. Marks lesson as in-progress.
-- **POST `/{lesson_id}/complete`** — Rate limit: 60/min. Auth: require_subscription_or_freemium("lessons"). Marks the lesson as completed and updates progress and competencies.
+- **POST `/{lesson_id}/start`** — Rate limit: 60/min. Auth: get_current_user. Validates ownership and returns the lesson; no in-progress state is persisted.
+- **POST `/{lesson_id}/complete`** — Rate limit: 60/min. Auth: require_subscription_or_freemium("lessons"). Marks the lesson as completed and updates progress and competencies. Repeated calls for an already-completed lesson return its existing state without changing `completed_at`, quota, progress, XP, or competencies.
 - **POST `/{lesson_id}/native-explanation`** — Rate limit: 10/min. Auth: get_current_user. Generates and caches a native-language explanation for existing lessons at any CEFR level whose `content.native_explanation` is missing. Returned support includes translated text, key points, examples, common traps, and a mini-glossary. If already present, returns the cached explanation idempotently.
 - **POST `/exercises/{id}/native-explanation`** — Rate limit: 10/min. Auth: get_current_user. Generates and caches a concise native-language clarification for an exercise whose target-language `explanation` exists but whose generated JSON lacks `native_explanation`. If already present, returns the cached exercise-level explanation idempotently.
 - **POST `/exercises/{id}/native-hint`** — Rate limit: 10/min. Auth: get_current_user. Generates and caches a concise pre-answer native-language hint for an exercise whose generated JSON lacks `native_hint`. Hints must help without revealing the correct answer. If already present, returns the cached hint idempotently.

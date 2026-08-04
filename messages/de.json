@@ -604,6 +604,8 @@
     "testScore": "Punktzahl:",
     "pendingLessons": "Ausstehende Lektionen",
     "resume": "Fortsetzen",
+    "continueLesson": "Fortsetzen",
+    "reviewLesson": "Wieder ansehen",
     "noPlanLabel": "LOS GEHTS",
     "noPlanTitle": "Erstelle deinen Lernplan",
     "noPlanDesc": "Mach eine kurze Einschätzung, um dein Niveau zu entdecken und einen persönlichen Lernplan zu erhalten.",
@@ -1400,7 +1402,7 @@
   },
   "whatsNew": {
     "title": "Neuigkeiten",
-    "version": "v1.8.28",
+    "version": "v1.8.30",
     "cta": "Verstanden",
     "entry1": {
       "label": "Erinnerungen, die dich begleiten",
@@ -1411,6 +1413,10 @@
       "desc": "Füge eigene Erinnerungen hinzu oder prüfe, lösche und leere sie jederzeit in den Einstellungen. Beim Entfernen einer Lernsprache bleiben deine Erinnerungen erhalten."
     },
     "entry3": {
+      "label": "Deine Lektionen, immer verfügbar",
+      "desc": "In Mein Plan kannst du deine aktuelle Lektion starten, übersprungene Lektionen fortsetzen oder abgeschlossene Lektionen mit deinen gespeicherten Antworten und Rückmeldungen ansehen."
+    },
+    "entry4": {
       "label": "Ein flüssigeres Erlebnis",
       "desc": "Fehlerbehebungen und kleine Verbesserungen machen FreeLingo zuverlässiger und angenehmer in der Nutzung."
     }

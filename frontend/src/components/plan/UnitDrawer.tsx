@@ -11,6 +11,7 @@ interface Lesson {
   week: number
   day: number
   completed: boolean
+  action?: 'start' | 'continue' | 'review'
 }
 
 interface Props {
@@ -132,12 +133,16 @@ export default function UnitDrawer({
                     {lessonTypeLabel[lesson.lesson_type] ?? lesson.lesson_type}
                   </p>
                 </div>
-                {lesson.id != null && !lesson.completed && (
+                {lesson.id != null && lesson.action && (
                   <button
                     onClick={() => onStartLesson(lesson.id!)}
                     className="text-fl-hint text-fl-muted-2 border-fl-border hover:border-fl-border-2 hover:text-fl-fg shrink-0 border px-3 py-1.5 font-mono tracking-widest uppercase transition-colors"
                   >
-                    {tCommon('start')}
+                    {lesson.action === 'review'
+                      ? t('reviewLesson')
+                      : lesson.action === 'continue'
+                        ? t('continueLesson')
+                        : tCommon('start')}
                   </button>
                 )}
               </div>

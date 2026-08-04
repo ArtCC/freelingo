@@ -88,6 +88,7 @@ Only endpoints with explicit `@limiter.limit()` decorators are listed here. Ever
 - `GET /api/study-plan/today` — Limit: 20/minute; Access: Authenticated; Rationale: May generate missing lesson content
 - `POST /api/study-plan/skip-day` — Limit: 60/minute; Access: Authenticated; Rationale: Plan progress mutation
 - `GET /api/study-plan/pending-lessons` — Limit: 60/minute; Access: Authenticated; Rationale: Pending lessons
+- `GET /api/study-plan/lessons` — Limit: 60/minute; Access: Authenticated; Rationale: Generated lesson metadata for the active plan
 - `GET /api/lessons/{lesson_id}` — Limit: 60/minute; Access: Authenticated; Rationale: Lesson detail
 - `POST /api/lessons/{lesson_id}/start` — Limit: 60/minute; Access: Authenticated; Rationale: Lesson status mutation
 - `POST /api/lessons/{lesson_id}/complete` — Limit: 60/minute; Access: Subscription or freemium; Rationale: Lesson completion

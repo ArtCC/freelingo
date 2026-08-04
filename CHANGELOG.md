@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.28] - 2026-08-10
+## [1.8.30] - 2026-08-04
 
 ### Added
 
@@ -20,12 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Voice memory freshness**: voice conversation reloads the user's global memories every turn, so manual and newly saved context is available without reconnecting.
 - **Memory limits and safety**: memory items remain limited to 200 characters, storage is capped at 150 items per user with deterministic oldest-first eviction, and injected memory text is escaped and treated as untrusted prompt data.
 - **Privacy and deletion copy**: all ten locales now explain manual/global memories and clarify that removing a learning language does not remove account memories.
-- **What's New version marker**: bumped to `v1.8.28` with localized memory redesign highlights.
+- **What's New version marker**: bumped to `v1.8.30` with localized memory redesign highlights.
 - **Memory save notification**: text and voice now share an accessible informational toast that confirms Lingu saved a memory, points users to Settings without a timed action, safely restarts and re-announces consecutive saves, and survives SSE events split across network chunks.
 - **Native-language memories**: Lingu now writes new automatic memories in the user's configured native language, independently of the language being studied, so saved facts remain directly readable in Settings. Manual and existing memories are left unchanged.
 
 ### Fixed
 
+- **Study-plan lesson actions**: unit drawers now use persisted lesson state to offer Start for the current lesson, Continue for skipped pending lessons, and read-only Review for completed lessons. Reviewing preserves saved answers and feedback without consuming quota or awarding progress again, and repeated lesson-completion requests are idempotent.
 - **Progressive chat streaming with memory tools**: visible text from the initial response and the post-tool continuation is forwarded as soon as the provider emits it instead of being buffered until each generation completes. A no-tools fallback is only attempted when no visible text has been sent, preventing duplicate partial responses.
 - **Serialized memory deletion**: individual deletion and clear-all now use the same per-user database lock as memory creation, so an already-running save completes before the deletion transaction decides what to remove.
 

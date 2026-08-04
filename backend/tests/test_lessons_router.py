@@ -514,15 +514,15 @@ async def test_complete_lesson_already_completed(client, test_user, db_session):
     user, headers = test_user
     lesson = await _create_lesson_with_plan(db_session, user.id)
 
-    # First completion
-    r1 = await client.post(f"/api/lessons/{lesson.id}/complete", headers=headers)
-    assert r1.status_code == 200
-    assert r1.json()["is_completed"] is True
+    with patch("app.routers.lessons.update_daily_progress", new_callable=AsyncMock) as progress:
+        r1 = await client.post(f"/api/lessons/{lesson.id}/complete", headers=headers)
+        r2 = await client.post(f"/api/lessons/{lesson.id}/complete", headers=headers)
 
-    # Second completion
-    r2 = await client.post(f"/api/lessons/{lesson.id}/complete", headers=headers)
+    assert r1.status_code == 200
     assert r2.status_code == 200
     assert r2.json()["is_completed"] is True
+    assert r2.json()["completed_at"] == r1.json()["completed_at"]
+    progress.assert_awaited_once()
 
 
 @pytest.mark.asyncio

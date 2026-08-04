@@ -604,6 +604,8 @@
     "testScore": "Score :",
     "pendingLessons": "Leçons en attente",
     "resume": "Reprendre",
+    "continueLesson": "Continuer",
+    "reviewLesson": "Revoir",
     "noPlanLabel": "COMMENCER",
     "noPlanTitle": "Créez votre plan d'étude",
     "noPlanDesc": "Faites une évaluation rapide pour découvrir votre niveau et obtenir un parcours d'apprentissage personnalisé.",
@@ -1400,7 +1402,7 @@
   },
   "whatsNew": {
     "title": "Nouveautés",
-    "version": "v1.8.28",
+    "version": "v1.8.30",
     "cta": "Compris",
     "entry1": {
       "label": "Des souvenirs qui vous suivent",
@@ -1411,6 +1413,10 @@
       "desc": "Ajoutez vos propres souvenirs, consultez-les, supprimez-les ou effacez-les à tout moment dans les Paramètres. Supprimer une langue conserve vos souvenirs."
     },
     "entry3": {
+      "label": "Vos leçons, toujours accessibles",
+      "desc": "Dans Mon plan, commencez votre leçon actuelle, reprenez les leçons ignorées ou révisez les leçons terminées avec vos réponses et commentaires enregistrés."
+    },
+    "entry4": {
       "label": "Une expérience plus fluide",
       "desc": "Des corrections de bugs et de petites améliorations rendent FreeLingo plus fiable et agréable à utiliser."
     }

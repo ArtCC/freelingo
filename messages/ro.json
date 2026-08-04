@@ -604,6 +604,8 @@
     "testScore": "Scor:",
     "pendingLessons": "Lecții restante",
     "resume": "Reia",
+    "continueLesson": "Continuă",
+    "reviewLesson": "Revizuiește",
     "noPlanLabel": "ÎNCEPE",
     "noPlanTitle": "Creează-ți planul de studiu",
     "noPlanDesc": "Fă o evaluare rapidă pentru a-ți descoperi nivelul și a obține un plan de învățare personalizat.",
@@ -1400,7 +1402,7 @@
   },
   "whatsNew": {
     "title": "Noutăți",
-    "version": "v1.8.28",
+    "version": "v1.8.30",
     "cta": "Am înțeles",
     "entry1": {
       "label": "Amintiri care te însoțesc",
@@ -1411,6 +1413,10 @@
       "desc": "Adaugă propriile amintiri sau consultă-le, șterge-le și golește-le oricând din Setări. Eliminarea unei limbi îți păstrează amintirile."
     },
     "entry3": {
+      "label": "Lecțiile tale, mereu accesibile",
+      "desc": "În Planul meu poți începe lecția curentă, continua lecțiile omise sau revizui lecțiile finalizate cu răspunsurile și feedbackul salvate."
+    },
+    "entry4": {
       "label": "O experiență mai fluidă",
       "desc": "Remedierile de erori și micile îmbunătățiri fac FreeLingo mai stabil și mai plăcut de utilizat."
     }
