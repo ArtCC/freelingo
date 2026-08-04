@@ -34,7 +34,7 @@ Most REST endpoints are prefixed under `/api`. The public health check is at `/h
 - **POST `/refresh`** — Rate limit: 60/min. Rotates refresh token, returns new access_token
 - **POST `/logout`** — Rate limit: 60/min. Deletes refresh token from Redis, clears cookie
 - **GET `/me`** — Rate limit: 60/min. Returns authenticated user profile, including subscription fields (`subscription_status`, `subscription_ends_at`, `trial_used`, `assessment_voice_trial_used`) and freemium fields (`freemium_trial_ends_at`, `freemium_trial_used`) so the frontend can distinguish Stripe trial eligibility, freemium trial state, post-assessment voice-demo eligibility, and active subscription state.
-- **PATCH `/me`** — Rate limit: 60/min. Updates display_name, email, password, target_language, conversation settings
+- **PATCH `/me`** — Rate limit: 60/min. Updates display name, email, password, native language, target language, UI locale, bio, learning goals, and conversation settings. `native_language` is validated against the same supported UI-language codes used at registration (`en`, `es`, `fr`, `pt`, `de`, `it`, `ru`, `nl`, `pl`, `ro`); unsupported codes return HTTP 422 even when the API is called outside the selector-based frontend.
 - **POST `/me/avatar`** — Rate limit: 60/min. Uploads the authenticated user's profile avatar (JPEG/PNG, max 2 MB). Validates the declared content type, image signature, and minimal image structure, stores the image on disk under `/app/avatars` using a non-predictable UUID filename, and returns the user profile with `avatar` set to a cache-busted internal reference (`/api/avatars/{uuid}.{ext}?v={ms}`). The file reference is not publicly served.
 - **GET `/me/avatar-file`** — Rate limit: 60/min. Authenticated current-user avatar retrieval endpoint. Returns only the authenticated user's own avatar file; this is the supported image retrieval path used by the frontend. Responses are marked `Cache-Control: private, no-store`; client-side avatar reuse is handled by the frontend blob cache keyed by the stored avatar reference.
 - **DELETE `/me/avatar`** — Rate limit: 60/min. Removes profile avatar (sets to null)
@@ -136,6 +136,7 @@ Auth required (`get_current_user`). Serves static vocabulary data across the bac
 - **GET `/today`** — Rate limit: 20/min. Today's lessons; auto-generates missing content via LLM on first access; auto-advances `progress_day` when all lessons for the current day are complete. Returns `plan_id`, `cefr_level`, `lessons`, `progress_day`, `total_days`, `pending_count`.
 - **POST `/skip-day`** — Rate limit: 60/min. Increments `progress_day` by 1 (capped at `total_days`). Returns `{progress_day, total_days}`.
 - **GET `/pending-lessons`** — Rate limit: 60/min. Returns incomplete lessons from days before `progress_day` (generated but not completed).
+- **GET `/lessons`** — Rate limit: 60/min. Returns lightweight metadata for every generated lesson in the active plan: `id`, title, type, week, day, unit, and completion state. It does not generate content or mutate progress.
 
 ---
 
@@ -144,8 +145,8 @@ Auth required (`get_current_user`). Serves static vocabulary data across the bac
 Lesson viewing and exercise answering use `get_current_user` (always free). Only completion is gated by `require_subscription_or_freemium("lessons")`.
 
 - **GET `/{lesson_id}`** — Rate limit: 60/min. Auth: get_current_user. Lesson detail with exercises. Exercise responses include optional `native_explanation` and `native_hint` copied from generated lesson JSON when available. Lesson content may include enriched vocabulary items with optional native-language translation, example translation, usage note, and reading fields.
-- **POST `/{lesson_id}/start`** — Rate limit: 60/min. Auth: get_current_user. Marks lesson as in-progress.
-- **POST `/{lesson_id}/complete`** — Rate limit: 60/min. Auth: require_subscription_or_freemium("lessons"). Marks the lesson as completed and updates progress and competencies.
+- **POST `/{lesson_id}/start`** — Rate limit: 60/min. Auth: get_current_user. Validates ownership and returns the lesson; no in-progress state is persisted.
+- **POST `/{lesson_id}/complete`** — Rate limit: 60/min. Auth: get_current_user; subscription/freemium quota is checked only when applying the first completion. Locks the lesson row and atomically commits completion, progress, XP, and competencies. Repeated or concurrent calls for an already-completed lesson return its existing state without changing `completed_at`, quota, progress, XP, or competencies, including when the user's freemium quota is exhausted.
 - **POST `/{lesson_id}/native-explanation`** — Rate limit: 10/min. Auth: get_current_user. Generates and caches a native-language explanation for existing lessons at any CEFR level whose `content.native_explanation` is missing. Returned support includes translated text, key points, examples, common traps, and a mini-glossary. If already present, returns the cached explanation idempotently.
 - **POST `/exercises/{id}/native-explanation`** — Rate limit: 10/min. Auth: get_current_user. Generates and caches a concise native-language clarification for an exercise whose target-language `explanation` exists but whose generated JSON lacks `native_explanation`. If already present, returns the cached exercise-level explanation idempotently.
 - **POST `/exercises/{id}/native-hint`** — Rate limit: 10/min. Auth: get_current_user. Generates and caches a concise pre-answer native-language hint for an exercise whose generated JSON lacks `native_hint`. Hints must help without revealing the correct answer. If already present, returns the cached hint idempotently.
@@ -180,7 +181,7 @@ All endpoints require `get_current_user`.
 
 ## Chat — `/api/chat`
 
-All endpoints require `require_subscription_or_freemium("chat")`. Memories endpoints still use `require_subscription`.
+All endpoints require `require_subscription_or_freemium("chat")`. Memory management is documented separately and requires authentication only.
 
 - GET — Path: `/conversations`; Description: Rate limit: 60/min. Lists user's conversations (text + voice), ordered by `updated_at` desc. Response includes `source` (`chat` or `voice`).
 - POST — Path: `/conversations`; Description: Rate limit: 60/min. Creates new conversation
@@ -311,11 +312,12 @@ User review endpoints. Admin moderation endpoints live under `/api/admin/reviews
 
 ## Memories — `/api/memories`
 
-All endpoints require `require_subscription`: users still need subscription access when Stripe is enabled, but maintenance mode does not block memory management.
+All endpoints require `get_current_user` only. Memory management is not subscription-gated or maintenance-gated so every authenticated user can inspect and control stored personal context.
 
-- GET — Path: ``; Rate limit: 60/min; Auth: require_subscription; Description: Returns all memories for the authenticated user. Response: `{memories: [{id, content, source, created_at}]}`.
-- DELETE — Path: `/{id}`; Rate limit: 60/min; Auth: require_subscription; Description: Deletes a single memory by ID. Returns HTTP 204. Returns 404 if not found or not owned by the user.
-- DELETE — Path: ``; Rate limit: 10/min; Auth: require_subscription; Description: Clears all memories for the authenticated user. Response: `{deleted: int}`.
+- GET — Path: ``; Rate limit: 60/min; Auth: get_current_user; Description: Returns all global memories for the authenticated user, oldest-first. Response: `{memories: [{id, content, source, created_at}]}`.
+- POST — Path: ``; Rate limit: 10/min; Auth: get_current_user; Description: Creates one trimmed 1-200 character memory with source `manual`. Returns HTTP 201, or 409 `memory_already_exists` for an exact duplicate.
+- DELETE — Path: `/{id}`; Rate limit: 60/min; Auth: get_current_user; Description: Deletes a single memory by ID. Returns HTTP 204. Returns 404 if not found or not owned by the user.
+- DELETE — Path: ``; Rate limit: 10/min; Auth: get_current_user; Description: Clears all global memories for the authenticated user. Response: `{deleted: int}`.
 
 ---
 

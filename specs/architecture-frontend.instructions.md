@@ -115,7 +115,7 @@ frontend/
 │   │
 │   └── middleware.ts            # Auth guard (redirect to /login) + locale detection
 │
-├── tests/                       # Vitest suite (30 test files, 405 tests; coverage not configured)
+├── tests/                       # Vitest suite (38 test files, 436 tests; coverage not configured)
 │   ├── setup.ts                 # Global mocks: localStorage, next/navigation, next-intl
 │   ├── middleware.test.ts
 │   ├── components/
@@ -178,8 +178,10 @@ frontend/
 
 - `/dashboard` — Home: action-oriented overview using existing progress and study-plan data. Shows the active language/level, a primary next-step card, streak/XP/lesson/accuracy stats, plan-progress summary with compact current-level vocabulary progress, today's lessons with completion count and next pending lesson highlight, recent-performance areas derived from `skills`, pending-lesson link, a freemium trial countdown banner when the trial is active, a compact Premium banner for unsubscribed users when Stripe is enabled, and shortcuts to plan, flashcards, tutor, and assessment. The Premium banner presents trial-focused messaging and the shared subscription buttons directly, recommending yearly first and keeping monthly as the flexible alternative. If the user's subscription is `past_due`, `unpaid`, or `paused`, the banner instead shows payment-recovery copy and opens the Stripe Customer Portal to update payment details.
 - `/assessment` — Level placement test (`BeginnerGate` → `AdaptiveQuiz` → `DurationSelector`).
-- `/plan` — Study plan overview: unit cards, `LevelTestBanner`, `UnitDrawer`.
+- `/plan` — Study plan overview: unit cards, `LevelTestBanner`, and `UnitDrawer`. Scheduled slots are merged with generated lesson metadata, today's lessons, and skipped pending lessons so the drawer offers Start, Continue, or Review according to persisted state while leaving future ungenerated slots unavailable.
 - `/lesson/[id]` — Lesson player: content + interactive exercises. If `content.native_explanation` exists, it is shown below the target-language explanation in a collapsible section that opens by default for A1/A2 and stays collapsed by default for B1+. The section renders translated text, key points, examples, common traps, and a mini-glossary when present. If it is missing, the expanded section shows a native-language button that calls `POST /api/lessons/{id}/native-explanation` and stores the returned explanation in local lesson state. Before an unanswered exercise, the page can show a native-language hint button; if the exercise response includes `native_hint`, it renders immediately when requested, otherwise the button calls `POST /api/lessons/exercises/{id}/native-hint` and patches the exercise in local state. The exercise card header also includes a small `Regenerate exercise` action for unanswered exercises; it calls `POST /api/lessons/exercises/{id}/regenerate`, replaces the current exercise in local state when the backend confirms a technical issue, and shows a small inline error if regeneration is rejected or fails. Exercise feedback still shows the target-language explanation first; when an exercise response includes `native_explanation`, the lesson page renders that native-language clarification directly below the target-language exercise explanation. When the exercise has a target-language explanation but lacks native text, the same button pattern calls `POST /api/lessons/exercises/{id}/native-explanation` and patches the exercise in local state. The lesson vocabulary block renders target-language word, definition, example audio, and example text, plus optional reading, native-language translation, example translation, and usage note when present; older vocabulary items without those optional fields still render normally. Completing a lesson may open the reusable review prompt when it advances the user out of the completed curriculum unit, subject to duplicate-review checks and local dismissal cooldown.
+- Completed lessons reuse `/lesson/[id]` in read-only review mode. Saved responses and feedback remain visible, answer/regeneration and quota controls are unavailable, and the final action returns to `/plan` without completing or rewarding the lesson again.
+- First-time lesson completion disables duplicate submissions immediately and force-refreshes the freemium status after success instead of decrementing cached quota optimistically.
 - `/chat` — AI tutor text chat with SSE streaming. Free-tier users see a `FreemiumQuotaBanner` with daily chat message counter; when the quota is exhausted, a compact `PaywallBanner` replaces the chat input. Premium users see the normal chat interface.
 - `/conversation` — Real-time voice conversation with WebSocket + VAD. Free-tier users see a `FreemiumQuotaBanner` with weekly voice minutes counter; when quota is exhausted, a compact `PaywallBanner` is shown. When the user manually stops a connected voice session after at least 5 minutes, the page may open the reusable review prompt, subject to duplicate-review checks and local dismissal cooldown.
 - `/flashcards` — Spaced-repetition flashcard review.
@@ -191,7 +193,7 @@ frontend/
 - `/listening` — AI-generated listening comprehension exercises. Its attempt history uses the shared pagination component with 10 results per page and sends `skip`/`limit` to the backend. Free-tier users see a `FreemiumQuotaBanner` with weekly exercise counter; when quota is exhausted, a compact `PaywallBanner` is shown. Completing a new listening attempt may open the reusable review prompt, subject to duplicate-review checks and local dismissal cooldown; replay attempts from history do not trigger it.
 - `/reading` — AI-generated reading comprehension exercises. Its attempt history uses the shared pagination component with 10 results per page and sends `skip`/`limit` to the backend. Free-tier users see a `FreemiumQuotaBanner` with weekly exercise counter; when quota is exhausted, a compact `PaywallBanner` is shown. Completing a new reading attempt may open the reusable review prompt, subject to duplicate-review checks and local dismissal cooldown; replay attempts from history do not trigger it.
 - `/progress` — Skills tracker with radar chart and multi-level vocabulary progress toggle.
-- `/settings` — Settings hub with an admin-inspired header/nav, quick action cards, and grouped panels. Account contains profile/avatar/password plus legal/session actions; avatars are uploaded/deleted through authenticated profile endpoints and rendered through the authenticated `/api/auth/me/avatar-file` endpoint with a shared client-side blob cache. Avatar fetches retry once through the refresh-token flow after a 401, and UI surfaces use the same initial-letter placeholder while the private image blob is loading or unavailable. Avatar file references are not public static URLs. Learning links to My Languages and Memory; Voice contains conversation and TTS voice preferences; Plan contains billing and usage limits with shared subscription buttons that recommend yearly first for unsubscribed users; `past_due`, `unpaid`, and `paused` subscriptions show payment-recovery copy and a Stripe Customer Portal action instead of new plan buttons. `none`, `incomplete`, `incomplete_expired`, and `canceled` show normal monthly/yearly plan buttons. Community contains review creation/editing.
+- `/settings` — Settings hub with an admin-inspired header/nav, quick action cards, and grouped panels. Account contains profile/avatar/password plus legal/session actions; avatars are uploaded/deleted through authenticated profile endpoints and rendered through the authenticated `/api/auth/me/avatar-file` endpoint with a shared client-side blob cache. Avatar fetches retry once through the refresh-token flow after a 401, and UI surfaces use the same initial-letter placeholder while the private image blob is loading or unavailable. Avatar file references are not public static URLs. Learning links to My Languages and Memory; `/settings/memories` explains global cross-language memory and supports authenticated manual add, list, individual delete, and clear-all with explicit loading, retry, duplicate, busy, success, and error states. Voice contains conversation and TTS voice preferences; Plan contains billing and usage limits with shared subscription buttons that recommend yearly first for unsubscribed users; `past_due`, `unpaid`, and `paused` subscriptions show payment-recovery copy and a Stripe Customer Portal action instead of new plan buttons. `none`, `incomplete`, `incomplete_expired`, and `canceled` show normal monthly/yearly plan buttons. Community contains review creation/editing.
 - `/faq` — Frequently asked questions.
 - `/admin/reviews` — Admin-only review moderation with 10 reviews per page, status/rating filters, approve/unapprove, and delete confirmation.
 - Onboarding Checkout — If a user reloads onboarding after registration and the refresh cookie exists but no access token is in memory, onboarding refreshes `/api/auth/refresh` before creating the Stripe Checkout session for the selected monthly/yearly plan.
@@ -205,7 +207,7 @@ frontend/
 
 ### Legal routes — `(legal)/`
 
-- `/privacy` — Privacy policy
+- `/privacy` — Privacy policy, including global/manual memory storage and preservation when a learning language is deleted
 - `/terms` — Terms of service
 
 ### API route handlers
@@ -249,6 +251,7 @@ Seven Zustand stores hold all client-side state. No React Context is used for gl
 - `billing/` — Stripe subscription management UI; landing `PricingSection` hides for active/trialing subscribers; `MaintenanceGate` hides gated pages from non-admin users during maintenance. `FreemiumQuotaBanner` displays quota counters and trial badge for free-tier users. `PaywallBanner` supports a `compact` prop for inline upsell on freemium-exhausted pages; the `PaywallGate` wrapper component has been removed in favor of per-page freemium checks.
 - `chat/` — Message display, input, SSE stream handling
 - `conversation/` — `ConversationMode`, `MicButton`, `StatusIndicator`, `TranscriptBubble`, VAD integration
+- `memory/` — Shared accessible `MemorySavedToast` used by text and voice tutoring
 - `feedback/` — `AdminAuthorBadge`, a compact gold `ADMIN` marker rendered only for feedback authors whose embedded API role is `admin`
 - `flashcard/` — Flashcard flip animation, SM-2 rating buttons
 - `lesson/` — Exercise renderers (multiple choice, fill-in-blank, listening, reading)
@@ -270,6 +273,7 @@ Seven Zustand stores hold all client-side state. No React Context is used for gl
 - **`LanguageSwitcher.tsx`** — UI locale switcher
 - **`CookieBanner.tsx`** — GDPR cookie consent banner
 - **`ui/`** — shadcn/ui primitives (`button`, `card`, `input`, `progress`, `badge`, `separator`, `sheet`, `tabs`) + custom: `AudioPlayer`, `VoiceRecorder`, `confirm-dialog`
+- **Memory notification** — `useTransientToast` owns one resettable, unmount-safe timer and increments an announcement ID for every confirmed save. `MemorySavedToast` remounts its `role="status"`/`aria-live="polite"` region for consecutive announcements and tells the user the memory can be reviewed in Settings without exposing stored content or presenting a timed action. Failed, skipped, duplicate, or unsupported automatic memory work produces no user-facing message.
 
 ---
 
@@ -334,12 +338,14 @@ User sends message → POST /api/chat (SSE proxy)
     ↓
 Next.js Route Handler forwards to backend SSE endpoint
     ↓
-Backend: LLM Adapter streams tokens → SSE events
+Backend: LLM Adapter streams tokens and memory status → SSE events
     ↓
-Frontend receives SSE events:
+Buffered `readSseData()` reassembles events across arbitrary network chunks:
   - token events → append to message accumulator
+  - memory_updated event → show the shared accessible memory toast
   - done event → finalize message, add to ChatHistory
   - error event → show error, stop streaming
+  - missing terminal done/error or truncated final JSON → show a generic interrupted-conversation error
 ```
 
 ---

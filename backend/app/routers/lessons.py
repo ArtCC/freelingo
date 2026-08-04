@@ -4,11 +4,16 @@ import re
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_subscription_or_freemium
+from app.core.deps import (
+    check_subscription_or_freemium_access,
+    get_current_user,
+    get_redis,
+)
 from app.core.limiter import limiter
 from app.models.lesson import Exercise, Lesson
 from app.models.study_plan import StudyPlan
@@ -132,16 +137,25 @@ def _exercise_has_technical_error(exercise: Exercise) -> bool:
     return False
 
 
-async def _get_lesson_for_user(lesson_id: int, user_id: int, db: AsyncSession) -> Lesson:
+async def _get_lesson_for_user(
+    lesson_id: int,
+    user_id: int,
+    db: AsyncSession,
+    *,
+    for_update: bool = False,
+) -> Lesson:
     """Fetch a lesson and verify it belongs to the requesting user via its study plan."""
     from app.models.user_language import UserLanguage
 
-    result = await db.execute(
+    query = (
         select(Lesson)
         .join(StudyPlan, Lesson.study_plan_id == StudyPlan.id)
         .join(UserLanguage, StudyPlan.user_language_id == UserLanguage.id)
         .where(Lesson.id == lesson_id, UserLanguage.user_id == user_id)
     )
+    if for_update:
+        query = query.with_for_update(of=Lesson)
+    result = await db.execute(query)
     lesson = result.scalar_one_or_none()
     if not lesson:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
@@ -264,15 +278,19 @@ async def start_lesson(
 async def complete_lesson(
     request: Request,
     lesson_id: int,
-    current_user: User = Depends(require_subscription_or_freemium("lessons")),
+    current_user: User = Depends(get_current_user),
+    redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
 ):
-    lesson = await _get_lesson_for_user(lesson_id, current_user.id, db)
+    lesson = await _get_lesson_for_user(lesson_id, current_user.id, db, for_update=True)
+
+    if lesson.is_completed:
+        return lesson
+
+    await check_subscription_or_freemium_access("lessons", redis, current_user)
 
     lesson.is_completed = True
     lesson.completed_at = datetime.now(UTC).replace(tzinfo=None)
-    await db.commit()
-    await db.refresh(lesson)
 
     await update_daily_progress(
         db,
@@ -280,12 +298,8 @@ async def complete_lesson(
         lesson_completed=True,
         skill=lesson.lesson_type,
         study_plan_id=lesson.study_plan_id,
+        commit=False,
     )
-
-    # Record freemium lesson usage (best-effort)
-    from app.services.freemium_service import maybe_record_freemium_usage
-
-    await maybe_record_freemium_usage(current_user, "lessons")
 
     if lesson.unit_id:
         from app.data.curriculum import get_curriculum_units  # noqa: PLC0415
@@ -316,8 +330,15 @@ async def complete_lesson(
                         lesson_score=lesson_score,
                         study_plan_id=lesson.study_plan_id,
                     )
-                    await db.commit()
                     break
+
+    await db.commit()
+    await db.refresh(lesson)
+
+    # Record freemium lesson usage only after the database transaction succeeds.
+    from app.services.freemium_service import maybe_record_freemium_usage
+
+    await maybe_record_freemium_usage(current_user, "lessons")
 
     return lesson
 

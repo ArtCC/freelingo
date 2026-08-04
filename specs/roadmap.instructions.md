@@ -315,34 +315,32 @@ This document records what was built and the completion criteria met.
 
 > The AI tutor autonomously remembers important details about the student (preferences,
 > hobbies, profession, learning goals, struggles) as they emerge during chat or voice
-> conversations. The LLM appends a structured marker block to its response when it
-> decides something is worth persisting; the backend strips the block before the student
-> sees it and saves the facts to the `memories` table. Saved memories are injected back
-> into the system prompt for both chat and voice sessions, giving the tutor persistent
-> cross-session context at zero extra LLM cost.
+> conversations. Lingu uses a native `save_user_memory` tool when a durable fact is worth
+> persisting; the backend executes one tool round and continuation for text or voice.
+> Saved memories are global per user and are injected into both tutor modes.
 
 - **1** — DB model — `memories` table + migration `0022_memory`. Status: ✅
-- **2** — `memory_service.py` — parse/strip marker, build context, save (dedup + FIFO eviction), get, delete, clear. Status: ✅
-- **3** — Chat integration — marker withheld mid-stream, `{"memory_updated": true}` SSE signal after `done`. Status: ✅
-- **4** — Voice integration — marker stripped from TTS path, `{"type": "memory_updated"}` WebSocket signal before `turn_complete`. Status: ✅
+- **2** — `memory_service.py` — strict native tool, escaped context, per-user exact deduplication, 150-item FIFO cap, global get, manual create, delete, clear. Status: ✅
+- **3** — Chat integration — one native tool round plus continuation, `{"memory_updated": true}` SSE signal before `done`. Status: ✅
+- **4** — Voice integration — global memories refreshed every turn, tool payload excluded from TTS, `{"type": "memory_updated"}` before `turn_complete`. Status: ✅
 - **5** — `MEMORY_SYSTEM_INSTRUCTION` injected into both chat and voice system prompts. Status: ✅
-- **6** — REST API — 3 endpoints: list, delete single, clear all (all require `require_subscription`; maintenance mode is not applied). Status: ✅
+- **6** — REST API — authenticated list, manual create, delete single, and clear all; no subscription or maintenance gate. Status: ✅
 - **7** — Frontend toast in chat and voice conversation on `memory_updated` signal. Status: ✅
-- **8** — Settings → Memory subpage (`/settings/memories`) — full list, individual delete, clear all. Status: ✅
+- **8** — Settings → Memory subpage (`/settings/memories`) — manual add, full list, individual delete, clear all, and robust loading/error/busy states. Status: ✅
 - **9** — i18n — `settings.sectionMemory`, `settings.memoryEmpty`, `settings.memoryClearAll*`, `chat.memoryUpdated`, `conversation.memoryUpdated` in all 10 locale files. Status: ✅
-- **10** — Tests — `test_memories.py` with 18 test cases (unit + integration, IDOR guard, dedup, eviction, subscription gate). Status: ✅
+- **10** — Tests — backend and frontend coverage for native provider streams, memory APIs/services, cross-language preservation, and Settings states. Aggregate totals await the next full validation run. Status: ✅
 
 **Completion criteria:**
 
-- [x] LLM marker `<<MEMORY>>...<<ENDMEMORY>>` never reaches the frontend (stripped in both chat SSE and voice WebSocket)
-- [x] New memories saved after each turn that contains the marker block
-- [x] Exact-duplicate items skipped; FIFO eviction when `MAX_MEMORIES_PER_USER` (50) is exceeded
+- [x] Native tool payloads never reach frontend text, transcripts, or TTS
+- [x] New memories are saved through one native `save_user_memory` tool round in text and voice
+- [x] Exact-duplicate items skipped; FIFO eviction when `MAX_MEMORIES_PER_USER` (150) is exceeded
 - [x] Up to `MAX_MEMORIES_CONTEXT` (20) most recent memories injected into system prompt per request
 - [x] `GET /api/memories` returns all memories oldest-first
 - [x] `DELETE /api/memories/{id}` returns 404 if wrong owner (IDOR guard)
 - [x] `DELETE /api/memories` returns `{"deleted": N}`
 - [x] Toast notification appears in chat and voice when new memories are saved
-- [x] `/settings/memories` subpage lists all memories with individual delete and clear-all
+- [x] `/settings/memories` supports manual add, global list, individual delete, and clear-all
 - [x] `tsc --noEmit` and `python3 -m compileall` pass clean
 - [x] No regressions in Phases 1–8
 
@@ -353,7 +351,8 @@ This document records what was built and the completion criteria met.
 ✅ Status: Complete (v1.7.0)
 
 > Each user can learn multiple languages simultaneously. Every language gets its own
-> isolated study plan, progress, flashcards, conversations, memories, and competencies.
+> isolated study plan, progress, flashcards, conversations, and competencies. Memories
+> are global per user so durable personal context follows the learner across languages.
 > A sidebar language switcher lets the user pivot the entire experience to any of their
 > active plans with one click. Phase 4 added `target_language` as a single value per
 > user — Phase 10 extends it to a full per-language data model.
@@ -372,7 +371,7 @@ This document records what was built and the completion criteria met.
 - [x] A user can add a second language from Settings → My Languages
 - [x] Language switcher appears in sidebar only when the user has ≥ 2 languages
 - [x] Switching language pivots the entire experience (plan, flashcards, chat, progress) to that language's plan
-- [x] Flashcards, progress, memories, and competencies are fully isolated per `study_plan_id`
+- [x] Flashcards, progress, and competencies are isolated per `study_plan_id`; memories retain nullable plan provenance but are retrieved globally
 - [x] Spanish (`es-ES`), Italian (`it-IT`), and Portuguese (`pt-PT`) curriculum data is complete and correct
 - [x] All LLM prompts are language-agnostic (no hardcoded "English")
 - [x] Migration `0029` runs cleanly; `downgrade` fully reverses it

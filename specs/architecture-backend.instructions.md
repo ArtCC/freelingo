@@ -25,7 +25,7 @@ backend/
 │   │   ├── app_logger.py        # Structured logging (structlog)
 │   │   └── limiter.py           # slowapi rate limiter setup
 │   │
-│   ├── models/                  # SQLAlchemy 2.0 ORM models (16 files, 23 model classes)
+│   ├── models/                  # SQLAlchemy 2.0 ORM models (16 files, 22 model classes)
 │   │   ├── __init__.py
 │   │   ├── user.py              # User, UserPreferences, user quotas, avatar
 │   │   ├── user_language.py     # UserLanguage (phase 10: multi-language learning)
@@ -89,7 +89,7 @@ backend/
 │   │   ├── reading.py           # AI-generated reading exercises
 │   │   ├── reviews.py           # User reviews: create/state, public list, admin moderation
 │   │   ├── stt.py               # Speech-to-text proxy
-│   │   ├── study_plan.py        # Study plan generation + today's lessons
+│   │   ├── study_plan.py        # Study plan generation + current/pending/generated lesson metadata
 │   │   ├── tts.py               # Text-to-speech proxy
 │   │   └── vocabulary.py        # Static vocabulary data (per language + per level)
 │   │
@@ -136,14 +136,14 @@ backend/
 │       └── pt/                   # Portuguese — curriculum, assessment bank, vocabulary, phrasebook
 │
 ├── alembic/
-│   └── versions/                # DB migrations (43 migrations)
+│   └── versions/                # DB migrations (49 migrations)
 │
-└── tests/                       # pytest suite (43 test files, 936 tests)
+└── tests/                       # pytest suite (43 test files, 943 tests)
 ```
 
 ## Database models
 
-The application uses 21 SQLAlchemy ORM model sections organized into 5 domains:
+The application uses 22 SQLAlchemy ORM model sections organized into 5 domains:
 
 - **Core**: User (authentication, preferences, quotas, Stripe state, post-assessment voice demo state, freemium trial state), Progress (daily XP/streak/skills)
 - **Study plan**: StudyPlan, Lesson, Exercise, UserCompetency (curriculum tracking)
@@ -151,12 +151,14 @@ The application uses 21 SQLAlchemy ORM model sections organized into 5 domains:
 - **Conversations**: Conversation, ChatHistory (text and voice transcripts)
 - **AI-generated/static support content**: ListeningExercise, ListeningAttempt, ReadingExercise, ReadingAttempt (shared exercise pools), ResourceNativeHelp (global native-language cache for static resources)
 - **Community**: FeedbackEntry, FeedbackVote, FeedbackComment (feature requests and bug reports), Review (moderated product reviews)
-- **LLM**: Memory (persistent context), LLMUsage (token audit trail)
+- **LLM**: Memory (global per-user persistent context with nullable study-plan provenance), LLMUsage (token audit trail)
 - **Multi-language**: UserLanguage (phase 10 — enables learning multiple target languages per user)
 
 All models use SQLAlchemy 2.0 declarative style with `Mapped[T]` type annotations. PostgreSQL JSON columns store structured content for lessons, plans, exercises, and skill scores.
 
 Feedback entry and comment response schemas embed `FeedbackAuthor` with `id`, `username`, `display_name`, and `role`. The router resolves the current user role while building both individual and batched responses, allowing the frontend to distinguish administrator-authored community content without changing the feedback database models.
+
+`UserUpdateRequest` validates `native_language` against the same supported code set as registration. The frontend exposes a selector, while the backend validation keeps direct or modified API requests from persisting unknown language codes that would later enter native-language prompts and memory-tool descriptions.
 
 For complete schema details, relationships, constraints, and business rules, see [database-models.instructions.md](database-models.instructions.md).
 
@@ -178,7 +180,9 @@ The application uses 18 services plus a centralized `services/prompts/` package 
 
 Key architectural decisions:
 
-- **LLM Adapter** is a singleton with provider-agnostic interface (Ollama, OpenAI, Anthropic, DeepSeek)
+- **LLM Adapter** is a singleton with provider-agnostic interface (Ollama, OpenAI, Anthropic, DeepSeek). Streaming native tools normalize OpenAI-compatible and Anthropic events, forward visible text progressively while filtering tool metadata, execute at most one call, and continue once with provider-native tool-result messages. Explicit tool incompatibility and failed tool continuations fall back to the original turn without tools only before visible text has been emitted, preventing duplicate partial responses; memory executor failures are logged and returned only as failed tool results.
+- **Memory Service** owns strict native `save_user_memory` execution, escaped global context, exact per-user deduplication, a 150-item cap, manual creation, and owner-scoped management. Saves, individual deletion, and clear-all serialize on the same user-row lock. `study_plan_id` records nullable provenance only.
+- **Voice memory capability** is session-local state on `ConversationPipeline`. Once a model explicitly rejects tools, later turns in the same WebSocket session omit them; a new voice session probes capability again.
 - **Study Plan Generator** and **Lesson Generator** are deterministic within curriculum constraints; lesson generation can include native-language support at lesson level, per-exercise explanation level, and per-exercise pre-answer hint level without adding separate exercise-table columns, enriched lesson vocabulary with native-language translation/example notes inside lesson JSON, and missing exercise native explanations or hints can be generated on demand and cached in lesson JSON
 - **TTS/STT services** abstract local (Kokoro/Whisper) and cloud (OpenAI) providers behind common interfaces
 - **Conversation Pipeline** orchestrates real-time voice: cancellable greeting, STT → full LLM response → sentence-level TTS chunks, serialized WebSocket sends, empty-STT guard, and backend barge-in support with frontend automatic interruption disabled
@@ -206,8 +210,8 @@ Testing infrastructure and strategy are documented in [testing.instructions.md](
 
 - **Framework**: pytest + pytest-asyncio + httpx AsyncClient
 - **Test files**: 43 (plus conftest.py for shared fixtures)
-- **Tests**: 922
-- **Coverage**: 85.09% last measured (target: ≥70%)
+- **Tests**: 943
+- **Coverage**: 84.36% last measured (target: ≥70%)
 - **Key fixtures**: async database session, test client with auth headers, Redis mock, user_language fixture
 
 ---

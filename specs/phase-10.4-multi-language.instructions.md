@@ -116,11 +116,11 @@ interface LanguageStore {
 
 **`fetchLanguages`:** calls `GET /api/languages` and populates `userLanguages`, `activeLanguage`, and `availableLanguageCodes` (from `all_supported_languages` in the response). Phase 10.5 uses `availableLanguageCodes` to filter the "Add new language" modal so only operator-enabled languages are shown.
 
-**`switchLanguage`:** calls `PUT /api/languages/active`, sets `isSwitching=true` during the request. Always resets `isSwitching=false` in a `finally` block — including on error — so the spinner never freezes. On success, calls `fetchLanguages()`. The calling component (LanguageSwitcher) is responsible for calling `router.refresh()` after the store call resolves, so server components re-render with the new active language. After the switch, all language-dependent data (study plan, progress, flashcards, lessons, competencies, conversations, memories) must reflect the new active language.
+**`switchLanguage`:** calls `PUT /api/languages/active`, sets `isSwitching=true` during the request. Always resets `isSwitching=false` in a `finally` block — including on error — so the spinner never freezes. On success, calls `fetchLanguages()`. The calling component (LanguageSwitcher) is responsible for calling `router.refresh()` after the store call resolves, so server components re-render with the new active language. After the switch, study plan, progress, flashcards, lessons, competencies, and conversations reflect the new active language; the same global memory collection remains available.
 
 **`addLanguage`:** calls `POST /api/languages`, then `fetchLanguages()`.
 
-**`removeLanguage`:** calls `DELETE /api/languages/{code}`, then `fetchLanguages()`. The **component** calling `removeLanguage` is responsible for showing a `ConfirmDialog` before invoking it (same pattern as the logout confirmation in `layout.tsx`), warning that all data associated with this language (study plan, progress, flashcards, conversations, memories) will be permanently deleted. The store method itself does not show any UI.
+**`removeLanguage`:** calls `DELETE /api/languages/{code}`, then `fetchLanguages()`. The **component** calling `removeLanguage` is responsible for showing a `ConfirmDialog` before invoking it (same pattern as the logout confirmation in `layout.tsx`), warning that language-specific study data and conversations will be deleted while account memories are preserved. The study-plan FK uses `SET NULL` for memory provenance. The store method itself does not show any UI.
 
 `supportedLanguages` is always the static `SUPPORTED_TARGET_LANGUAGES` list — no API call needed. `availableLanguageCodes` is the operator-configured subset and is populated from the API.
 
@@ -212,7 +212,7 @@ export function mapUserLanguageInfo(
 ```json
 "common": {
   "removeLanguageConfirmTitle": "Remove language",
-  "removeLanguageConfirmMessage": "All data for this language (study plan, progress, flashcards, conversations, and memories) will be permanently deleted. This action cannot be undone.",
+  "removeLanguageConfirmMessage": "All language-specific data (study plan, progress, flashcards, and conversations) will be permanently deleted. Your account memories will be preserved. This action cannot be undone.",
   "removeLanguageConfirmLabel": "Remove"
 }
 ```

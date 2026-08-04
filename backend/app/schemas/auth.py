@@ -194,6 +194,13 @@ class UserUpdateRequest(BaseModel):
             return validate_password_strength(v)
         return v
 
+    @field_validator("native_language")
+    @classmethod
+    def validate_native_language(cls, v: str | None) -> str | None:
+        if v is not None and v not in SUPPORTED_LANGUAGES:
+            raise ValueError(f"Unsupported language code: {v}")
+        return v
+
     @field_validator("target_language")
     @classmethod
     def validate_target_language(cls, v: str | None) -> str | None:

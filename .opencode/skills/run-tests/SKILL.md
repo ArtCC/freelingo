@@ -41,7 +41,7 @@ Options:
 cd frontend && npm run test:run
 ```
 
-419 tests covering stores, components, hooks, app pages, lib, i18n, middleware, review UI, review prompt triggers, billing UI, and API interceptor. Frontend coverage is not configured/reported:
+436 tests covering stores, components, hooks, app pages, lib, i18n, middleware, review UI, review prompt triggers, billing UI, freemium state, memory management, SSE parsing, toasts, and API interceptor. Frontend coverage is not configured/reported:
 
 - `lib/api.ts` — auth interceptor, 401 refresh, retry
 - `store/auth.ts` — isSubscribed(), logout

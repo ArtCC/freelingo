@@ -130,8 +130,8 @@ def test_system_prompt_includes_memory_system_instruction() -> None:
         user_context="",
         memory_context="",
     )
-    assert "<<MEMORY>>" in prompt
-    assert "<<ENDMEMORY>>" in prompt
+    assert "save_user_memory" in prompt
+    assert "<<MEMORY>>" not in prompt
 
 
 # ---------------------------------------------------------------------------
@@ -145,38 +145,6 @@ def test_clean_sentence_no_marker() -> None:
     # _clean_sentence preserves whitespace (only strips after marker removal)
     result = pipeline._clean_sentence("  How are you?  ")
     assert "How are you?" in result.strip()
-
-
-def test_clean_sentence_with_full_marker() -> None:
-    pipeline = _make_pipeline()
-    result = pipeline._clean_sentence("I love cats. <<MEMORY>>stuff<<ENDMEMORY>>")
-    assert result == "I love cats."
-
-
-def test_clean_sentence_with_partial_marker_prefix() -> None:
-    """Partial marker at the end (e.g. incomplete during streaming)."""
-    pipeline = _make_pipeline()
-    # Ends with <<MEMO — partial prefix
-    result = pipeline._clean_sentence("Hello there. <<MEMO")
-    assert result == "Hello there."
-
-
-def test_clean_sentence_with_partial_marker_midword() -> None:
-    pipeline = _make_pipeline()
-    result = pipeline._clean_sentence("Great job. <<ME")
-    assert result == "Great job."
-
-
-def test_clean_sentence_empty_after_cleaning() -> None:
-    pipeline = _make_pipeline()
-    result = pipeline._clean_sentence("<<MEMORY>>")
-    assert result == ""
-
-
-def test_clean_sentence_only_partial_marker() -> None:
-    pipeline = _make_pipeline()
-    result = pipeline._clean_sentence("<<MEM")
-    assert result == ""
 
 
 # ---------------------------------------------------------------------------
@@ -668,50 +636,109 @@ async def test_process_tts_sentence_failure_continues_with_remaining_audio() -> 
 
 
 @pytest.mark.asyncio
-async def test_process_handles_memory_marker_in_response() -> None:
+async def test_process_reports_native_memory_tool_update() -> None:
     pipeline = _make_pipeline(user_id=1, study_plan_id=5)
     pipeline.stt.transcribe = AsyncMock(return_value="hi")
 
-    async def fake_stream():
-        yield _make_chunk("Nice to meet you. <<MEMORY>>")
-        yield _make_chunk('{"items":["Bob likes pizza"]}<<ENDMEMORY>>')
+    from app.services.llm_adapter import LLMToolCall, LLMToolResult
 
-    pipeline.llm.chat = AsyncMock(return_value=fake_stream())
+    call = LLMToolCall(
+        id="call_1",
+        name="save_user_memory",
+        arguments={"content": "A Bob le gusta la pizza"},
+        raw_arguments='{"content":"A Bob le gusta la pizza"}',
+    )
+
+    class FakeToolStream:
+        tool_results = [LLMToolResult(call=call, content={"saved": True})]
+
+        def __aiter__(self):
+            return self.iterate()
+
+        async def iterate(self):
+            yield "Nice to meet you."
+
+    pipeline.llm.chat = AsyncMock(return_value=FakeToolStream())
     pipeline.tts.synthesize = AsyncMock(return_value=b"audio")
 
-    # Patch save_memories to verify call
-    with patch("app.services.conversation_pipeline.save_memories") as mock_save:
-        mock_save.return_value = True
+    ws = FakeWS()
+    await pipeline._process(b"audio", ws)
 
-        ws = FakeWS()
-        await pipeline._process(b"audio", ws)
-
-        types = ws.types()
-        assert "turn_complete" in types
-        assert "memory_updated" in types
+    types = ws.types()
+    assert "turn_complete" in types
+    assert "memory_updated" in types
+    tool = pipeline.llm.chat.call_args.kwargs["tools"][0]
+    assert "native language: Spanish" in tool.description
 
 
 @pytest.mark.asyncio
-async def test_process_memory_save_failure_does_not_crash() -> None:
+async def test_process_memory_tool_failure_does_not_crash() -> None:
     pipeline = _make_pipeline(user_id=1, study_plan_id=5)
     pipeline.stt.transcribe = AsyncMock(return_value="hi")
 
-    async def fake_stream():
-        yield _make_chunk("Hello. <<MEMORY>>")
-        yield _make_chunk('{"items":["fact"]}<<ENDMEMORY>>')
+    from app.services.llm_adapter import LLMToolCall, LLMToolResult
 
-    pipeline.llm.chat = AsyncMock(return_value=fake_stream())
+    call = LLMToolCall(
+        id="call_1",
+        name="save_user_memory",
+        arguments={"content": "fact"},
+        raw_arguments='{"content":"fact"}',
+    )
+
+    class FailedToolStream:
+        tool_results = [
+            LLMToolResult(
+                call=call,
+                content={"saved": False, "error": "persistence_failed"},
+                is_error=True,
+            )
+        ]
+
+        def __aiter__(self):
+            return self.iterate()
+
+        async def iterate(self):
+            yield "Hello."
+
+    pipeline.llm.chat = AsyncMock(return_value=FailedToolStream())
     pipeline.tts.synthesize = AsyncMock(return_value=b"audio")
 
-    with patch(
-        "app.services.conversation_pipeline.save_memories",
-        side_effect=RuntimeError("DB down"),
-    ):
-        ws = FakeWS()
-        await pipeline._process(b"audio", ws)
+    ws = FakeWS()
+    await pipeline._process(b"audio", ws)
 
-        # Should still complete successfully
-        assert "turn_complete" in ws.types()
+    assert "turn_complete" in ws.types()
+    assert "memory_updated" not in ws.types()
+
+
+@pytest.mark.asyncio
+async def test_process_disables_memory_tools_only_for_current_voice_session() -> None:
+    pipeline = _make_pipeline()
+    pipeline.stt.transcribe = AsyncMock(side_effect=["first", "second"])
+    pipeline.tts.synthesize = AsyncMock(return_value=b"audio")
+
+    class ToolFallbackStream:
+        tools_unsupported = True
+
+        def __aiter__(self):
+            return self.iterate()
+
+        async def iterate(self):
+            yield "First response."
+
+    async def normal_stream():
+        yield "Second response."
+
+    pipeline.llm.chat = AsyncMock(side_effect=[ToolFallbackStream(), normal_stream()])
+    ws = FakeWS()
+
+    await pipeline._process(b"audio", ws)
+    await pipeline._process(b"audio", ws)
+
+    first_kwargs = pipeline.llm.chat.call_args_list[0].kwargs
+    second_kwargs = pipeline.llm.chat.call_args_list[1].kwargs
+    assert "tools" in first_kwargs
+    assert "tools" not in second_kwargs
+    assert _make_pipeline()._memory_tools_available is True
 
 
 @pytest.mark.asyncio
@@ -757,9 +784,7 @@ async def test_process_stt_returns_short_text() -> None:
 
 
 @pytest.mark.asyncio
-async def test_process_final_sentence_with_memory_marker_cleanup() -> None:
-    """When full_response contains <<MEMORY>> but the marker spans chunks,
-    the final sentence buffer is adjusted before TTS."""
+async def test_process_native_tool_payload_never_reaches_tts() -> None:
     pipeline = _make_pipeline()
     pipeline.stt.transcribe = AsyncMock(return_value="hello")
 
@@ -773,20 +798,16 @@ async def test_process_final_sentence_with_memory_marker_cleanup() -> None:
     pipeline.tts.synthesize = synth
 
     async def fake_stream():
-        yield _make_chunk("Goodbye. <<MEMORY>>")
-        yield _make_chunk('{"items":["fact"]}<<ENDMEMORY>>')
+        yield "Goodbye."
 
     pipeline.llm.chat = AsyncMock(return_value=fake_stream())
 
     ws = FakeWS()
     await pipeline._process(b"audio", ws)
 
-    # The final sentence_buffer should have been cleaned of the memory block
-    # and only "Goodbye." should be in TTS
     non_empty_tts = [t for t in tts_texts if t.strip()]
     assert any("Goodbye" in t for t in non_empty_tts)
-    # No TTS text should contain the memory marker
-    assert not any("<<MEMORY>>" in t for t in tts_texts)
+    assert not any("save_user_memory" in t for t in tts_texts)
 
 
 # ---------------------------------------------------------------------------

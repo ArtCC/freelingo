@@ -3,7 +3,7 @@
 ![Next.js](https://img.shields.io/badge/next.js-16-black?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.14-blue?style=flat-square)
 ![Self-hosted](https://img.shields.io/badge/self--hosted-yes-orange?style=flat-square)
-![Version](https://img.shields.io/badge/version-1.8.27-brightgreen?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.8.30-brightgreen?style=flat-square)
 
 <p align="left">
   <img src="assets/logo_large.png" alt="FreeLingo logo" />
@@ -24,6 +24,7 @@ The platform combines structure and adaptation: lessons are generated within
 curriculum boundaries with native-language support for lesson and exercise explanations,
 flashcards use SM-2 spaced repetition, and the AI tutor provides contextual streaming
 feedback in English (with optional brief support in the learner's native language).
+Lingu's durable memories are global across learning languages: the tutor can save useful facts through native tool calling, while every authenticated user can manually add, review, delete, or clear memories from Settings. Removing a learning language preserves those account memories.
 Listening exercises are generated on demand by the
 LLM, synthesised to MP3 via TTS, and cached per CEFR level — the user listens,
 answers 5 comprehension questions, and earns XP before the transcript is revealed.

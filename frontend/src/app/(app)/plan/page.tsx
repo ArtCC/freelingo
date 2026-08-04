@@ -23,6 +23,23 @@ interface PendingLesson {
   day_number: number
 }
 
+interface PlanLesson extends PendingLesson {
+  unit_id: string | null
+  is_completed: boolean
+}
+
+interface TodayLesson {
+  id: number | null
+  title: string
+  lesson_type: string
+  week: number
+  day: number
+  unit_id?: string
+  is_completed?: boolean
+}
+
+type LessonAction = 'start' | 'continue' | 'review'
+
 interface Lesson {
   id: number | null
   title: string
@@ -31,6 +48,7 @@ interface Lesson {
   day: number
   unit_id?: string
   completed?: boolean
+  action?: LessonAction
 }
 
 interface StudyPlan {
@@ -89,6 +107,10 @@ function lessonsByUnit(lessons: Lesson[]): Record<string, Lesson[]> {
   return map
 }
 
+function lessonKey(week: number, day: number, title: string): string {
+  return `${week}:${day}:${title}`
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PlanPage() {
@@ -104,18 +126,23 @@ export default function PlanPage() {
   const [activeDrawer, setActiveDrawer] = useState<CurriculumUnit | null>(null)
   const [activeLessonId, setActiveLessonId] = useState<number | null>(null)
   const [pendingLessons, setPendingLessons] = useState<PendingLesson[]>([])
+  const [lessonStates, setLessonStates] = useState<
+    Record<string, Pick<Lesson, 'id' | 'completed' | 'action'>>
+  >({})
   const [units, setUnits] = useState<CurriculumUnit[]>([])
 
   const loadPlan = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      const [planRes, compRes, todayRes, pendingRes] = await Promise.all([
-        apiFetch('/api/study-plan/current'),
-        apiFetch('/api/progress/competencies').catch(() => null),
-        apiFetch('/api/study-plan/today').catch(() => null),
-        apiFetch('/api/study-plan/pending-lessons').catch(() => null),
-      ])
+      const [planRes, compRes, todayRes, pendingRes, lessonsRes] =
+        await Promise.all([
+          apiFetch('/api/study-plan/current'),
+          apiFetch('/api/progress/competencies').catch(() => null),
+          apiFetch('/api/study-plan/today').catch(() => null),
+          apiFetch('/api/study-plan/pending-lessons').catch(() => null),
+          apiFetch('/api/study-plan/lessons').catch(() => null),
+        ])
 
       if (!planRes.ok) {
         if (planRes.status === 404) {
@@ -142,20 +169,57 @@ export default function PlanPage() {
         }
       }
 
-      if (todayRes?.ok) {
-        const todayData = (await todayRes.json()) as {
-          lessons: { id: number | null; is_completed?: boolean }[]
+      const states: Record<
+        string,
+        Pick<Lesson, 'id' | 'completed' | 'action'>
+      > = {}
+
+      if (lessonsRes?.ok) {
+        const generatedLessons = (await lessonsRes.json()) as PlanLesson[]
+        for (const lesson of generatedLessons) {
+          states[
+            lessonKey(lesson.week_number, lesson.day_number, lesson.title)
+          ] = {
+            id: lesson.id,
+            completed: lesson.is_completed,
+            action: lesson.is_completed ? 'review' : undefined,
+          }
         }
-        const nextLesson = todayData.lessons.find(
-          (l) => l.id != null && !l.is_completed
-        )
-        setActiveLessonId(nextLesson?.id ?? null)
       }
 
       if (pendingRes?.ok) {
         const pendingData = (await pendingRes.json()) as PendingLesson[]
         setPendingLessons(pendingData)
+        for (const lesson of pendingData) {
+          states[
+            lessonKey(lesson.week_number, lesson.day_number, lesson.title)
+          ] = {
+            id: lesson.id,
+            completed: false,
+            action: 'continue',
+          }
+        }
       }
+
+      if (todayRes?.ok) {
+        const todayData = (await todayRes.json()) as {
+          lessons: TodayLesson[]
+        }
+        const nextLesson = todayData.lessons.find(
+          (l) => l.id != null && !l.is_completed
+        )
+        setActiveLessonId(nextLesson?.id ?? null)
+        for (const lesson of todayData.lessons) {
+          if (lesson.id == null) continue
+          states[lessonKey(lesson.week, lesson.day, lesson.title)] = {
+            id: lesson.id,
+            completed: lesson.is_completed ?? false,
+            action: lesson.is_completed ? 'review' : 'start',
+          }
+        }
+      }
+
+      setLessonStates(states)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load')
     } finally {
@@ -185,7 +249,10 @@ export default function PlanPage() {
   }
 
   const level = plan.cefr_level as CEFRLevel
-  const allLessons = flattenLessons(plan)
+  const allLessons = flattenLessons(plan).map((lesson) => ({
+    ...lesson,
+    ...lessonStates[lessonKey(lesson.week, lesson.day, lesson.title)],
+  }))
   const byUnit = lessonsByUnit(allLessons)
   const currentUnitId = plan.current_unit
 

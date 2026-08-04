@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
+from dataclasses import dataclass
 
 import anthropic as _anthropic
 from openai import AsyncOpenAI
@@ -50,6 +51,83 @@ class LLMResponseError(LLMError):
 
 class LLMContextOverflowError(LLMError):
     pass
+
+
+class LLMToolsUnsupportedError(LLMError):
+    pass
+
+
+def _is_tools_unsupported_error(exc: BaseException) -> bool:
+    current: BaseException | None = exc
+    messages: list[str] = []
+    while current is not None:
+        messages.append(str(current).lower())
+        current = current.__cause__
+    message = " ".join(messages)
+    return any(
+        marker in message
+        for marker in (
+            "does not support tools",
+            "doesn't support tools",
+            "tools are not supported",
+            "tool use is not supported",
+            "unsupported parameter: 'tools'",
+            'unsupported parameter: "tools"',
+        )
+    )
+
+
+@dataclass(frozen=True)
+class LLMTool:
+    name: str
+    description: str
+    input_schema: dict
+
+
+@dataclass(frozen=True)
+class LLMToolCall:
+    id: str
+    name: str
+    arguments: dict
+    raw_arguments: str
+
+
+@dataclass(frozen=True)
+class LLMToolResult:
+    call: LLMToolCall
+    content: dict
+    is_error: bool = False
+
+
+ToolExecutor = Callable[[LLMToolCall], Awaitable[LLMToolResult]]
+
+
+async def _safe_stream_events(stream: object, provider: str) -> AsyncGenerator:
+    """Normalize exceptions raised after a provider stream has started."""
+    try:
+        async for event in stream:  # type: ignore[union-attr]
+            yield event
+    except LLMError:
+        raise
+    except (TimeoutError, _anthropic.APITimeoutError) as exc:
+        raise LLMTimeoutError(f"{provider} timed out while streaming") from exc
+    except _anthropic.APIConnectionError as exc:
+        raise LLMUnavailableError(f"{provider} is unreachable") from exc
+    except _anthropic.RateLimitError as exc:
+        raise LLMUnavailableError(f"{provider} rate limit exceeded") from exc
+    except _anthropic.APIStatusError as exc:
+        if _is_tools_unsupported_error(exc):
+            raise LLMToolsUnsupportedError(f"{provider} does not support tools") from exc
+        raise LLMError(f"{provider} streaming error: {exc}") from exc
+    except Exception as exc:
+        if _is_tools_unsupported_error(exc):
+            raise LLMToolsUnsupportedError(f"{provider} does not support tools") from exc
+        message = str(exc)
+        if "connection" in message.lower():
+            raise LLMUnavailableError(f"{provider} is unreachable") from exc
+        if "rate" in message.lower():
+            raise LLMUnavailableError(f"{provider} rate limit exceeded") from exc
+        raise LLMError(f"{provider} streaming error: {message}") from exc
 
 
 class LLMStream:
@@ -102,6 +180,250 @@ class LLMStream:
             yield chunk
 
 
+class AnthropicLLMStream(LLMStream):
+    """Yield normalized text from an ordinary Anthropic stream."""
+
+    async def _iterate(self):
+        async for event in _safe_stream_events(self._stream, "anthropic"):
+            event_type = getattr(event, "type", "")
+            if event_type == "message_start":
+                usage = getattr(getattr(event, "message", None), "usage", None)
+                self.prompt_tokens = getattr(usage, "input_tokens", None)
+            elif event_type == "message_delta":
+                usage = getattr(event, "usage", None)
+                self.completion_tokens = getattr(usage, "output_tokens", None)
+            elif event_type == "content_block_delta":
+                delta = getattr(event, "delta", None)
+                if getattr(delta, "type", "") == "text_delta":
+                    text = getattr(delta, "text", "")
+                    if text:
+                        yield text
+        if self.prompt_tokens is not None or self.completion_tokens is not None:
+            self.total_tokens = (self.prompt_tokens or 0) + (self.completion_tokens or 0)
+
+
+class LLMToolStream(LLMStream):
+    """Normalize provider streams and execute at most one native-tool round."""
+
+    def __init__(
+        self,
+        adapter: LLMAdapter,
+        stream: object,
+        messages: list[dict],
+        tools: list[LLMTool],
+        tool_executor: ToolExecutor,
+        *,
+        tools_unsupported: bool = False,
+    ) -> None:
+        super().__init__(stream)
+        self._adapter = adapter
+        self._messages = messages
+        self._tools = tools
+        self._tool_executor = tool_executor
+        self.tool_calls: list[LLMToolCall] = []
+        self.tool_results: list[LLMToolResult] = []
+        self.tools_unsupported = tools_unsupported
+
+    def _add_usage(self, prompt: int | None, completion: int | None) -> None:
+        if prompt is not None:
+            self.prompt_tokens = (self.prompt_tokens or 0) + prompt
+        if completion is not None:
+            self.completion_tokens = (self.completion_tokens or 0) + completion
+        if self.prompt_tokens is not None or self.completion_tokens is not None:
+            self.total_tokens = (self.prompt_tokens or 0) + (self.completion_tokens or 0)
+
+    async def _provider_text_and_calls(
+        self, stream: object, *, collect_calls: bool
+    ) -> AsyncGenerator[str]:
+        calls: dict[int, dict[str, str]] = {}
+        prompt_tokens: int | None = None
+        completion_tokens: int | None = None
+
+        async for event in _safe_stream_events(stream, self._adapter.provider):
+            if self._adapter.provider == "anthropic":
+                event_type = getattr(event, "type", "")
+                if event_type == "message_start":
+                    usage = getattr(getattr(event, "message", None), "usage", None)
+                    prompt_tokens = getattr(usage, "input_tokens", None)
+                elif event_type == "message_delta":
+                    usage = getattr(event, "usage", None)
+                    completion_tokens = getattr(usage, "output_tokens", None)
+                elif event_type == "content_block_start" and collect_calls:
+                    block = getattr(event, "content_block", None)
+                    if getattr(block, "type", "") == "tool_use":
+                        index = int(getattr(event, "index", len(calls)))
+                        initial_input = getattr(block, "input", None)
+                        calls[index] = {
+                            "id": str(getattr(block, "id", f"tool_{index}")),
+                            "name": str(getattr(block, "name", "")),
+                            "arguments": json.dumps(initial_input) if initial_input else "",
+                        }
+                elif event_type == "content_block_delta":
+                    delta = getattr(event, "delta", None)
+                    delta_type = getattr(delta, "type", "")
+                    if delta_type == "text_delta":
+                        text = getattr(delta, "text", "")
+                        if text:
+                            yield text
+                    elif delta_type == "input_json_delta" and collect_calls:
+                        index = int(getattr(event, "index", 0))
+                        call = calls.setdefault(
+                            index,
+                            {"id": f"tool_{index}", "name": "", "arguments": ""},
+                        )
+                        call["arguments"] += str(getattr(delta, "partial_json", ""))
+                continue
+
+            usage = getattr(event, "usage", None)
+            if usage is not None:
+                prompt_tokens = getattr(usage, "prompt_tokens", None)
+                completion_tokens = getattr(usage, "completion_tokens", None)
+            choices = getattr(event, "choices", None)
+            if not choices:
+                continue
+            delta = getattr(choices[0], "delta", None)
+            text = getattr(delta, "content", None)
+            if text:
+                yield text
+            if not collect_calls:
+                continue
+            tool_deltas = getattr(delta, "tool_calls", None)
+            if not isinstance(tool_deltas, (list, tuple)):
+                continue
+            for tool_delta in tool_deltas:
+                index = int(getattr(tool_delta, "index", 0))
+                call = calls.setdefault(
+                    index,
+                    {"id": f"tool_{index}", "name": "", "arguments": ""},
+                )
+                tool_id = getattr(tool_delta, "id", None)
+                if tool_id:
+                    call["id"] = str(tool_id)
+                function = getattr(tool_delta, "function", None)
+                name = getattr(function, "name", None)
+                arguments = getattr(function, "arguments", None)
+                if name:
+                    call["name"] += str(name)
+                if arguments:
+                    call["arguments"] += str(arguments)
+
+        self._add_usage(prompt_tokens, completion_tokens)
+        if collect_calls:
+            for raw_call in (calls[index] for index in sorted(calls)):
+                try:
+                    arguments = json.loads(raw_call["arguments"] or "{}")
+                    if not isinstance(arguments, dict):
+                        arguments = {}
+                except json.JSONDecodeError:
+                    arguments = {}
+                self.tool_calls.append(
+                    LLMToolCall(
+                        id=raw_call["id"],
+                        name=raw_call["name"],
+                        arguments=arguments,
+                        raw_arguments=raw_call["arguments"],
+                    )
+                )
+
+    async def _iterate(self):
+        initial_parts: list[str] = []
+        visible_text_emitted = False
+        try:
+            async for text in self._provider_text_and_calls(self._stream, collect_calls=True):
+                initial_parts.append(text)
+                visible_text_emitted = True
+                yield text
+        except LLMToolsUnsupportedError:
+            if visible_text_emitted:
+                logger.warning(
+                    "%s rejected tools after visible text was streamed; "
+                    "cannot retry without duplicating output",
+                    self._adapter.provider,
+                    exc_info=True,
+                )
+                raise
+            logger.info(
+                "%s model rejected native tools; continuing without them", self._adapter.provider
+            )
+            self.tools_unsupported = True
+            fallback = await self._adapter._call_with_retry(
+                self._adapter._do_chat,
+                self._messages,
+                True,
+                None,
+            )
+            async for text in self._provider_text_and_calls(fallback, collect_calls=False):
+                yield text
+            return
+
+        if not self.tool_calls:
+            return
+
+        for index, call in enumerate(self.tool_calls):
+            if index > 0:
+                self.tool_results.append(
+                    LLMToolResult(
+                        call=call,
+                        content={"saved": False, "error": "tool_limit_exceeded"},
+                        is_error=True,
+                    )
+                )
+                continue
+            try:
+                result = await self._tool_executor(call)
+            except Exception:
+                logger.exception("LLM tool executor failed for %s", call.name)
+                result = LLMToolResult(
+                    call=call,
+                    content={"saved": False, "error": "tool_execution_failed"},
+                    is_error=True,
+                )
+            self.tool_results.append(result)
+
+        initial_text = "".join(initial_parts)
+        continuation_messages = self._adapter._build_tool_continuation(
+            self._messages,
+            initial_text,
+            self.tool_calls,
+            self.tool_results,
+        )
+        try:
+            continuation = await self._adapter._call_with_retry(
+                self._adapter._do_chat,
+                continuation_messages,
+                True,
+                None,
+            )
+            async for text in self._provider_text_and_calls(
+                continuation,
+                collect_calls=False,
+            ):
+                visible_text_emitted = True
+                yield text
+        except LLMError:
+            if visible_text_emitted:
+                logger.warning(
+                    "%s tool continuation failed after visible text was streamed; "
+                    "cannot retry without duplicating output",
+                    self._adapter.provider,
+                    exc_info=True,
+                )
+                raise
+            logger.warning(
+                "%s tool continuation failed; retrying the turn without tools",
+                self._adapter.provider,
+                exc_info=True,
+            )
+            fallback = await self._adapter._call_with_retry(
+                self._adapter._do_chat,
+                self._messages,
+                True,
+                None,
+            )
+            async for text in self._provider_text_and_calls(fallback, collect_calls=False):
+                yield text
+
+
 class LLMAdapter:
     def __init__(self):
         self.provider = settings.LLM_PROVIDER
@@ -130,12 +452,14 @@ class LLMAdapter:
             self.client = None
             self.model = settings.ANTHROPIC_MODEL
 
-    async def _call_with_retry(self, fn, *args, **kwargs):
+    async def _call_with_retry(self, fn, *args, tools_requested: bool = False, **kwargs):
         last_error = None
         for attempt in range(MAX_RETRIES + 1):
             try:
                 return await fn(*args, **kwargs)
             except LLMError as e:
+                if tools_requested and _is_tools_unsupported_error(e):
+                    raise LLMToolsUnsupportedError(f"{self.provider} does not support tools") from e
                 # Already a typed LLM error raised by a provider-specific
                 # handler (e.g. _anthropic_chat). Preserve the type instead of
                 # re-wrapping into a generic LLMError.
@@ -143,6 +467,8 @@ class LLMAdapter:
             except TimeoutError:
                 last_error = LLMTimeoutError(f"{self.provider} timed out after {REQUEST_TIMEOUT}s")
             except Exception as e:
+                if tools_requested and _is_tools_unsupported_error(e):
+                    raise LLMToolsUnsupportedError(f"{self.provider} does not support tools") from e
                 error_msg = str(e)
                 if "connection" in error_msg.lower():
                     last_error = LLMUnavailableError(
@@ -160,16 +486,52 @@ class LLMAdapter:
 
         raise last_error
 
-    async def chat(self, messages: list[dict], stream: bool = False) -> str | AsyncGenerator:
-        return await self._call_with_retry(self._do_chat, messages, stream)
-
-    async def _do_chat(self, messages: list[dict], stream: bool = False):
+    async def chat(
+        self,
+        messages: list[dict],
+        stream: bool = False,
+        *,
+        tools: list[LLMTool] | None = None,
+        tool_executor: ToolExecutor | None = None,
+    ) -> str | AsyncGenerator:
+        if tools and (not stream or tool_executor is None):
+            raise ValueError("Native tools require streaming and a tool executor")
+        tools_unsupported = False
+        try:
+            result = await self._call_with_retry(
+                self._do_chat,
+                messages,
+                stream,
+                tools,
+                tools_requested=bool(tools),
+            )
+        except LLMToolsUnsupportedError:
+            logger.info("%s model rejected native tools; continuing without them", self.provider)
+            result = await self._call_with_retry(self._do_chat, messages, stream, None)
+            tools_unsupported = True
+        if not stream:
+            return result
+        if tools and tool_executor:
+            return LLMToolStream(
+                self,
+                result,
+                messages,
+                tools,
+                tool_executor,
+                tools_unsupported=tools_unsupported,
+            )
         if self.provider == "anthropic":
-            result = await self._anthropic_chat(messages, stream)
-            # Wrap in LLMStream so callers always get a uniform interface.
-            # Anthropic events have a different structure so usage will remain
-            # None, but no code will break.
-            return LLMStream(result) if stream else result
+            return AnthropicLLMStream(result)
+        return LLMStream(result)
+
+    async def _do_chat(
+        self,
+        messages: list[dict],
+        stream: bool = False,
+        tools: list[LLMTool] | None = None,
+    ):
+        if self.provider == "anthropic":
+            return await self._anthropic_chat(messages, stream, tools)
 
         # For Ollama, OpenAI and DeepSeek (all OpenAI-compatible):
         # pass stream_options so the final chunk includes token usage.
@@ -177,6 +539,18 @@ class LLMAdapter:
         extra: dict = {}
         if stream:
             extra["stream_options"] = {"include_usage": True}
+        if tools:
+            extra["tools"] = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.input_schema,
+                    },
+                }
+                for tool in tools
+            ]
 
         response = await self.client.chat.completions.create(
             model=self.model,
@@ -186,7 +560,7 @@ class LLMAdapter:
             **extra,
         )
         if stream:
-            return LLMStream(response)
+            return response
 
         content = response.choices[0].message.content
         if not content:
@@ -241,7 +615,74 @@ class LLMAdapter:
                     raw_response=raw2 if "raw2" in locals() else raw,
                 ) from e2
 
-    async def _anthropic_chat(self, messages: list[dict], stream: bool = False):
+    def _build_tool_continuation(
+        self,
+        messages: list[dict],
+        initial_text: str,
+        calls: list[LLMToolCall],
+        results: list[LLMToolResult],
+    ) -> list[dict]:
+        if self.provider == "anthropic":
+            assistant_content: list[dict] = []
+            if initial_text:
+                assistant_content.append({"type": "text", "text": initial_text})
+            assistant_content.extend(
+                {
+                    "type": "tool_use",
+                    "id": call.id,
+                    "name": call.name,
+                    "input": call.arguments,
+                }
+                for call in calls
+            )
+            tool_results = [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": result.call.id,
+                    "content": json.dumps(result.content),
+                    "is_error": result.is_error,
+                }
+                for result in results
+            ]
+            return messages + [
+                {"role": "assistant", "content": assistant_content},
+                {"role": "user", "content": tool_results},
+            ]
+
+        assistant_tool_calls = [
+            {
+                "id": call.id,
+                "type": "function",
+                "function": {
+                    "name": call.name,
+                    "arguments": call.raw_arguments or json.dumps(call.arguments),
+                },
+            }
+            for call in calls
+        ]
+        continuation = messages + [
+            {
+                "role": "assistant",
+                "content": initial_text or None,
+                "tool_calls": assistant_tool_calls,
+            }
+        ]
+        continuation.extend(
+            {
+                "role": "tool",
+                "tool_call_id": result.call.id,
+                "content": json.dumps(result.content),
+            }
+            for result in results
+        )
+        return continuation
+
+    async def _anthropic_chat(
+        self,
+        messages: list[dict],
+        stream: bool = False,
+        tools: list[LLMTool] | None = None,
+    ):
         # Combine ALL system messages so that extra instructions (e.g. the
         # JSON format hint appended by _structured_via_json) are not silently
         # dropped by a naive next()-based extraction.
@@ -266,6 +707,15 @@ class LLMAdapter:
         # Only pass system when present — Anthropic SDK does not accept None.
         if system is not None:
             kwargs["system"] = system
+        if tools:
+            kwargs["tools"] = [
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "input_schema": tool.input_schema,
+                }
+                for tool in tools
+            ]
 
         # Map Anthropic SDK exceptions to our internal error types so that
         # _call_with_retry can classify and retry them correctly.

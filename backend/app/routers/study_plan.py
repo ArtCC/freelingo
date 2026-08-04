@@ -17,6 +17,7 @@ from app.models.user_language import UserLanguage
 from app.schemas.study_plan import (
     GenerateStudyPlanRequest,
     PendingLessonResponse,
+    PlanLessonResponse,
     StudyPlanResponse,
     TodayLesson,
     TodayResponse,
@@ -375,3 +376,18 @@ async def get_pending_lessons(
         if (lsn.week_number - 1) * plan.days_per_week + (lsn.day_number - 1) < plan.progress_day
     ]
     return pending
+
+
+@router.get("/lessons", response_model=list[PlanLessonResponse])
+@limiter.limit("60/minute")
+async def get_plan_lessons(
+    request: Request,
+    plan: StudyPlan = Depends(get_active_study_plan),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Lesson)
+        .where(Lesson.study_plan_id == plan.id)
+        .order_by(Lesson.week_number, Lesson.day_number, Lesson.id)
+    )
+    return result.scalars().all()

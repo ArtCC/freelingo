@@ -1,5 +1,5 @@
 ---
-description: "Database models reference for FreeLingo: 21 SQLAlchemy ORM models with full schema details, relationships, constraints, and business rules."
+description: "Database models reference for FreeLingo: 22 SQLAlchemy ORM models with full schema details, relationships, constraints, and business rules."
 applyTo: "backend/app/models/**, backend/alembic/**"
 ---
 
@@ -377,14 +377,15 @@ Global cache for native-language study help generated for static learning resour
 
 ## Memory (`memories`)
 
-User-specific context persisted by the LLM during conversations. The AI tutor autonomously decides what to remember. Added `study_plan_id` in Phase 10.
+Global user-specific context persisted by Lingu or manually by the user. Memories are shared across learning languages. `study_plan_id` is nullable creation provenance only and never scopes retrieval; deleting its study plan preserves the row through `SET NULL`.
 
 - id — Type: integer; Notes: Primary key
 - user_id — Type: integer; Notes: FK → users (CASCADE DELETE)
-- study_plan_id — Type: integer (nullable); Notes: FK → study_plans (SET NULL), indexed
+- study_plan_id — Type: integer (nullable); Notes: FK → study_plans (SET NULL), indexed provenance only
 - content — Type: text; Notes: Memory text, max 200 chars enforced at service layer
-- source — Type: varchar(10); Notes: `"chat"` or `"voice"`
+- source — Type: varchar(10); Notes: `"chat"`, `"voice"`, or `"manual"`
 - created_at — Type: datetime; Notes: Auto-set on creation
+- Unique constraint: `uq_memories_user_content` on `(user_id, content)` for exact per-user deduplication; migration `0049_memory_user_content_unique` removes later duplicates before creating it
 
 ## LLMUsage (`llm_usage`)
 

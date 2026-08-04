@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from app.core.app_logger import get_logger
+from app.models.user import User
 from app.services.language_helpers import (
     get_iso639,
     get_language_name,
@@ -21,9 +22,9 @@ from app.services.llm_adapter import (
 )
 from app.services.memory_service import (
     build_memory_context,
-    parse_memory_marker,
-    save_memories,
-    strip_memory_marker,
+    build_save_user_memory_tool,
+    execute_save_user_memory,
+    get_user_memories,
 )
 from app.services.prompts.common import get_language_prompt_overlay
 from app.services.prompts.tutor import build_conversation_system_prompt
@@ -117,20 +118,24 @@ class ConversationPipeline:
         memory_context = build_memory_context(memories or [])
         target_language_name = get_language_name(target_language)
         language_prompt_overlay = get_language_prompt_overlay(target_language)
+        self._prompt_args = {
+            "student_name": student_name,
+            "cefr_level": cefr_level,
+            "native_language": get_native_language_name(native_language),
+            "target_language_name": target_language_name,
+            "user_context": user_context,
+            "language_prompt_overlay": language_prompt_overlay,
+        }
         self.system_prompt = _build_conversation_system_prompt(
-            student_name=student_name,
-            cefr_level=cefr_level,
-            native_language=get_native_language_name(native_language),
-            target_language_name=target_language_name,
-            user_context=user_context,
+            **self._prompt_args,
             memory_context=memory_context,
-            language_prompt_overlay=language_prompt_overlay,
         )
         self.max_duration = max_duration
         self.inactivity_timeout = inactivity_timeout
         self._redis: object | None = None  # injected after construction
         self._recorded = False
         self._freemium_voice = False
+        self._memory_tools_available = True
 
         self.current_task: asyncio.Task | None = None
         # Pre-populate history from optional chat context
@@ -183,13 +188,34 @@ class ConversationPipeline:
 
     @staticmethod
     def _extract_speech_text(raw_text: str) -> str:
-        stripped = strip_memory_marker(raw_text)
-        cleaned = ConversationPipeline._clean_sentence(stripped).strip()
-        if cleaned:
-            return cleaned
+        return ConversationPipeline._clean_sentence(raw_text).strip()
 
-        fallback = stripped.strip().replace("<<MEMORY>>", "").replace("<<ENDMEMORY>>", "")
-        return fallback.strip()
+    @staticmethod
+    def _stream_text(chunk: object) -> str:
+        if isinstance(chunk, str):
+            return chunk
+        choices = getattr(chunk, "choices", None)
+        if not choices:
+            return ""
+        return getattr(getattr(choices[0], "delta", None), "content", None) or ""
+
+    async def _refresh_memory_prompt(self) -> None:
+        if self._user_id is None:
+            return
+        try:
+            async with db_session() as db:
+                memories = await get_user_memories(db, self._user_id)
+                user = await db.get(User, self._user_id)
+                if user is not None:
+                    self._prompt_args["native_language"] = get_native_language_name(
+                        user.native_language
+                    )
+            self.system_prompt = _build_conversation_system_prompt(
+                **self._prompt_args,
+                memory_context=build_memory_context(memories),
+            )
+        except Exception:
+            logger.exception("[pipeline] Failed to refresh global memory context")
 
     async def _safe_send_bytes(self, ws: WebSocket, data: bytes) -> bool:
         try:
@@ -345,33 +371,8 @@ class ConversationPipeline:
 
     @staticmethod
     def _clean_sentence(raw_sentence: str) -> str:
-        """Strip memory markers from a sentence buffer using pure string ops."""
-        raw = raw_sentence
-
-        # 1. Strip complete <<MEMORY>>...<<ENDMEMORY>> blocks
-        while "<<MEMORY>>" in raw:
-            start = raw.find("<<MEMORY>>")
-            end = raw.find("<<ENDMEMORY>>", start + 10)
-            if end != -1:
-                raw = raw[:start] + raw[end + 13 :]
-            else:
-                raw = raw[:start]
-                break
-
-        # 2. Strip any orphan markers (counterpart split across sentence boundary)
-        for orphan in ("<<MEMORY>>", "<<ENDMEMORY>>"):
-            idx = raw.find(orphan)
-            if idx != -1:
-                raw = raw[:idx]
-
-        # 3. Strip partial marker prefixes from the end of the text
-        for marker in ("<<MEMORY>>", "<<ENDMEMORY>>"):
-            for pi in range(len(marker), 0, -1):
-                if raw.endswith(marker[:pi]):
-                    raw = raw[:-pi]
-                    break
-
-        return raw.strip()
+        """Normalize visible assistant text before synthesis."""
+        return raw_sentence.strip()
 
     async def _greet(self, ws: WebSocket) -> None:
         """Generate and stream an opening greeting from the assistant."""
@@ -388,7 +389,7 @@ class ConversationPipeline:
             full_response = ""
             llm_stream = await self.llm.chat(messages, stream=True)
             async for chunk in llm_stream:
-                token = chunk.choices[0].delta.content or ""
+                token = self._stream_text(chunk)
                 full_response += token
             clean_full_response = self._extract_speech_text(full_response)
             if not clean_full_response:
@@ -565,19 +566,49 @@ class ConversationPipeline:
         # NOTE: user message is intentionally saved *after* a successful turn
         # (alongside the assistant reply) so no orphan rows are written on
         # LLM failures or barge-in cancellations.
+        await self._refresh_memory_prompt()
         messages = [{"role": "system", "content": self.system_prompt}] + self.history[-20:]
 
         full_response = ""
         clean_full_response = ""
+        llm_stream = None
         try:
             await self._send_status(ws, turn_id, "thinking")
 
             llm_t0 = time.perf_counter()
-            llm_stream = await self.llm.chat(messages, stream=True)
+
+            async def execute_memory_tool(call):
+                if self._user_id is None:
+                    raise RuntimeError("Memory tool requires an authenticated user")
+                async with db_session() as db_mem:
+                    return await execute_save_user_memory(
+                        db_mem,
+                        self._user_id,
+                        call,
+                        "voice",
+                        study_plan_id=self._study_plan_id,
+                    )
+
+            memory_kwargs = {}
+            if self._memory_tools_available:
+                memory_kwargs = {
+                    "tools": [
+                        build_save_user_memory_tool(str(self._prompt_args["native_language"]))
+                    ],
+                    "tool_executor": execute_memory_tool,
+                }
+            llm_stream = await self.llm.chat(messages, stream=True, **memory_kwargs)
             async for chunk in llm_stream:
-                token = chunk.choices[0].delta.content or ""
+                token = self._stream_text(chunk)
                 full_response += token
             llm_ms = (time.perf_counter() - llm_t0) * 1000
+
+            memory_updated = any(
+                result.content.get("saved") is True
+                for result in getattr(llm_stream, "tool_results", [])
+            )
+            if memory_updated:
+                await self._send_json(ws, {"type": "memory_updated", "turn_id": turn_id})
 
             clean_full_response = self._extract_speech_text(full_response)
             if clean_full_response:
@@ -624,9 +655,6 @@ class ConversationPipeline:
                 await self._send_status(ws, turn_id, "listening")
                 await self._send_json(ws, {"type": "turn_complete", "turn_id": turn_id})
                 return
-
-            # Persist token usage best-effort (never blocks the response)
-            self._pending_saves.append(asyncio.create_task(self._save_usage(llm_stream)))
 
         except asyncio.CancelledError:
             logger.warning(
@@ -682,6 +710,11 @@ class ConversationPipeline:
             if self.history and self.history[-1]["role"] == "user":
                 self.history.pop()
             return
+        finally:
+            if llm_stream is not None:
+                if getattr(llm_stream, "tools_unsupported", False):
+                    self._memory_tools_available = False
+                self._pending_saves.append(asyncio.create_task(self._save_usage(llm_stream)))
 
         self.history.append({"role": "assistant", "content": clean_full_response})
         # Persist both sides of the turn together — only reached on success.
@@ -689,24 +722,6 @@ class ConversationPipeline:
         self._pending_saves.append(
             asyncio.create_task(self._save_message("assistant", clean_full_response))
         )
-
-        # Extract and persist memories (best-effort, in background)
-        memory_items = parse_memory_marker(full_response)
-        memory_updated = False
-        if memory_items and self._user_id:
-            try:
-                async with db_session() as db_mem:
-                    saved = await save_memories(
-                        db_mem,
-                        self._user_id,
-                        memory_items,
-                        "voice",
-                        study_plan_id=self._study_plan_id,
-                    )
-                    if saved:
-                        memory_updated = True
-            except Exception:
-                logger.debug("[pipeline] Failed to save memories — ignored")
 
         logger.info("[pipeline] Turn complete — assistant: %r", clean_full_response[:120])
         logger.info(
@@ -720,9 +735,6 @@ class ConversationPipeline:
             turn_total_ms=round((time.perf_counter() - turn_t0) * 1000, 1),
         )
         await self._send_status(ws, turn_id, "listening")
-
-        if memory_updated:
-            await self._send_json(ws, {"type": "memory_updated", "turn_id": turn_id})
 
         await self._send_json(ws, {"type": "turn_complete", "turn_id": turn_id})
 

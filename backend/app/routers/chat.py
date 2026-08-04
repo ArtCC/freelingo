@@ -36,13 +36,13 @@ from app.services.llm_adapter import (
 )
 from app.services.memory_service import (
     build_memory_context,
+    build_save_user_memory_tool,
+    execute_save_user_memory,
     get_user_memories,
-    parse_memory_marker,
-    save_memories,
-    strip_memory_marker,
 )
 from app.services.prompts.common import get_language_prompt_overlay
 from app.services.prompts.tutor import build_tutor_system_prompt
+from app.utils.db import db_session
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -313,16 +313,17 @@ async def chat(
         else ""
     )
 
-    memories = await get_user_memories(db, current_user.id, study_plan_id=study_plan_id)
+    memories = await get_user_memories(db, current_user.id)
     memory_context = build_memory_context(memories)
 
     target_language_name = get_language_name(target_language)
+    native_language_name = get_native_language_name(current_user.native_language)
     language_prompt_overlay = get_language_prompt_overlay(target_language)
 
     system_prompt = _build_tutor_system_prompt(
         student_name=current_user.display_name,
         cefr_level=cefr_level,
-        native_language=get_native_language_name(current_user.native_language),
+        native_language=native_language_name,
         target_language_name=target_language_name,
         total_xp=total_xp,
         streak=streak,
@@ -363,86 +364,55 @@ async def chat(
 
     async def event_stream():
         full_response = ""
-        sent_len = 0
-        memory_block_active = False
+        stream = None
         try:
             yield f"data: {json.dumps({'conversation_id': conversation_id})}\n\n"
-            stream = await llm_adapter.chat(messages, stream=True)
+
+            async def execute_memory_tool(call):
+                async with db_session() as memory_db:
+                    return await execute_save_user_memory(
+                        memory_db,
+                        current_user.id,
+                        call,
+                        "chat",
+                        study_plan_id=study_plan_id,
+                    )
+
+            stream = await llm_adapter.chat(
+                messages,
+                stream=True,
+                tools=[build_save_user_memory_tool(native_language_name)],
+                tool_executor=execute_memory_tool,
+            )
             async for chunk in stream:
-                if chunk.choices[0].delta.content:
-                    token = chunk.choices[0].delta.content
+                token = (
+                    chunk
+                    if isinstance(chunk, str)
+                    else getattr(getattr(chunk.choices[0], "delta", None), "content", None)
+                )
+                if token:
                     full_response += token
+                    yield f"data: {json.dumps({'token': token})}\n\n"
 
-                    if memory_block_active:
-                        mem_end = full_response.find("<<ENDMEMORY>>", sent_len)
-                        if mem_end != -1:
-                            memory_block_active = False
-                            sent_len = mem_end + len("<<ENDMEMORY>>")
-                        else:
-                            continue
-
-                    marker_start = full_response.find("<<MEMORY>>", sent_len)
-                    if marker_start != -1:
-                        clean_up_to_marker = full_response[:marker_start]
-                        if len(clean_up_to_marker) > sent_len:
-                            unsent = clean_up_to_marker[sent_len:]
-                            yield f"data: {json.dumps({'token': unsent})}\n\n"
-                        sent_len = marker_start
-                        memory_block_active = True
-                        continue
-
-                    # Withhold any trailing partial <<MEMORY>> prefix to avoid leaking
-                    # it to the frontend before the complete marker is assembled
-                    _marker = "<<MEMORY>>"
-                    safe_len = len(full_response)
-                    for _pi in range(len(_marker), 0, -1):
-                        if full_response.endswith(_marker[:_pi]):
-                            safe_len = len(full_response) - _pi
-                            break
-                    if safe_len > sent_len:
-                        unsent = full_response[sent_len:safe_len]
-                        yield f"data: {json.dumps({'token': unsent})}\n\n"
-                        sent_len = safe_len
-
-            # Strip memory marker before saving to DB
-            clean_response = strip_memory_marker(full_response)
-            # Ensure we sent all clean text to the frontend
-            if len(clean_response) > sent_len:
-                unsent = clean_response[sent_len:]
-                yield f"data: {json.dumps({'token': unsent})}\n\n"
+            memory_updated = any(
+                result.content.get("saved") is True
+                for result in getattr(stream, "tool_results", [])
+            )
+            if memory_updated:
+                yield f"data: {json.dumps({'memory_updated': True})}\n\n"
 
             db.add(
                 ChatHistory(
                     user_id=current_user.id,
                     conversation_id=conversation_id,
                     role="assistant",
-                    content=clean_response,
+                    content=full_response,
                     study_plan_id=study_plan_id,
                     target_language=target_language,
                 )
             )
             conv.updated_at = datetime.now(UTC).replace(tzinfo=None)
             await db.commit()
-
-            memory_items = parse_memory_marker(full_response)
-            memory_updated = False
-            if memory_items:
-                try:
-                    saved = await save_memories(
-                        db,
-                        current_user.id,
-                        memory_items,
-                        "chat",
-                        study_plan_id=study_plan_id,
-                    )
-                    if saved:
-                        memory_updated = True
-                except Exception:
-                    await db.rollback()
-                    logger.debug("Failed to save memories — ignored")
-
-            if memory_updated:
-                yield f"data: {json.dumps({'memory_updated': True})}\n\n"
 
             yield f"data: {json.dumps({'done': True})}\n\n"
 
@@ -451,25 +421,6 @@ async def chat(
 
             await maybe_record_freemium_usage(current_user, "chat")
 
-            # Persist token usage best-effort in a separate transaction
-            if isinstance(stream, LLMStream) and (
-                stream.prompt_tokens is not None or stream.completion_tokens is not None
-            ):
-                try:
-                    db.add(
-                        LLMUsage(
-                            user_id=current_user.id,
-                            source="chat",
-                            prompt_tokens=stream.prompt_tokens,
-                            completion_tokens=stream.completion_tokens,
-                            total_tokens=stream.total_tokens,
-                            study_plan_id=study_plan_id,
-                        )
-                    )
-                    await db.commit()
-                except Exception:
-                    await db.rollback()
-                    logger.debug("Failed to save LLM usage — ignored")
         except LLMTimeoutError:
             logger.warning(
                 "LLM timeout for user %s conversation %s",
@@ -487,6 +438,25 @@ async def chat(
                 conversation_id,
             )
             yield f"data: {json.dumps({'error': 'Something went wrong. Please try again.'})}\n\n"
+        finally:
+            if isinstance(stream, LLMStream) and (
+                stream.prompt_tokens is not None or stream.completion_tokens is not None
+            ):
+                try:
+                    async with db_session() as usage_db:
+                        usage_db.add(
+                            LLMUsage(
+                                user_id=current_user.id,
+                                source="chat",
+                                prompt_tokens=stream.prompt_tokens,
+                                completion_tokens=stream.completion_tokens,
+                                total_tokens=stream.total_tokens,
+                                study_plan_id=study_plan_id,
+                            )
+                        )
+                        await usage_db.commit()
+                except Exception:
+                    logger.debug("Failed to save LLM usage — ignored")
 
     return StreamingResponse(
         event_stream(),

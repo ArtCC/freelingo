@@ -18,7 +18,8 @@ Singleton providing provider-agnostic LLM access. Supports four providers select
 
 **Key capabilities:**
 
-- `chat(messages, stream=False)` — returns string or async generator
+- `chat(messages, stream=False, tools=None, tool_executor=None)` — returns a string or normalized async stream; native tools require streaming and an executor
+- Native tool streaming supports OpenAI-compatible and Anthropic event formats, forwards visible text progressively while keeping tool metadata internal, executes at most the first tool call, then performs one provider-native continuation without re-offering tools. Explicitly unsupported tools and failed continuations fall back once to the original turn without tools only when no visible text has been emitted; this prevents duplicate partial responses. Executor failures stay internal, and the returned stream exposes normalized `tool_results` and combined token usage.
 - `structured_output(messages, schema)` — returns validated Pydantic model (JSON mode + retry on parse failure)
 - `parse_llm_json(raw)` — module-level utility; strips optional code fences and parses JSON from LLM output. Kept for lower-level parsing tests and any legacy callers; reading/listening generation now uses `structured_output()`.
 - 2 automatic retries with exponential backoff, 60 s timeout
@@ -87,17 +88,18 @@ Japanese (`ja-JP`), Korean (`ko-KR`), and Mainland Chinese (`zh-CN`) are now ena
 
 ## Memory Service (`memory_service.py`)
 
-Handles LLM-driven persistent context across conversations:
+Handles global per-user persistent context across text and voice conversations:
 
-- `parse_memory_marker(text)` — extracts items from `<<MEMORY>>{"items":[...]}<<ENDMEMORY>>` blocks in LLM responses
-- `strip_memory_marker(text)` — removes the marker block before the response reaches the user
-- `build_memory_context(memories)` — formats up to 20 memories × 200 chars for injection into system prompts
-- `save_memories(db, user_id, items, source)` — persists new items, skipping exact duplicates
-- Zero-cost design: the LLM includes the marker in its normal response; no extra API calls needed.
+- `build_save_user_memory_tool(native_language_name)` defines the strict 200-character native `save_user_memory` tool and requires automatic memories to be written in the user's configured native language.
+- `build_memory_context(memories)` escapes and formats up to 20 recent memories as untrusted prompt data.
+- `save_memories(...)` serializes per-user collection mutations, skips exact duplicates, stores optional plan provenance, and enforces a 150-item FIFO cap.
+- `execute_save_user_memory(...)` validates and persists a native tool call without failing the visible response when persistence fails.
+- `create_memory(...)`, `get_user_memories(...)`, `delete_memory(...)`, and `clear_all_memories(...)` power manual global management. Saves, individual deletion, and clear-all share the same per-user row lock; retrieval and deletion are keyed only by `user_id`, and `study_plan_id` is nullable provenance.
 
 ## Progress Service (`progress_service.py`)
 
 - Atomic daily progress updates: XP (20 per lesson, 5 per correct exercise, 1 per wrong, 2 per flashcard)
+- `update_daily_progress(..., commit=False)` flushes without committing so callers such as lesson completion can include progress in a larger transaction; the default remains self-contained commit-and-refresh behavior.
 - Streak calculation: counts consecutive days with activity
 - Skill scoring: 0.7/0.3 exponential moving average per skill
 - Unit competency tracking: per-competency EMA, marked mastered at >=0.80
@@ -215,7 +217,7 @@ Single source of truth for subscription-based access control (Phase 5):
 
 Stripe lifecycle states such as `past_due`, `unpaid`, `paused`, `incomplete`, `incomplete_expired`, and `canceled` never grant access. The frontend distinguishes payment-recovery states (`past_due`, `unpaid`, `paused`) from normal plan-selection states (`none`, `incomplete`, `incomplete_expired`, `canceled`).
 
-Used by `require_subscription` in `core/deps.py`, which gates subscription-only access. Maintenance mode is handled separately by `require_not_maintenance` on chat, listening, reading, and conversation warmup endpoints. Memory-management endpoints use only `require_subscription`, so they stay subscription-gated but are not blocked during maintenance mode.
+Used by `require_subscription` in `core/deps.py`, which gates subscription-only access. Maintenance mode is handled separately by `require_not_maintenance` on chat, listening, reading, and conversation warmup endpoints. Authenticated memory-management endpoints intentionally use neither dependency so users can inspect and control stored personal context regardless of subscription or maintenance state.
 
 ## Freemium Service (`freemium_service.py`)
 
@@ -240,7 +242,7 @@ WebSocket-based voice conversation orchestrator:
 3. Barge-in protocol: explicit interrupts or new audio while a backend task is active can cancel the current greeting or LLM+TTS generation and send `barge_in` to the client. The current frontend ignores VAD detections during active assistant turns for stability.
 4. Sends audio to STT service for transcription; empty/whitespace transcriptions are ignored and do not call the LLM.
 5. Builds prompt with system message + last 20 message history.
-6. Collects the LLM response, strips memory markers, and validates the speech text.
+6. Executes at most one native memory tool call, collects the visible continuation, and validates the speech text. An explicit tool-capability rejection disables tools only for the remainder of that voice WebSocket session; failed memory work remains invisible to the user.
 7. Splits the complete assistant response on full stops and synthesizes ordered sentence chunks through TTS, with one retry per sentence.
 8. Sends each MP3 binary frame to the client as soon as that sentence audio is ready; failed sentence chunks are skipped so later chunks can still play.
 9. Emits the complete final assistant transcript after the first successful audio chunk; if every TTS chunk fails, emits the transcript as a text-only fallback. Then sends `status=listening` and `turn_complete` after all chunks have been processed.

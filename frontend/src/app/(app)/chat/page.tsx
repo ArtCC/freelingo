@@ -19,6 +19,9 @@ import { WordTooltip, useWordSave } from '@/components/ui/WordTooltip'
 import { PageLoading } from '@/components/ui/page-loading'
 import { TargetLanguageText } from '@/components/TargetLanguageText'
 import { AuthAvatarImage } from '@/components/AuthAvatarImage'
+import { MemorySavedToast } from '@/components/memory/MemorySavedToast'
+import { useTransientToast } from '@/hooks/useTransientToast'
+import { readSseData } from '@/lib/sse'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -31,6 +34,14 @@ interface Conversation {
   source: string
   created_at: string
   updated_at: string
+}
+
+interface ChatSseEvent {
+  conversation_id?: number
+  token?: string
+  error?: string
+  done?: boolean
+  memory_updated?: boolean
 }
 
 export default function ChatPage() {
@@ -61,7 +72,11 @@ export default function ChatPage() {
   const [loadingMsgs, setLoadingMsgs] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [deletePending, setDeletePending] = useState<number | null>(null)
-  const [memoryToast, setMemoryToast] = useState(false)
+  const {
+    visible: memoryToast,
+    announcementId: memoryToastId,
+    show: showMemoryToast,
+  } = useTransientToast()
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const targetLanguageCode = activeLanguage?.code ?? 'en-GB'
@@ -232,54 +247,44 @@ export default function ChatPage() {
         throw new Error(data.detail || `Error ${res.status}`)
       }
 
-      const reader = res.body?.getReader()
-      const decoder = new TextDecoder()
       let assistantContent = ''
+      let streamCompleted = false
       setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
 
-      while (reader) {
-        const { done, value } = await reader.read()
-        if (done) break
-        const chunk = decoder.decode(value)
-        for (const line of chunk.split('\n')) {
-          if (!line.startsWith('data: ')) continue
-          try {
-            const data = JSON.parse(line.slice(6))
-            if (data.conversation_id && !activeId) {
-              setActiveId(data.conversation_id)
-              // Refresh sidebar with the new conversation
-              loadConversations().then((list) => list && setConversations(list))
-            }
-            if (data.token) {
-              assistantContent += data.token
-              setMessages((prev) => {
-                const copy = [...prev]
-                copy[copy.length - 1] = {
-                  role: 'assistant',
-                  content: assistantContent,
-                }
-                return copy
-              })
-            }
-            if (data.error) setError(data.error)
-            if (data.done) {
-              if (
-                !isSubscribed(user, stripeEnabled) &&
-                !isFreemiumTrialActive(user, stripeEnabled)
-              ) {
-                decrementFreemium('chat_remaining')
-              }
-              loadConversations().then((list) => list && setConversations(list))
-            }
-            if (data.memory_updated) {
-              setMemoryToast(true)
-              setTimeout(() => setMemoryToast(false), 3500)
-            }
-          } catch {
-            /* skip malformed */
-          }
+      if (!res.body) throw new Error(t('errorMessage'))
+      for await (const data of readSseData<ChatSseEvent>(res.body)) {
+        if (data.conversation_id && !activeId) {
+          setActiveId(data.conversation_id)
+          loadConversations().then((list) => list && setConversations(list))
         }
+        if (data.token) {
+          assistantContent += data.token
+          setMessages((prev) => {
+            const copy = [...prev]
+            copy[copy.length - 1] = {
+              role: 'assistant',
+              content: assistantContent,
+            }
+            return copy
+          })
+        }
+        if (data.error) {
+          streamCompleted = true
+          setError(data.error)
+        }
+        if (data.done) {
+          streamCompleted = true
+          if (
+            !isSubscribed(user, stripeEnabled) &&
+            !isFreemiumTrialActive(user, stripeEnabled)
+          ) {
+            decrementFreemium('chat_remaining')
+          }
+          loadConversations().then((list) => list && setConversations(list))
+        }
+        if (data.memory_updated) showMemoryToast()
       }
+      if (!streamCompleted) throw new Error(t('errorMessage'))
     } catch (e) {
       setError(e instanceof Error ? e.message : t('errorMessage'))
     } finally {
@@ -291,14 +296,10 @@ export default function ChatPage() {
   return (
     <MaintenanceGate>
       <div className="flex h-[calc(100dvh-56px)] w-full overflow-hidden md:h-screen">
-        {/* Memory updated toast */}
-        {memoryToast && (
-          <div className="pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center">
-            <div className="border-fl-border bg-fl-surface text-fl-muted-1 animate-in fade-in slide-in-from-top-2 pointer-events-auto border px-4 py-2 font-mono text-xs tracking-widest uppercase shadow-lg">
-              {t('memoryUpdated')}
-            </div>
-          </div>
-        )}
+        <MemorySavedToast
+          visible={memoryToast}
+          announcementId={memoryToastId}
+        />
         {/* Sidebar backdrop — mobile only */}
         {sidebarOpen && (
           <div

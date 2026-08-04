@@ -13,7 +13,6 @@ from app.services.language_helpers import (
     get_reading_length_unit,
     uses_word_spacing,
 )
-from app.services.memory_service import parse_memory_marker
 from app.services.prompts.assessment import (
     build_end_of_level_test_prompt,
     build_free_write_assessment_prompt,
@@ -147,7 +146,7 @@ def test_tutor_prompts_include_shared_memory_instruction() -> None:
     prompt = build_tutor_system_prompt(
         student_name="Alice",
         cefr_level="B1",
-        native_language="es",
+        native_language="Spanish",
         target_language_name="German",
         total_xp=0,
         streak=0,
@@ -157,8 +156,9 @@ def test_tutor_prompts_include_shared_memory_instruction() -> None:
         memory_context="",
     )
 
-    assert get_memory_system_instruction("German") in prompt
-    assert "<<MEMORY>>" in prompt
+    assert get_memory_system_instruction("Spanish") in prompt
+    assert "save_user_memory" in prompt
+    assert "<<MEMORY>>" not in prompt
 
 
 def test_tutor_prompts_use_central_tutor_display_name() -> None:
@@ -446,9 +446,8 @@ def test_assessment_prompts_use_language_schema_and_delimiters() -> None:
     assert '"answers":' in legacy_user
 
 
-def test_memory_marker_parser_accepts_valid_json_and_ignores_invalid_json() -> None:
-    valid = 'Visible text.<<MEMORY>>{"items":["Likes grammar","Studies at night"]}<<ENDMEMORY>>'
-    invalid = 'Visible text.<<MEMORY>>{"items": [}<<ENDMEMORY>>'
-
-    assert parse_memory_marker(valid) == ["Likes grammar", "Studies at night"]
-    assert parse_memory_marker(invalid) == []
+def test_memory_tool_policy_is_language_global() -> None:
+    instruction = get_memory_system_instruction("Spanish")
+    normalized = " ".join(instruction.split())
+    assert "student's native language (Spanish)" in normalized
+    assert "review it in Settings" in normalized

@@ -343,6 +343,80 @@ async def test_pending_lessons_requires_auth(client):
     assert response.status_code == 401
 
 
+# ── GET /api/study-plan/lessons ───────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_plan_lessons_returns_generated_lessons(client, test_user, db_session):
+    """Generated lessons include the metadata needed to render plan actions."""
+    from app.models.lesson import Lesson
+
+    user, headers = test_user
+    await deactivate_active_plans(db_session, user.id)
+    plan = await make_study_plan(
+        db_session,
+        user_id=user.id,
+        cefr_level="A1",
+        goals=["grammar"],
+        duration_weeks=4,
+        days_per_week=4,
+        current_unit="unit-a1-1",
+        generated_plan={},
+        is_active=True,
+    )
+    db_session.add_all(
+        [
+            Lesson(
+                study_plan_id=plan.id,
+                title="Completed Grammar",
+                lesson_type="grammar",
+                cefr_level="A1",
+                week_number=1,
+                day_number=1,
+                unit_id="unit-a1-1",
+                content={},
+                is_completed=True,
+            ),
+            Lesson(
+                study_plan_id=plan.id,
+                title="Current Vocabulary",
+                lesson_type="vocabulary",
+                cefr_level="A1",
+                week_number=1,
+                day_number=2,
+                unit_id="unit-a1-1",
+                content={},
+                is_completed=False,
+            ),
+        ]
+    )
+    await db_session.commit()
+
+    response = await client.get("/api/study-plan/lessons", headers=headers)
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": response.json()[0]["id"],
+            "title": "Completed Grammar",
+            "lesson_type": "grammar",
+            "week_number": 1,
+            "day_number": 1,
+            "unit_id": "unit-a1-1",
+            "is_completed": True,
+        },
+        {
+            "id": response.json()[1]["id"],
+            "title": "Current Vocabulary",
+            "lesson_type": "vocabulary",
+            "week_number": 1,
+            "day_number": 2,
+            "unit_id": "unit-a1-1",
+            "is_completed": False,
+        },
+    ]
+
+
 # ── Auto-advance in GET /api/study-plan/today ─────────────────────────────────
 
 

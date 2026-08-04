@@ -197,7 +197,7 @@ async def upsert_unit_competency(db, user_id, unit_id, ..., study_plan_id: int |
 
 ## 10.2.5 `memory_service.py`
 
-`get_user_memories()` accepts an optional `study_plan_id`. If `None`, returns all user memories (backward compatibility). If provided, filters by plan.
+Current behavior supersedes the original plan-filter design: `get_user_memories(db, user_id)` always returns the user's global collection. `study_plan_id` can still be written by AI saves as nullable provenance but is never a retrieval filter.
 
 ---
 

@@ -132,11 +132,13 @@ On WebSocket connect:
 3. **Barge-in check**: if an explicit interrupt/new audio arrives while a backend task is active, cancel it and send `barge_in` so the client can stop playback. The current frontend ignores VAD detections during active assistant turns.
 4. **STT**: send WAV bytes to STT service → get transcribed text; empty/whitespace STT results are ignored and do not trigger LLM/TTS
 5. **Context building**: prepend system prompt + last 20 messages (in-memory)
-6. **LLM response**: collect the assistant response from the LLM stream
+6. **Memory refresh and LLM response**: reload the user's global memories for this turn, inject the latest 20 as untrusted context, and collect the assistant response from the normalized LLM stream. Lingu may execute one native `save_user_memory` tool round with the active plan ID retained only as provenance, then continue the visible response.
 7. **TTS synthesis**: split the complete assistant response on full stops and synthesize ordered sentence chunks sequentially
 8. **Send audio first**: send each MP3 binary frame to the browser as soon as that sentence audio is ready
 9. **Send transcript**: send the complete AI text as final `transcript` immediately after the first audio chunk is generated and sent, avoiding visible text without associated audio
 10. **Append to history/persist**: store the user+assistant exchange in memory and persist successful turns to `chat_history`
+
+Native tool payloads are never sent to TTS or transcript output. A successful save sends `memory_updated` before `turn_complete`, and the next turn immediately sees the refreshed global collection, including manual memories and memories created while another learning language was active.
 
 All server writes to the WebSocket are serialized through a single send lock. This prevents timeout watchers, TTS sender tasks, transcript events, and close frames from writing concurrently to the same connection.
 
