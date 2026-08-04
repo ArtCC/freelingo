@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -1298,12 +1299,17 @@ class TestNativeToolStreaming:
             return SimpleNamespace(choices=[SimpleNamespace(delta=delta)], usage=None)
 
         async def initial_stream():
+            yield FakeOpenAIChunk("Sure. ")
             yield tool_chunk('{"content":"Likes ', tool_id="call_1", name="save_user_memory")
             yield tool_chunk('hiking"}')
             yield FakeOpenAIChunk(None, usage=FakeUsage(10, 3))
 
+        release_continuation = asyncio.Event()
+
         async def continuation_stream():
             yield FakeOpenAIChunk("I will remember that.")
+            await release_continuation.wait()
+            yield FakeOpenAIChunk(" Thanks.")
             yield FakeOpenAIChunk(None, usage=FakeUsage(12, 4))
 
         adapter = LLMAdapter()
@@ -1329,7 +1335,11 @@ class TestNativeToolStreaming:
                 tools=[tool],
                 tool_executor=executor,
             )
-            assert [part async for part in stream] == ["I will remember that."]
+            iterator = stream.__aiter__()
+            assert await asyncio.wait_for(anext(iterator), timeout=0.1) == "Sure. "
+            assert await asyncio.wait_for(anext(iterator), timeout=0.1) == "I will remember that."
+            release_continuation.set()
+            assert [part async for part in iterator] == [" Thanks."]
 
         assert stream.tool_results[0].content == {"saved": True}
         assert stream.prompt_tokens == 22
@@ -1515,7 +1525,19 @@ class TestNativeToolStreaming:
             LLMUnavailableError,
         )
 
-        async def broken_stream():
+        def tool_chunk():
+            function = SimpleNamespace(
+                name="save_user_memory",
+                arguments='{"content":"Likes tea"}',
+            )
+            tool_call = SimpleNamespace(index=0, id="call_1", function=function)
+            delta = SimpleNamespace(content=None, tool_calls=[tool_call])
+            return SimpleNamespace(choices=[SimpleNamespace(delta=delta)], usage=None)
+
+        async def initial_stream():
+            yield tool_chunk()
+
+        async def broken_continuation():
             yield FakeOpenAIChunk("Partial")
             raise ConnectionError("connection lost")
 
@@ -1529,13 +1551,16 @@ class TestNativeToolStreaming:
             adapter.client.chat.completions,
             "create",
             new_callable=AsyncMock,
-            return_value=broken_stream(),
-        ):
+            side_effect=[initial_stream(), broken_continuation()],
+        ) as create:
             stream = await adapter.chat(
                 [{"role": "user", "content": "Hi"}],
                 stream=True,
                 tools=[tool],
                 tool_executor=executor,
             )
+            iterator = stream.__aiter__()
+            assert await asyncio.wait_for(anext(iterator), timeout=0.1) == "Partial"
             with pytest.raises(LLMUnavailableError, match="unreachable"):
-                _ = [part async for part in stream]
+                await anext(iterator)
+            assert len(create.call_args_list) == 2

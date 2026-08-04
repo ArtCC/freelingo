@@ -310,8 +310,10 @@ async def test_delete_memory_service(db_session, memory_user):
     memories = await get_user_memories(db_session, memory_user.id)
     target_id = memories[1].id
 
-    deleted = await delete_memory(db_session, target_id, memory_user.id)
+    with patch.object(db_session, "execute", wraps=db_session.execute) as execute:
+        deleted = await delete_memory(db_session, target_id, memory_user.id)
     assert deleted is True
+    assert execute.call_args_list[0].args[0]._for_update_arg is not None
 
     remaining = await get_user_memories(db_session, memory_user.id)
     assert len(remaining) == 1
@@ -349,8 +351,10 @@ async def test_clear_all_memories_service(db_session, memory_user):
     await save_memories(db_session, memory_user.id, ["A", "B", "C"], "chat")
     await save_memories(db_session, user2.id, ["Other"], "voice")
 
-    count = await clear_all_memories(db_session, memory_user.id)
+    with patch.object(db_session, "execute", wraps=db_session.execute) as execute:
+        count = await clear_all_memories(db_session, memory_user.id)
     assert count == 3
+    assert execute.call_args_list[0].args[0]._for_update_arg is not None
 
     remaining_user1 = await get_user_memories(db_session, memory_user.id)
     assert len(remaining_user1) == 0

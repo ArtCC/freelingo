@@ -19,7 +19,7 @@ Singleton providing provider-agnostic LLM access. Supports four providers select
 **Key capabilities:**
 
 - `chat(messages, stream=False, tools=None, tool_executor=None)` — returns a string or normalized async stream; native tools require streaming and an executor
-- Native tool streaming supports OpenAI-compatible and Anthropic event formats, executes at most the first tool call, then performs one provider-native continuation without re-offering tools. Explicitly unsupported tools and failed continuations fall back once to the original turn without tools. Executor failures stay internal, the returned stream exposes normalized `tool_results` and combined token usage, and memory-specific failures never replace the visible tutor response.
+- Native tool streaming supports OpenAI-compatible and Anthropic event formats, forwards visible text progressively while keeping tool metadata internal, executes at most the first tool call, then performs one provider-native continuation without re-offering tools. Explicitly unsupported tools and failed continuations fall back once to the original turn without tools only when no visible text has been emitted; this prevents duplicate partial responses. Executor failures stay internal, and the returned stream exposes normalized `tool_results` and combined token usage.
 - `structured_output(messages, schema)` — returns validated Pydantic model (JSON mode + retry on parse failure)
 - `parse_llm_json(raw)` — module-level utility; strips optional code fences and parses JSON from LLM output. Kept for lower-level parsing tests and any legacy callers; reading/listening generation now uses `structured_output()`.
 - 2 automatic retries with exponential backoff, 60 s timeout
@@ -92,9 +92,9 @@ Handles global per-user persistent context across text and voice conversations:
 
 - `build_save_user_memory_tool(native_language_name)` defines the strict 200-character native `save_user_memory` tool and requires automatic memories to be written in the user's configured native language.
 - `build_memory_context(memories)` escapes and formats up to 20 recent memories as untrusted prompt data.
-- `save_memories(...)` serializes per-user writes, skips exact duplicates, stores optional plan provenance, and enforces a 150-item FIFO cap.
+- `save_memories(...)` serializes per-user collection mutations, skips exact duplicates, stores optional plan provenance, and enforces a 150-item FIFO cap.
 - `execute_save_user_memory(...)` validates and persists a native tool call without failing the visible response when persistence fails.
-- `create_memory(...)`, `get_user_memories(...)`, `delete_memory(...)`, and `clear_all_memories(...)` power manual global management. Retrieval and deletion are keyed only by `user_id`; `study_plan_id` is nullable provenance.
+- `create_memory(...)`, `get_user_memories(...)`, `delete_memory(...)`, and `clear_all_memories(...)` power manual global management. Saves, individual deletion, and clear-all share the same per-user row lock; retrieval and deletion are keyed only by `user_id`, and `study_plan_id` is nullable provenance.
 
 ## Progress Service (`progress_service.py`)
 

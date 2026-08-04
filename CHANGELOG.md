@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Memory save notification**: text and voice now share an accessible informational toast that confirms Lingu saved a memory, points users to Settings without a timed action, safely restarts and re-announces consecutive saves, and survives SSE events split across network chunks.
 - **Native-language memories**: Lingu now writes new automatic memories in the user's configured native language, independently of the language being studied, so saved facts remain directly readable in Settings. Manual and existing memories are left unchanged.
 
+### Fixed
+
+- **Progressive chat streaming with memory tools**: visible text from the initial response and the post-tool continuation is forwarded as soon as the provider emits it instead of being buffered until each generation completes. A no-tools fallback is only attempted when no visible text has been sent, preventing duplicate partial responses.
+- **Serialized memory deletion**: individual deletion and clear-all now use the same per-user database lock as memory creation, so an already-running save completes before the deletion transaction decides what to remove.
+
 ## [1.8.27] - 2026-06-28
 
 ### Fixed

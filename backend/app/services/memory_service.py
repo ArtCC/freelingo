@@ -218,6 +218,7 @@ async def get_user_memories(
 
 async def delete_memory(db: AsyncSession, memory_id: int, user_id: int) -> bool:
     """Delete a single memory. Returns True if found and deleted."""
+    await db.execute(select(User.id).where(User.id == user_id).with_for_update())
     memory = await db.get(Memory, memory_id)
     if memory is None or memory.user_id != user_id:
         return False
@@ -231,6 +232,7 @@ async def clear_all_memories(db: AsyncSession, user_id: int) -> int:
 
     Returns the number deleted.
     """
+    await db.execute(select(User.id).where(User.id == user_id).with_for_update())
     stmt = delete(Memory).where(Memory.user_id == user_id)
     result = await db.execute(stmt)
     await db.commit()

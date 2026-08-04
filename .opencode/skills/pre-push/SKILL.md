@@ -25,7 +25,7 @@ Fixes what can be fixed automatically: Python lint + format, JS/TS lint + format
 source .venv/bin/activate && cd backend && pytest -v
 ```
 
-940 backend tests, >= 70% backend coverage required. Current backend coverage is 84.33% last measured. SQLite in-memory, no Docker needed.
+940 backend tests, >= 70% backend coverage required. Current backend coverage is 84.31% last measured. SQLite in-memory, no Docker needed.
 
 Use a command timeout of at least 600 seconds for the full backend suite; the current run takes about 4 minutes and can exceed shorter 120-second tool defaults.
 

@@ -36,12 +36,12 @@ Migration `0022_memory` created the table. Phase 10 migration `0029_multi_langua
 - `MAX_MEMORIES_PER_USER = 150` - hard per-user storage cap; oldest rows are evicted first.
 - `build_save_user_memory_tool()` - returns the strict native tool schema with one required `content` string and no additional properties.
 - `build_memory_context(memories)` - escapes each memory and wraps the latest 20 in `<user_memories>` as untrusted data, not instructions.
-- `save_memories(...)` - serializes writes with a per-user row lock, normalizes and exact-deduplicates input, enforces the 150-item cap, optionally records plan provenance, and commits.
+- `save_memories(...)` - serializes collection mutations with a per-user row lock, normalizes and exact-deduplicates input, enforces the 150-item cap, optionally records plan provenance, and commits.
 - `create_memory(...)` - creates one `manual` global memory and raises `MemoryAlreadyExistsError` for an exact duplicate.
 - `execute_save_user_memory(...)` - validates and executes a native tool call, returning a structured success or error result without breaking the visible tutor response.
 - `get_user_memories(db, user_id)` - returns every memory for the user, regardless of language, ordered by `created_at` and `id` ascending.
-- `delete_memory(...)` - owner-scoped single deletion with an IDOR-safe not-found result.
-- `clear_all_memories(...)` - deletes the user's complete global collection.
+- `delete_memory(...)` - owner-scoped single deletion with an IDOR-safe not-found result and the same per-user lock used by saves.
+- `clear_all_memories(...)` - deletes the user's complete global collection while holding the same per-user lock used by saves.
 
 ## Native Tool Streaming
 
@@ -49,16 +49,16 @@ Migration `0022_memory` created the table. Phase 10 migration `0029_multi_langua
 
 `LLMAdapter.chat(..., stream=True, tools=[...], tool_executor=...)` normalizes native streaming tool calls for OpenAI-compatible providers and Anthropic:
 
-1. The initial stream can emit visible text and one or more tool call fragments; text is buffered until the tool path is known so a fallback cannot duplicate partial output.
+1. The initial stream can emit visible text and one or more tool call fragments; visible text is forwarded immediately while tool metadata remains internal.
 2. Tool arguments are assembled and normalized into `LLMToolCall` objects.
 3. The supplied executor runs at most the first call; additional calls receive a controlled error result without being executed.
 4. The adapter makes one continuation request with provider-native assistant tool-call and tool-result messages.
 5. Tools are omitted from the continuation request, so only one tool round is possible.
-6. Callers receive a single async text stream plus accumulated usage and `tool_results` metadata.
+6. Visible continuation text is also forwarded as soon as it arrives; callers receive a single async text stream plus accumulated usage and `tool_results` metadata.
 
 Native tools require streaming and an executor. OpenAI-compatible continuation uses `assistant.tool_calls` followed by `tool` messages; Anthropic uses `tool_use` and `tool_result` content blocks.
 
-Memory is best-effort and never blocks the tutor response. If a provider explicitly rejects native tools, the same turn is retried once without tools. If tool execution fails, the error is logged and returned only to the model as a failed tool result. If the provider-native continuation fails, the original turn is retried without tools. None of these memory-specific failures are exposed to the user.
+Memory is best-effort. If a provider explicitly rejects native tools before visible text is emitted, the same turn is retried once without tools. If tool execution fails, the error is logged and returned only to the model as a failed tool result. If the provider-native continuation fails before any visible text was emitted, the original turn is retried without tools. Once visible text has been sent, a failed stream is surfaced as the normal LLM turn error instead of generating a fallback that could duplicate output. Memory-specific execution failures are not exposed to the user.
 
 ## Prompt Policy
 
@@ -72,7 +72,7 @@ The old `<<MEMORY>>...<<ENDMEMORY>>` marker parser and stream-stripping flow no 
 
 **File:** `backend/app/routers/chat.py`
 
-Each request loads the user's global memories, builds the untrusted context block, and enables `save_user_memory` with source `chat` and the active plan ID as optional provenance. After the one native tool round and continuation, the clean visible response is persisted and streamed normally. A successful committed save emits `{"memory_updated": true}`; failed or skipped memory work emits no user-visible event. The frontend's buffered SSE reader preserves events split across network chunks, rejects a truncated final event, and requires a terminal `done` or conversation `error` event.
+Each request loads the user's global memories, builds the untrusted context block, and enables `save_user_memory` with source `chat` and the active plan ID as optional provenance. Visible text from both the initial provider stream and the one native-tool continuation is forwarded progressively; tool fragments remain internal. The clean visible response is persisted normally. A successful committed save emits `{"memory_updated": true}`; failed or skipped memory work emits no user-visible event. The frontend's buffered SSE reader preserves events split across network chunks, rejects a truncated final event, and requires a terminal `done` or conversation `error` event.
 
 ## Voice Conversation
 

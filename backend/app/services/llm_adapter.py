@@ -327,10 +327,21 @@ class LLMToolStream(LLMStream):
 
     async def _iterate(self):
         initial_parts: list[str] = []
+        visible_text_emitted = False
         try:
             async for text in self._provider_text_and_calls(self._stream, collect_calls=True):
                 initial_parts.append(text)
+                visible_text_emitted = True
+                yield text
         except LLMToolsUnsupportedError:
+            if visible_text_emitted:
+                logger.warning(
+                    "%s rejected tools after visible text was streamed; "
+                    "cannot retry without duplicating output",
+                    self._adapter.provider,
+                    exc_info=True,
+                )
+                raise
             logger.info(
                 "%s model rejected native tools; continuing without them", self._adapter.provider
             )
@@ -346,8 +357,6 @@ class LLMToolStream(LLMStream):
             return
 
         if not self.tool_calls:
-            for text in initial_parts:
-                yield text
             return
 
         for index, call in enumerate(self.tool_calls):
@@ -385,14 +394,21 @@ class LLMToolStream(LLMStream):
                 True,
                 None,
             )
-            continuation_parts = [
-                text
-                async for text in self._provider_text_and_calls(
-                    continuation,
-                    collect_calls=False,
-                )
-            ]
+            async for text in self._provider_text_and_calls(
+                continuation,
+                collect_calls=False,
+            ):
+                visible_text_emitted = True
+                yield text
         except LLMError:
+            if visible_text_emitted:
+                logger.warning(
+                    "%s tool continuation failed after visible text was streamed; "
+                    "cannot retry without duplicating output",
+                    self._adapter.provider,
+                    exc_info=True,
+                )
+                raise
             logger.warning(
                 "%s tool continuation failed; retrying the turn without tools",
                 self._adapter.provider,
@@ -406,12 +422,6 @@ class LLMToolStream(LLMStream):
             )
             async for text in self._provider_text_and_calls(fallback, collect_calls=False):
                 yield text
-            return
-
-        for text in initial_parts:
-            yield text
-        for text in continuation_parts:
-            yield text
 
 
 class LLMAdapter:

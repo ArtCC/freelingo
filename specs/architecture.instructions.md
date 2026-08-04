@@ -177,6 +177,6 @@ Testing infrastructure and strategy are documented in [testing.instructions.md](
 
 **Summary:**
 
-- **Backend**: pytest + pytest-asyncio, 43 test files, 940 tests, 84.33% last measured coverage (target: 70%)
+- **Backend**: pytest + pytest-asyncio, 43 test files, 940 tests, 84.31% last measured coverage (target: 70%)
 - **Frontend**: Vitest, 37 test files, 434 tests covering stores, components, hooks, lib, i18n, app pages, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, and middleware; coverage is not configured/reported
 - **E2E**: Playwright (planned, not yet implemented)

@@ -180,8 +180,8 @@ The application uses 18 services plus a centralized `services/prompts/` package 
 
 Key architectural decisions:
 
-- **LLM Adapter** is a singleton with provider-agnostic interface (Ollama, OpenAI, Anthropic, DeepSeek). Streaming native tools normalize OpenAI-compatible and Anthropic events, execute at most one call, and continue once with provider-native tool-result messages. Explicit tool incompatibility and failed tool continuations fall back silently to the original turn without tools; memory executor failures are logged and returned only as failed tool results.
-- **Memory Service** owns strict native `save_user_memory` execution, escaped global context, exact per-user deduplication, a 150-item cap, manual creation, and owner-scoped management. `study_plan_id` records nullable provenance only.
+- **LLM Adapter** is a singleton with provider-agnostic interface (Ollama, OpenAI, Anthropic, DeepSeek). Streaming native tools normalize OpenAI-compatible and Anthropic events, forward visible text progressively while filtering tool metadata, execute at most one call, and continue once with provider-native tool-result messages. Explicit tool incompatibility and failed tool continuations fall back to the original turn without tools only before visible text has been emitted, preventing duplicate partial responses; memory executor failures are logged and returned only as failed tool results.
+- **Memory Service** owns strict native `save_user_memory` execution, escaped global context, exact per-user deduplication, a 150-item cap, manual creation, and owner-scoped management. Saves, individual deletion, and clear-all serialize on the same user-row lock. `study_plan_id` records nullable provenance only.
 - **Voice memory capability** is session-local state on `ConversationPipeline`. Once a model explicitly rejects tools, later turns in the same WebSocket session omit them; a new voice session probes capability again.
 - **Study Plan Generator** and **Lesson Generator** are deterministic within curriculum constraints; lesson generation can include native-language support at lesson level, per-exercise explanation level, and per-exercise pre-answer hint level without adding separate exercise-table columns, enriched lesson vocabulary with native-language translation/example notes inside lesson JSON, and missing exercise native explanations or hints can be generated on demand and cached in lesson JSON
 - **TTS/STT services** abstract local (Kokoro/Whisper) and cloud (OpenAI) providers behind common interfaces
@@ -211,7 +211,7 @@ Testing infrastructure and strategy are documented in [testing.instructions.md](
 - **Framework**: pytest + pytest-asyncio + httpx AsyncClient
 - **Test files**: 43 (plus conftest.py for shared fixtures)
 - **Tests**: 922
-- **Coverage**: 84.33% last measured (target: ≥70%)
+- **Coverage**: 84.31% last measured (target: ≥70%)
 - **Key fixtures**: async database session, test client with auth headers, Redis mock, user_language fixture
 
 ---

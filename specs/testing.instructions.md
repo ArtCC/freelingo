@@ -1,5 +1,5 @@
 ---
-description: "Testing strategy for FreeLingo: backend pytest suite (43 test files, 940 tests, 84.33% last measured coverage, with SQLite in-memory DB and Redis mocking), frontend Vitest suite (37 test files, 434 tests, no configured coverage, covering stores, components, lib, hooks, app pages, i18n, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, and middleware), E2E plan (Playwright, pending), CI integration, and coverage requirements."
+description: "Testing strategy for FreeLingo: backend pytest suite (43 test files, 940 tests, 84.31% last measured coverage, with SQLite in-memory DB and Redis mocking), frontend Vitest suite (37 test files, 434 tests, no configured coverage, covering stores, components, lib, hooks, app pages, i18n, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, and middleware), E2E plan (Playwright, pending), CI integration, and coverage requirements."
 applyTo: "**/*.test.*, **/*.spec.*, **/tests/**, **/__tests__/**"
 ---
 
@@ -7,11 +7,11 @@ applyTo: "**/*.test.*, **/*.spec.*, **/tests/**, **/__tests__/**"
 
 ## Overview
 
-- Backend unit + integration — Framework: pytest + pytest-asyncio; Scope: API endpoints, services, SM-2 algorithm, data integrity; Coverage: 84.33% last measured (target: 70%); Status: Implemented
+- Backend unit + integration — Framework: pytest + pytest-asyncio; Scope: API endpoints, services, SM-2 algorithm, data integrity; Coverage: 84.31% last measured (target: 70%); Status: Implemented
 - Frontend unit — Framework: Vitest; Scope: Stores, components, hooks, lib, middleware; Coverage: Not configured; Status: Implemented
 - E2E — Framework: Playwright; Scope: Critical user flows; Coverage: Smoke; Status: Pending
 
-All tests pass on every push. Backend coverage threshold configured at 70%, last measured at 84.33%. Frontend tests cover stores, critical components (VoiceRecorder, AudioPlayer, ProfileSection, UnitCard/UnitDrawer, LanguageSwitcher, TargetLanguageSelector, review UI, LanguageBubbles, billing paywall UI, memory toast), billing success verification, app pages, hooks, lib modules, SSE framing, i18n, and middleware. Frontend coverage is not currently reported because Vitest coverage is not configured and `@vitest/coverage-v8` is not installed.
+All tests pass on every push. Backend coverage threshold configured at 70%, last measured at 84.31%. Frontend tests cover stores, critical components (VoiceRecorder, AudioPlayer, ProfileSection, UnitCard/UnitDrawer, LanguageSwitcher, TargetLanguageSelector, review UI, LanguageBubbles, billing paywall UI, memory toast), billing success verification, app pages, hooks, lib modules, SSE framing, i18n, and middleware. Frontend coverage is not currently reported because Vitest coverage is not configured and `@vitest/coverage-v8` is not installed.
 
 ---
 
@@ -60,8 +60,8 @@ All tests pass on every push. Backend coverage threshold configured at 70%, last
 - **`test_feedback.py`** — Lines: 1500+. What it covers: Feedback board: feature requests, bug reports, default exclusion of done entries, voting, comments, admin moderation, unread thread counters, per-thread read markers, and per-entry `unread_by_me` response flags
 - **`test_billing.py`** — Lines: 381+. What it covers: Stripe subscriptions, Checkout customer reuse, Customer Portal access including payment-recovery states, webhooks, payment status, real Stripe subscription statuses, unknown-status fallback, subscription lifecycle, webhook retry behavior on processing failure, current Stripe Invoice subscription shape, `stripe_subscription_id` persistence/backfill, and stale subscription-event ignoring
 - **`test_maintenance.py`** — Lines: 153. What it covers: Maintenance mode toggle, API behavior during maintenance
-- **`test_memories.py`** — What it covers: global LLM memory (Phase 9), strict native tool schema, escaped context, manual creation and duplicate validation, authenticated ungated management, ownership, exact deduplication, hard cap including eviction of existing FIFO entries, and text chat tool-update events
-- **`test_llm_adapter.py`** — Also covers one-round native tool streaming and continuation for OpenAI-compatible and Anthropic providers, explicit unsupported-tool fallback, failed-continuation fallback with usage accumulation, and one-call execution limits
+- **`test_memories.py`** — What it covers: global LLM memory (Phase 9), strict native tool schema, escaped context, manual creation and duplicate validation, authenticated ungated management, ownership, exact deduplication, hard cap including eviction of existing FIFO entries, shared per-user locks for deletion/clear-all, and text chat tool-update events
+- **`test_llm_adapter.py`** — Also covers progressive visible text before the tool path is known and during continuation, one-round native tool streaming for OpenAI-compatible and Anthropic providers, explicit unsupported-tool fallback, failed-continuation fallback with usage accumulation, and one-call execution limits
 - **`test_multi_language.py`** — Also covers global cross-language memory retrieval and memory preservation through language deletion
 - **`frontend/tests/lib/memories.test.ts` and `frontend/tests/app/settings-memories.test.tsx`** — Cover memory API helpers and add/list/delete/clear Settings states
 - **`frontend/tests/lib/sse.test.ts`** — Covers SSE events fragmented across byte chunks, CRLF framing, malformed-event isolation, and truncated final-event rejection
@@ -82,7 +82,7 @@ All tests pass on every push. Backend coverage threshold configured at 70%, last
 
 ### Coverage
 
-- **Current coverage**: 84.33% last measured (above 70% target)
+- **Current coverage**: 84.31% last measured (above 70% target)
 - **Configured threshold**: 70% (enforced via `pytest --cov-fail-under=70`)
 
 ### Test patterns
