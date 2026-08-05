@@ -1250,8 +1250,36 @@ class TestLLMStreamAnthropic:
 
 
 class TestNativeToolStreaming:
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "This model does not support tool use",
+            "This model does not support function calling",
+            "`tools` is not supported by this endpoint",
+        ],
+    )
+    def test_recognizes_common_tool_incompatibility_messages(self, message):
+        from app.services.llm_adapter import _is_tools_unsupported_error
+
+        assert _is_tools_unsupported_error(RuntimeError(message)) is True
+
+    def test_recognizes_tool_incompatibility_from_exception_context(self):
+        from app.services.llm_adapter import _is_tools_unsupported_error
+
+        try:
+            raise RuntimeError("This model does not support function calling")
+        except RuntimeError:
+            try:
+                raise RuntimeError("provider request failed")
+            except RuntimeError as wrapped:
+                assert _is_tools_unsupported_error(wrapped) is True
+
     @pytest.mark.asyncio
-    async def test_unsupported_tools_fall_back_without_retrying_them(self, monkeypatch):
+    async def test_unsupported_tools_use_explicit_fallback_messages(
+        self,
+        monkeypatch,
+        caplog,
+    ):
         _make_ollama_settings(monkeypatch)
         from app.services.llm_adapter import LLMAdapter, LLMTool, LLMToolResult
 
@@ -1260,6 +1288,17 @@ class TestNativeToolStreaming:
 
         adapter = LLMAdapter()
         tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+        messages = [
+            {
+                "role": "system",
+                "content": "Tutor rules. Use the save_user_memory tool when appropriate.",
+            },
+            {"role": "user", "content": "Hi"},
+        ]
+        fallback_messages = [
+            {"role": "system", "content": "Tutor rules."},
+            {"role": "user", "content": "Hi"},
+        ]
 
         async def executor(call):
             return LLMToolResult(call=call, content={"saved": True})
@@ -1277,10 +1316,11 @@ class TestNativeToolStreaming:
             ],
         ) as create:
             stream = await adapter.chat(
-                [{"role": "user", "content": "Hi"}],
+                messages,
                 stream=True,
                 tools=[tool],
                 tool_executor=executor,
+                fallback_messages=fallback_messages,
             )
             assert [part async for part in stream] == ["Normal response."]
 
@@ -1288,6 +1328,152 @@ class TestNativeToolStreaming:
         assert len(create.call_args_list) == 2
         assert "tools" in create.call_args_list[0].kwargs
         assert "tools" not in create.call_args_list[1].kwargs
+        assert create.call_args_list[0].kwargs["messages"] == messages
+        assert create.call_args_list[1].kwargs["messages"] == fallback_messages
+        assert "Native tools available" not in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_late_tools_incompatibility_resets_then_returns_full_fallback(
+        self,
+        monkeypatch,
+        caplog,
+    ):
+        _make_ollama_settings(monkeypatch)
+        from app.services.llm_adapter import (
+            LLMAdapter,
+            LLMStreamReset,
+            LLMTool,
+            LLMToolResult,
+        )
+
+        async def incompatible_stream():
+            yield FakeOpenAIChunk("Partial response.")
+            yield FakeOpenAIChunk(None, usage=FakeUsage(7, 2))
+            raise RuntimeError("Tools are not supported by this model")
+
+        async def fallback_stream():
+            yield FakeOpenAIChunk("Complete normal response.")
+            yield FakeOpenAIChunk(None, usage=FakeUsage(11, 4))
+
+        adapter = LLMAdapter()
+        tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+        fallback_messages = [{"role": "user", "content": "Fallback Hi"}]
+
+        async def executor(call):
+            return LLMToolResult(call=call, content={"saved": True})
+
+        with patch.object(
+            adapter.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            side_effect=[incompatible_stream(), fallback_stream()],
+        ) as create:
+            stream = await adapter.chat(
+                [{"role": "user", "content": "Hi"}],
+                stream=True,
+                tools=[tool],
+                tool_executor=executor,
+                fallback_messages=fallback_messages,
+            )
+            iterator = stream.__aiter__()
+            assert await anext(iterator) == "Partial response."
+            reset = await anext(iterator)
+            assert isinstance(reset, LLMStreamReset)
+            assert stream.tools_unsupported is True
+            fallback_parts = [part async for part in iterator]
+
+        assert reset.reason == "tools_unsupported"
+        assert fallback_parts == ["Complete normal response."]
+        assert stream.prompt_tokens == 18
+        assert stream.completion_tokens == 6
+        assert stream.total_tokens == 24
+        assert len(create.call_args_list) == 2
+        assert create.call_args_list[1].kwargs["messages"] == fallback_messages
+        assert "tools" not in create.call_args_list[1].kwargs
+        assert "Native tools available" not in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_late_tools_incompatibility_rejects_empty_fallback(self, monkeypatch):
+        _make_ollama_settings(monkeypatch)
+        from app.services.llm_adapter import (
+            LLMAdapter,
+            LLMResponseError,
+            LLMStreamReset,
+            LLMTool,
+            LLMToolResult,
+        )
+
+        async def incompatible_stream():
+            yield FakeOpenAIChunk("Partial response.")
+            raise RuntimeError("This model does not support tool use")
+
+        async def empty_fallback_stream():
+            yield FakeOpenAIChunk(None, usage=FakeUsage(11, 0))
+
+        adapter = LLMAdapter()
+        tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+
+        async def executor(call):
+            return LLMToolResult(call=call, content={"saved": True})
+
+        with patch.object(
+            adapter.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            side_effect=[incompatible_stream(), empty_fallback_stream()],
+        ):
+            stream = await adapter.chat(
+                [{"role": "user", "content": "Hi"}],
+                stream=True,
+                tools=[tool],
+                tool_executor=executor,
+            )
+            iterator = stream.__aiter__()
+            assert await anext(iterator) == "Partial response."
+            assert isinstance(await anext(iterator), LLMStreamReset)
+            with pytest.raises(LLMResponseError, match="empty fallback response"):
+                await anext(iterator)
+
+        assert stream.tools_unsupported is True
+        assert stream.prompt_tokens == 11
+        assert stream.completion_tokens == 0
+        assert stream.total_tokens == 11
+
+    @pytest.mark.asyncio
+    async def test_known_usage_is_kept_when_tool_stream_is_closed(self, monkeypatch):
+        _make_ollama_settings(monkeypatch)
+        from app.services.llm_adapter import LLMAdapter, LLMTool, LLMToolResult
+
+        async def interrupted_stream():
+            yield FakeOpenAIChunk(None, usage=FakeUsage(6, 2))
+            yield FakeOpenAIChunk("Partial response.")
+            await asyncio.Event().wait()
+
+        adapter = LLMAdapter()
+        tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+
+        async def executor(call):
+            return LLMToolResult(call=call, content={"saved": True})
+
+        with patch.object(
+            adapter.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            return_value=interrupted_stream(),
+        ):
+            stream = await adapter.chat(
+                [{"role": "user", "content": "Hi"}],
+                stream=True,
+                tools=[tool],
+                tool_executor=executor,
+            )
+            iterator = stream.__aiter__()
+            assert await anext(iterator) == "Partial response."
+            await iterator.aclose()
+
+        assert stream.prompt_tokens == 6
+        assert stream.completion_tokens == 2
+        assert stream.total_tokens == 8
 
     @pytest.mark.asyncio
     async def test_unknown_tool_request_failure_falls_back_without_tools(self, monkeypatch):
@@ -1299,6 +1485,7 @@ class TestNativeToolStreaming:
 
         adapter = LLMAdapter()
         tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+        fallback_messages = [{"role": "user", "content": "Fallback Hi"}]
 
         async def executor(call):
             return LLMToolResult(call=call, content={"saved": True})
@@ -1314,13 +1501,15 @@ class TestNativeToolStreaming:
                 stream=True,
                 tools=[tool],
                 tool_executor=executor,
+                fallback_messages=fallback_messages,
             )
             assert [part async for part in stream] == ["Normal response."]
 
-        assert stream.tools_unsupported is True
+        assert stream.tools_unsupported is False
         assert call.await_count == 2
         assert call.call_args_list[0].args[3] == [tool]
         assert call.call_args_list[1].args[3] is None
+        assert call.call_args_list[1].args[1] == fallback_messages
 
     @pytest.mark.asyncio
     async def test_tool_stream_failure_before_text_falls_back_without_tools(self, monkeypatch):
@@ -1336,6 +1525,7 @@ class TestNativeToolStreaming:
 
         adapter = LLMAdapter()
         tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+        fallback_messages = [{"role": "user", "content": "Fallback Hi"}]
 
         async def executor(call):
             return LLMToolResult(call=call, content={"saved": True})
@@ -1351,13 +1541,15 @@ class TestNativeToolStreaming:
                 stream=True,
                 tools=[tool],
                 tool_executor=executor,
+                fallback_messages=fallback_messages,
             )
             assert [part async for part in stream] == ["Normal response."]
 
-        assert stream.tools_unsupported is True
+        assert stream.tools_unsupported is False
         assert len(create.call_args_list) == 2
         assert "tools" in create.call_args_list[0].kwargs
         assert "tools" not in create.call_args_list[1].kwargs
+        assert create.call_args_list[1].kwargs["messages"] == fallback_messages
 
     @pytest.mark.asyncio
     async def test_openai_tool_call_executes_and_continues(self, monkeypatch, caplog):
@@ -1368,6 +1560,7 @@ class TestNativeToolStreaming:
             LLMAdapter,
             LLMTool,
             LLMToolResult,
+            LLMToolResultEvent,
         )
 
         def tool_chunk(arguments: str, *, tool_id: str | None = None, name: str | None = None):
@@ -1415,6 +1608,9 @@ class TestNativeToolStreaming:
             )
             iterator = stream.__aiter__()
             assert await asyncio.wait_for(anext(iterator), timeout=0.1) == "Sure. "
+            result_event = await asyncio.wait_for(anext(iterator), timeout=0.1)
+            assert isinstance(result_event, LLMToolResultEvent)
+            assert result_event.result.content == {"saved": True}
             assert await asyncio.wait_for(anext(iterator), timeout=0.1) == "I will remember that."
             release_continuation.set()
             assert [part async for part in iterator] == [" Thanks."]
@@ -1437,7 +1633,12 @@ class TestNativeToolStreaming:
     @pytest.mark.asyncio
     async def test_anthropic_tool_call_uses_native_result_blocks(self, monkeypatch):
         _make_anthropic_settings(monkeypatch)
-        from app.services.llm_adapter import LLMAdapter, LLMTool, LLMToolResult
+        from app.services.llm_adapter import (
+            LLMAdapter,
+            LLMTool,
+            LLMToolResult,
+            LLMToolResultEvent,
+        )
 
         async def initial_stream():
             yield SimpleNamespace(
@@ -1492,8 +1693,11 @@ class TestNativeToolStreaming:
                 tools=[tool],
                 tool_executor=executor,
             )
-            assert [part async for part in stream] == ["Thanks for sharing."]
+            parts = [part async for part in stream]
 
+        assert isinstance(parts[0], LLMToolResultEvent)
+        assert parts[0].result.content == {"saved": True}
+        assert parts[1:] == ["Thanks for sharing."]
         assert create.call_args_list[0].kwargs["tools"][0]["name"] == "save_user_memory"
         continuation = create.call_args_list[1].kwargs["messages"]
         assert continuation[-1]["content"][0]["type"] == "tool_result"
@@ -1501,7 +1705,12 @@ class TestNativeToolStreaming:
     @pytest.mark.asyncio
     async def test_tool_continuation_failure_falls_back_without_tools(self, monkeypatch):
         _make_ollama_settings(monkeypatch)
-        from app.services.llm_adapter import LLMAdapter, LLMTool, LLMToolResult
+        from app.services.llm_adapter import (
+            LLMAdapter,
+            LLMTool,
+            LLMToolResult,
+            LLMToolResultEvent,
+        )
 
         def tool_chunk(index: int, content: str):
             function = SimpleNamespace(name="save_user_memory", arguments=content)
@@ -1521,6 +1730,7 @@ class TestNativeToolStreaming:
 
         adapter = LLMAdapter()
         tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+        fallback_messages = [{"role": "user", "content": "Fallback tea"}]
 
         async def executor(call):
             return LLMToolResult(call=call, content={"saved": True})
@@ -1536,17 +1746,27 @@ class TestNativeToolStreaming:
                 stream=True,
                 tools=[tool],
                 tool_executor=executor,
+                fallback_messages=fallback_messages,
             )
-            assert [part async for part in stream] == ["Thanks for sharing."]
+            parts = [part async for part in stream]
 
+        assert isinstance(parts[0], LLMToolResultEvent)
+        assert parts[0].result.content == {"saved": True}
+        assert parts[1:] == ["Thanks for sharing."]
         assert stream.tool_results[0].content == {"saved": True}
         assert stream.total_tokens == 12
         assert "tools" not in create.call_args_list[2].kwargs
+        assert create.call_args_list[2].kwargs["messages"] == fallback_messages
 
     @pytest.mark.asyncio
     async def test_executes_only_first_tool_call(self, monkeypatch):
         _make_ollama_settings(monkeypatch)
-        from app.services.llm_adapter import LLMAdapter, LLMTool, LLMToolResult
+        from app.services.llm_adapter import (
+            LLMAdapter,
+            LLMTool,
+            LLMToolResult,
+            LLMToolResultEvent,
+        )
 
         async def initial_stream():
             for index in range(2):
@@ -1581,9 +1801,13 @@ class TestNativeToolStreaming:
                 tools=[tool],
                 tool_executor=executor,
             )
-            assert [part async for part in stream] == ["Understood."]
+            parts = [part async for part in stream]
 
         assert executed == ["call_0"]
+        events = [part for part in parts if isinstance(part, LLMToolResultEvent)]
+        assert len(events) == 1
+        assert events[0].result.call.id == "call_0"
+        assert parts[-1] == "Understood."
         assert stream.tool_results[1].content == {
             "saved": False,
             "error": "tool_limit_exceeded",
@@ -1600,12 +1824,14 @@ class TestNativeToolStreaming:
             await adapter.chat([], tools=[tool])
 
     @pytest.mark.asyncio
-    async def test_tool_continuation_failure_after_text_keeps_partial_response(self, monkeypatch):
+    async def test_tool_continuation_failure_after_text_resets_and_falls_back(self, monkeypatch):
         _make_ollama_settings(monkeypatch)
         from app.services.llm_adapter import (
             LLMAdapter,
+            LLMStreamReset,
             LLMTool,
             LLMToolResult,
+            LLMToolResultEvent,
         )
 
         def tool_chunk():
@@ -1618,14 +1844,19 @@ class TestNativeToolStreaming:
             return SimpleNamespace(choices=[SimpleNamespace(delta=delta)], usage=None)
 
         async def initial_stream():
+            yield FakeOpenAIChunk("Initial response. ")
             yield tool_chunk()
 
         async def broken_continuation():
-            yield FakeOpenAIChunk("Partial")
             raise ConnectionError("connection lost")
+            yield  # pragma: no cover
+
+        async def fallback_stream():
+            yield FakeOpenAIChunk("Complete normal response.")
 
         adapter = LLMAdapter()
         tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+        fallback_messages = [{"role": "user", "content": "Fallback Hi"}]
 
         async def executor(call):
             return LLMToolResult(call=call, content={"saved": True})
@@ -1634,16 +1865,23 @@ class TestNativeToolStreaming:
             adapter.client.chat.completions,
             "create",
             new_callable=AsyncMock,
-            side_effect=[initial_stream(), broken_continuation()],
+            side_effect=[initial_stream(), broken_continuation(), fallback_stream()],
         ) as create:
             stream = await adapter.chat(
                 [{"role": "user", "content": "Hi"}],
                 stream=True,
                 tools=[tool],
                 tool_executor=executor,
+                fallback_messages=fallback_messages,
             )
-            iterator = stream.__aiter__()
-            assert await asyncio.wait_for(anext(iterator), timeout=0.1) == "Partial"
-            with pytest.raises(StopAsyncIteration):
-                await anext(iterator)
-            assert len(create.call_args_list) == 2
+            parts = [part async for part in stream]
+
+        assert parts[0] == "Initial response. "
+        assert isinstance(parts[1], LLMToolResultEvent)
+        assert parts[1].result.content == {"saved": True}
+        assert isinstance(parts[2], LLMStreamReset)
+        assert parts[2].reason == "tool_continuation_failed"
+        assert parts[3:] == ["Complete normal response."]
+        assert stream.tools_unsupported is False
+        assert len(create.call_args_list) == 3
+        assert create.call_args_list[2].kwargs["messages"] == fallback_messages

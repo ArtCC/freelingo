@@ -187,7 +187,7 @@ All endpoints require `require_subscription_or_freemium("chat")`. Memory managem
 - POST — Path: `/conversations`; Description: Rate limit: 60/min. Creates new conversation
 - DELETE — Path: `/conversations/{id}`; Description: Rate limit: 60/min. Deletes conversation and its messages (CASCADE)
 - GET — Path: `/conversations/{id}/messages`; Description: Rate limit: 60/min. Returns messages for a conversation
-- POST — Path: `/`; Description: Rate limit: 30/min. Sends message → streams AI tutor response (SSE)
+- POST — Path: `/`; Description: Rate limit: 30/min. Sends a message and streams the AI tutor response as SSE. Events can contain `conversation_id`, `token`, `memory_updated`, `response_reset`, `done`, or `error`. `response_reset=true` instructs the client to discard text already emitted for the current assistant turn before consuming a complete no-tools fallback. A confirmed committed memory can emit `memory_updated=true` before a later reset or terminal error. Only non-empty completed responses are persisted as assistant history.
 - GET — Path: `/history`; Description: Rate limit: 60/min. All chat history (legacy)
 
 ---

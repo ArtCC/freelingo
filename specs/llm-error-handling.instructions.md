@@ -70,10 +70,12 @@ Memory tools are optional capabilities and must not break text or voice tutoring
 
 - OpenAI GPT-5.6 requests that include native tools use Chat Completions with `reasoning_effort="none"`, as required for function tools on that endpoint. Other providers and model families do not receive this parameter.
 - A known tool incompatibility is non-fatal and is not retried as the same invalid request.
-- Any tool-enabled request or stream failure before visible output retries the original turn without tools. The capability issue is logged with provider, model, and reason at `INFO` and is not exposed to the user.
+- Known incompatibility detection recognizes provider wording for unsupported tools, tool use, and function calling through both explicit exception causes and implicit exception contexts.
+- Any tool-enabled request or stream failure before visible output retries the original turn without tools. Only an explicit incompatibility disables memory tools for later turns in the current voice session; transient failures retry tools on the next turn.
 - The first tool-capable stream that completes successfully logs `Native tools available for provider=... model=...` once per process, making positive capability visible without producing one entry per turn.
-- Voice remembers the fallback only for the current WebSocket session and omits tools on later turns; a new session probes support again.
-- A failed tool continuation retries without tools before visible output. After partial continuation output, the partial response is kept to avoid both duplication and a user-visible turn failure.
+- Voice remembers an explicit incompatibility only for the current WebSocket session and omits tools on later turns; a new session probes support again.
+- Tool-free retries use a separate system prompt that retains saved-memory context but omits instructions to call `save_user_memory`.
+- A known incompatibility or failed tool continuation after visible output emits a stream-reset control event before retrying the complete turn without tools. Consumers discard the invalid partial text, and fallback streams that emit no visible text raise `LLMResponseError` rather than completing successfully.
 - A persistence or executor failure is returned only to the model as a failed tool result; the visible response continues without a memory confirmation event.
 
 ---

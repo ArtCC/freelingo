@@ -115,7 +115,7 @@ frontend/
 │   │
 │   └── middleware.ts            # Auth guard (redirect to /login) + locale detection
 │
-├── tests/                       # Vitest suite (38 test files, 436 tests; coverage not configured)
+├── tests/                       # Vitest suite (39 test files, 440 tests; coverage not configured)
 │   ├── setup.ts                 # Global mocks: localStorage, next/navigation, next-intl
 │   ├── middleware.test.ts
 │   ├── components/
@@ -342,11 +342,14 @@ Backend: LLM Adapter streams tokens and memory status → SSE events
     ↓
 Buffered `readSseData()` reassembles events across arbitrary network chunks:
   - token events → append to message accumulator
+  - response_reset event → dismiss any word tooltip and clear the current assistant accumulator before fallback tokens arrive
   - memory_updated event → show the shared accessible memory toast
   - done event → finalize message, add to ChatHistory
   - error event → show error, stop streaming
   - missing terminal done/error or truncated final JSON → show a generic interrupted-conversation error
 ```
+
+Word selection is disabled on the active assistant placeholder while a response is streaming and restored once that turn reaches `done` or `error`, preventing tooltips from retaining text invalidated by a reset.
 
 ---
 
