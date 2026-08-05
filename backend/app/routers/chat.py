@@ -30,7 +30,9 @@ from app.services.language_helpers import get_language_name, get_native_language
 from app.services.llm_adapter import (
     LLMError,
     LLMStream,
+    LLMStreamReset,
     LLMTimeoutError,
+    LLMToolResultEvent,
     LLMUnavailableError,
     llm_adapter,
 )
@@ -62,6 +64,7 @@ def _build_tutor_system_prompt(
     user_context: str,
     memory_context: str,
     language_prompt_overlay: str = "",
+    memory_tools_enabled: bool = True,
 ) -> str:
     return build_tutor_system_prompt(
         student_name=student_name,
@@ -75,6 +78,7 @@ def _build_tutor_system_prompt(
         user_context=user_context,
         memory_context=memory_context,
         language_prompt_overlay=language_prompt_overlay,
+        memory_tools_enabled=memory_tools_enabled,
     )
 
 
@@ -313,8 +317,13 @@ async def chat(
         else ""
     )
 
-    memories = await get_user_memories(db, current_user.id)
-    memory_context = build_memory_context(memories)
+    try:
+        async with db_session() as memory_db:
+            memories = await get_user_memories(memory_db, current_user.id)
+        memory_context = build_memory_context(memories)
+    except Exception:
+        logger.exception("Failed to load memories for chat user %s — ignored", current_user.id)
+        memory_context = ""
 
     target_language_name = get_language_name(target_language)
     native_language_name = get_native_language_name(current_user.native_language)
@@ -332,6 +341,20 @@ async def chat(
         user_context=user_context,
         memory_context=memory_context,
         language_prompt_overlay=language_prompt_overlay,
+    )
+    fallback_system_prompt = _build_tutor_system_prompt(
+        student_name=current_user.display_name,
+        cefr_level=cefr_level,
+        native_language=native_language_name,
+        target_language_name=target_language_name,
+        total_xp=total_xp,
+        streak=streak,
+        lessons_today=lessons_today,
+        skills=skills_str,
+        user_context=user_context,
+        memory_context=memory_context,
+        language_prompt_overlay=language_prompt_overlay,
+        memory_tools_enabled=False,
     )
 
     db.add(
@@ -361,9 +384,13 @@ async def chat(
     messages = [{"role": "system", "content": system_prompt}] + [
         {"role": m.role, "content": m.content} for m in db_messages
     ]
+    fallback_messages = [{"role": "system", "content": fallback_system_prompt}] + [
+        {"role": m.role, "content": m.content} for m in db_messages
+    ]
 
     async def event_stream():
         full_response = ""
+        memory_updated_sent = False
         stream = None
         try:
             yield f"data: {json.dumps({'conversation_id': conversation_id})}\n\n"
@@ -383,8 +410,18 @@ async def chat(
                 stream=True,
                 tools=[build_save_user_memory_tool(native_language_name)],
                 tool_executor=execute_memory_tool,
+                fallback_messages=fallback_messages,
             )
             async for chunk in stream:
+                if isinstance(chunk, LLMToolResultEvent):
+                    if chunk.result.content.get("saved") is True and not memory_updated_sent:
+                        memory_updated_sent = True
+                        yield f"data: {json.dumps({'memory_updated': True})}\n\n"
+                    continue
+                if isinstance(chunk, LLMStreamReset):
+                    full_response = ""
+                    yield f"data: {json.dumps({'response_reset': True})}\n\n"
+                    continue
                 token = (
                     chunk
                     if isinstance(chunk, str)
@@ -398,7 +435,7 @@ async def chat(
                 result.content.get("saved") is True
                 for result in getattr(stream, "tool_results", [])
             )
-            if memory_updated:
+            if memory_updated and not memory_updated_sent:
                 yield f"data: {json.dumps({'memory_updated': True})}\n\n"
 
             db.add(

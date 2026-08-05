@@ -17,7 +17,9 @@ from app.services.language_helpers import (
 from app.services.llm_adapter import (
     LLMError,
     LLMStream,
+    LLMStreamReset,
     LLMTimeoutError,
+    LLMToolResultEvent,
     LLMUnavailableError,
 )
 from app.services.memory_service import (
@@ -51,6 +53,7 @@ def _build_conversation_system_prompt(
     user_context: str,
     memory_context: str,
     language_prompt_overlay: str = "",
+    memory_tools_enabled: bool = True,
 ) -> str:
     return build_conversation_system_prompt(
         student_name=student_name,
@@ -60,6 +63,7 @@ def _build_conversation_system_prompt(
         user_context=user_context,
         memory_context=memory_context,
         language_prompt_overlay=language_prompt_overlay,
+        memory_tools_enabled=memory_tools_enabled,
     )
 
 
@@ -115,7 +119,7 @@ class ConversationPipeline:
             if _ctx_parts
             else ""
         )
-        memory_context = build_memory_context(memories or [])
+        self._memory_context = build_memory_context(memories or [])
         target_language_name = get_language_name(target_language)
         language_prompt_overlay = get_language_prompt_overlay(target_language)
         self._prompt_args = {
@@ -128,7 +132,7 @@ class ConversationPipeline:
         }
         self.system_prompt = _build_conversation_system_prompt(
             **self._prompt_args,
-            memory_context=memory_context,
+            memory_context=self._memory_context,
         )
         self.max_duration = max_duration
         self.inactivity_timeout = inactivity_timeout
@@ -186,6 +190,22 @@ class ConversationPipeline:
     async def _send_status(self, ws: WebSocket, turn_id: int, value: str) -> None:
         await self._send_json(ws, {"type": "status", "value": value, "turn_id": turn_id})
 
+    async def _send_memory_updated(self, ws: WebSocket, turn_id: int) -> None:
+        send_task = asyncio.create_task(
+            self._send_json(ws, {"type": "memory_updated", "turn_id": turn_id})
+        )
+        try:
+            await asyncio.shield(send_task)
+        except asyncio.CancelledError:
+            try:
+                await send_task
+            except Exception as exc:
+                logger.debug(
+                    "[pipeline] Memory update notification failed during cancellation: %s",
+                    self._fmt_exc(exc),
+                )
+            raise
+
     @staticmethod
     def _extract_speech_text(raw_text: str) -> str:
         return ConversationPipeline._clean_sentence(raw_text).strip()
@@ -200,6 +220,11 @@ class ConversationPipeline:
         return getattr(getattr(choices[0], "delta", None), "content", None) or ""
 
     async def _refresh_memory_prompt(self) -> None:
+        self.system_prompt = _build_conversation_system_prompt(
+            **self._prompt_args,
+            memory_context=self._memory_context,
+            memory_tools_enabled=self._memory_tools_available,
+        )
         if self._user_id is None:
             return
         try:
@@ -210,9 +235,11 @@ class ConversationPipeline:
                     self._prompt_args["native_language"] = get_native_language_name(
                         user.native_language
                     )
+            self._memory_context = build_memory_context(memories)
             self.system_prompt = _build_conversation_system_prompt(
                 **self._prompt_args,
-                memory_context=build_memory_context(memories),
+                memory_context=self._memory_context,
+                memory_tools_enabled=self._memory_tools_available,
             )
         except Exception:
             logger.exception("[pipeline] Failed to refresh global memory context")
@@ -381,9 +408,12 @@ class ConversationPipeline:
             "role": "user",
             "content": "[Session started. Greet the student warmly and naturally — one or two sentences max — and invite them to speak.]",
         }
-        messages = (
-            [{"role": "system", "content": self.system_prompt}] + self.history[-20:] + [trigger]
+        greeting_prompt = _build_conversation_system_prompt(
+            **self._prompt_args,
+            memory_context=self._memory_context,
+            memory_tools_enabled=False,
         )
+        messages = [{"role": "system", "content": greeting_prompt}] + self.history[-20:] + [trigger]
 
         try:
             full_response = ""
@@ -571,6 +601,7 @@ class ConversationPipeline:
 
         full_response = ""
         clean_full_response = ""
+        memory_updated = False
         llm_stream = None
         try:
             await self._send_status(ws, turn_id, "thinking")
@@ -591,24 +622,42 @@ class ConversationPipeline:
 
             memory_kwargs = {}
             if self._memory_tools_available:
+                fallback_messages = [
+                    {
+                        "role": "system",
+                        "content": _build_conversation_system_prompt(
+                            **self._prompt_args,
+                            memory_context=self._memory_context,
+                            memory_tools_enabled=False,
+                        ),
+                    }
+                ] + self.history[-20:]
                 memory_kwargs = {
                     "tools": [
                         build_save_user_memory_tool(str(self._prompt_args["native_language"]))
                     ],
                     "tool_executor": execute_memory_tool,
+                    "fallback_messages": fallback_messages,
                 }
             llm_stream = await self.llm.chat(messages, stream=True, **memory_kwargs)
-            async for chunk in llm_stream:
-                token = self._stream_text(chunk)
-                full_response += token
+            try:
+                async for chunk in llm_stream:
+                    if isinstance(chunk, LLMToolResultEvent):
+                        memory_updated = memory_updated or chunk.result.content.get("saved") is True
+                        continue
+                    if isinstance(chunk, LLMStreamReset):
+                        full_response = ""
+                        continue
+                    token = self._stream_text(chunk)
+                    full_response += token
+            finally:
+                memory_updated = memory_updated or any(
+                    result.content.get("saved") is True
+                    for result in getattr(llm_stream, "tool_results", [])
+                )
+                if memory_updated:
+                    await self._send_memory_updated(ws, turn_id)
             llm_ms = (time.perf_counter() - llm_t0) * 1000
-
-            memory_updated = any(
-                result.content.get("saved") is True
-                for result in getattr(llm_stream, "tool_results", [])
-            )
-            if memory_updated:
-                await self._send_json(ws, {"type": "memory_updated", "turn_id": turn_id})
 
             clean_full_response = self._extract_speech_text(full_response)
             if clean_full_response:

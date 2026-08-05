@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from app.routers.chat import _build_tutor_system_prompt
 from app.services.conversation_pipeline import _build_conversation_system_prompt
 from app.services.flashcard_sm2 import _get_lang_hint
@@ -159,6 +161,37 @@ def test_tutor_prompts_include_shared_memory_instruction() -> None:
     assert get_memory_system_instruction("Spanish") in prompt
     assert "save_user_memory" in prompt
     assert "<<MEMORY>>" not in prompt
+
+
+@pytest.mark.parametrize(
+    ("builder", "kwargs"),
+    [
+        (
+            build_tutor_system_prompt,
+            {
+                "total_xp": 0,
+                "streak": 0,
+                "lessons_today": 0,
+                "skills": "None yet",
+            },
+        ),
+        (build_conversation_system_prompt, {}),
+    ],
+)
+def test_tutor_prompts_omit_memory_tool_instruction_when_disabled(builder, kwargs) -> None:
+    prompt = builder(
+        student_name="Alice",
+        cefr_level="B1",
+        native_language="Spanish",
+        target_language_name="German",
+        user_context="",
+        memory_context="<user_memories><memory>Le gusta caminar</memory></user_memories>",
+        memory_tools_enabled=False,
+        **kwargs,
+    )
+
+    assert "Le gusta caminar" in prompt
+    assert "save_user_memory" not in prompt
 
 
 def test_tutor_prompts_use_central_tutor_display_name() -> None:

@@ -124,6 +124,7 @@ Common variables:
 - `student_name`: display name or username.
 - `user_context`: learning goals and bio; explicitly non-authoritative.
 - `memory_context`: global per-user saved memories, escaped and explicitly treated as non-authoritative data.
+- `memory_tools_enabled`: tutor and voice-tutor switch that appends the native memory-tool policy only when the corresponding LLM request actually offers `save_user_memory`; no-tools fallback and greeting prompts retain memory context without advertising the unavailable tool.
 - `language_prompt_overlay`: concise language/variant guidance injected into tutor, voice tutor, lesson, evaluation, flashcard, comprehension, and assessment prompts.
 - `length_guidance`: reading/listening length string derived from `language_helpers.get_comprehension_length_guidance()`, using word counts for word-spaced targets and character ranges for Japanese/Mainland Chinese.
 
@@ -195,7 +196,7 @@ student-facing language. Treat such edits as product behavior changes.
 Prompt architecture is covered by:
 
 - `backend/tests/test_prompts.py` for builder/wrapper equivalence, shared block checks, target-language
-  injection, dynamic-data delimiter checks, legacy assessment payload JSON, and the global native-memory-tool policy.
+  injection, dynamic-data delimiter checks, legacy assessment payload JSON, the global native-memory-tool policy, and omission of that policy when tools are disabled.
 - Existing conversation pipeline prompt tests in `backend/tests/test_conversation_pipeline_service.py`.
 - Existing service tests that mock LLM calls and validate parsed outputs.
 

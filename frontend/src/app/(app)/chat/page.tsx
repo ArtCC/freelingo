@@ -39,6 +39,7 @@ interface Conversation {
 interface ChatSseEvent {
   conversation_id?: number
   token?: string
+  response_reset?: boolean
   error?: string
   done?: boolean
   memory_updated?: boolean
@@ -256,6 +257,15 @@ export default function ChatPage() {
         if (data.conversation_id && !activeId) {
           setActiveId(data.conversation_id)
           loadConversations().then((list) => list && setConversations(list))
+        }
+        if (data.response_reset) {
+          dismissTooltip()
+          assistantContent = ''
+          setMessages((prev) => {
+            const copy = [...prev]
+            copy[copy.length - 1] = { role: 'assistant', content: '' }
+            return copy
+          })
         }
         if (data.token) {
           assistantContent += data.token
@@ -510,7 +520,8 @@ export default function ChatPage() {
                           : 'bg-fl-surface text-fl-fg-2 border-fl-border'
                       }`}
                       onPointerUp={
-                        msg.role === 'assistant'
+                        msg.role === 'assistant' &&
+                        !(sending && i === messages.length - 1)
                           ? () => handleTextSelection(msg.content)
                           : undefined
                       }

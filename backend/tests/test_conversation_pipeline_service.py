@@ -202,6 +202,20 @@ def test_init_recorded_starts_false() -> None:
     assert pipeline._recorded is False
 
 
+@pytest.mark.asyncio
+async def test_refresh_keeps_prompt_clean_when_disabled_tools_and_memory_read_fails() -> None:
+    pipeline = _make_pipeline(user_id=1)
+    pipeline._memory_tools_available = False
+
+    with patch(
+        "app.services.conversation_pipeline.db_session",
+        side_effect=RuntimeError("memory read failed"),
+    ):
+        await pipeline._refresh_memory_prompt()
+
+    assert "save_user_memory" not in pipeline.system_prompt
+
+
 # ---------------------------------------------------------------------------
 # _greet
 # ---------------------------------------------------------------------------
@@ -227,6 +241,7 @@ async def test_greet_streams_greeting_and_sends_turn_complete() -> None:
     assert "turn_complete" in types
     assert len(pipeline.history) >= 1
     assert pipeline.history[-1]["role"] == "assistant"
+    assert "save_user_memory" not in pipeline.llm.chat.call_args.args[0][0]["content"]
 
 
 @pytest.mark.asyncio
@@ -640,7 +655,7 @@ async def test_process_reports_native_memory_tool_update() -> None:
     pipeline = _make_pipeline(user_id=1, study_plan_id=5)
     pipeline.stt.transcribe = AsyncMock(return_value="hi")
 
-    from app.services.llm_adapter import LLMToolCall, LLMToolResult
+    from app.services.llm_adapter import LLMToolCall, LLMToolResult, LLMToolResultEvent
 
     call = LLMToolCall(
         id="call_1",
@@ -656,6 +671,7 @@ async def test_process_reports_native_memory_tool_update() -> None:
             return self.iterate()
 
         async def iterate(self):
+            yield LLMToolResultEvent(result=self.tool_results[0])
             yield "Nice to meet you."
 
     pipeline.llm.chat = AsyncMock(return_value=FakeToolStream())
@@ -666,9 +682,144 @@ async def test_process_reports_native_memory_tool_update() -> None:
 
     types = ws.types()
     assert "turn_complete" in types
-    assert "memory_updated" in types
+    assert types.count("memory_updated") == 1
     tool = pipeline.llm.chat.call_args.kwargs["tools"][0]
     assert "native language: Spanish" in tool.description
+    assert "save_user_memory" in pipeline.llm.chat.call_args.args[0][0]["content"]
+    fallback_prompt = pipeline.llm.chat.call_args.kwargs["fallback_messages"][0]["content"]
+    assert "save_user_memory" not in fallback_prompt
+
+
+@pytest.mark.asyncio
+async def test_process_reports_memory_update_when_barge_in_cancels_continuation() -> None:
+    pipeline = _make_pipeline(user_id=1, study_plan_id=5)
+    pipeline.stt.transcribe = AsyncMock(side_effect=["remember this", ""])
+
+    from app.services.llm_adapter import LLMToolCall, LLMToolResult, LLMToolResultEvent
+
+    call = LLMToolCall(
+        id="call_1",
+        name="save_user_memory",
+        arguments={"content": "The user likes pizza"},
+        raw_arguments='{"content":"The user likes pizza"}',
+    )
+    continuation_started = asyncio.Event()
+    continuation_blocked = asyncio.Event()
+
+    class BlockedContinuationStream:
+        def __init__(self) -> None:
+            self.tool_results: list[LLMToolResult] = []
+
+        def __aiter__(self):
+            return self.iterate()
+
+        async def iterate(self):
+            self.tool_results.append(LLMToolResult(call=call, content={"saved": True}))
+            yield LLMToolResultEvent(result=self.tool_results[0])
+            continuation_started.set()
+            await continuation_blocked.wait()
+            yield "This continuation should be cancelled."
+
+    pipeline.llm.chat = AsyncMock(return_value=BlockedContinuationStream())
+    ws = FakeWS()
+    pipeline.current_task = asyncio.create_task(pipeline._process(b"first-audio", ws))
+    await asyncio.wait_for(continuation_started.wait(), timeout=1)
+
+    await pipeline.handle_audio(b"barge-in-audio", ws)
+    assert pipeline.current_task is not None
+    await pipeline.current_task
+
+    types = ws.types()
+    assert types.count("memory_updated") == 1
+    assert "barge_in" in types
+
+
+@pytest.mark.asyncio
+async def test_memory_update_send_completes_when_turn_is_cancelled_during_send() -> None:
+    pipeline = _make_pipeline(user_id=1, study_plan_id=5)
+    pipeline.stt.transcribe = AsyncMock(return_value="remember this")
+
+    from app.services.llm_adapter import LLMToolCall, LLMToolResult, LLMToolResultEvent
+
+    call = LLMToolCall(
+        id="call_1",
+        name="save_user_memory",
+        arguments={"content": "The user likes pizza"},
+        raw_arguments='{"content":"The user likes pizza"}',
+    )
+    result = LLMToolResult(call=call, content={"saved": True})
+
+    class SavedMemoryStream:
+        tool_results = [result]
+
+        def __aiter__(self):
+            return self.iterate()
+
+        async def iterate(self):
+            yield LLMToolResultEvent(result=result)
+
+    class BlockingMemoryWS(FakeWS):
+        def __init__(self) -> None:
+            super().__init__()
+            self.memory_send_started = asyncio.Event()
+            self.release_memory_send = asyncio.Event()
+
+        async def send_json(self, data: object) -> None:
+            if isinstance(data, dict) and data.get("type") == "memory_updated":
+                self.memory_send_started.set()
+                await self.release_memory_send.wait()
+            await super().send_json(data)
+
+    pipeline.llm.chat = AsyncMock(return_value=SavedMemoryStream())
+    ws = BlockingMemoryWS()
+    turn_task = asyncio.create_task(pipeline._process(b"audio", ws))
+    await asyncio.wait_for(ws.memory_send_started.wait(), timeout=1)
+
+    turn_task.cancel()
+    ws.release_memory_send.set()
+
+    with pytest.raises(asyncio.CancelledError):
+        await turn_task
+    assert ws.types().count("memory_updated") == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("saved", "expected_updates"), [(True, 1), (False, 0)])
+async def test_process_memory_update_after_stream_failure(
+    saved: bool, expected_updates: int
+) -> None:
+    pipeline = _make_pipeline(user_id=1, study_plan_id=5)
+    pipeline.stt.transcribe = AsyncMock(return_value="remember this")
+
+    from app.services.llm_adapter import LLMToolCall, LLMToolResult
+
+    call = LLMToolCall(
+        id="call_1",
+        name="save_user_memory",
+        arguments={"content": "The user likes pizza"},
+        raw_arguments='{"content":"The user likes pizza"}',
+    )
+
+    class FailedContinuationStream:
+        def __init__(self) -> None:
+            self.tool_results: list[LLMToolResult] = []
+
+        def __aiter__(self):
+            return self.iterate()
+
+        async def iterate(self):
+            self.tool_results.append(LLMToolResult(call=call, content={"saved": saved}))
+            raise LLMError("continuation failed")
+            yield ""  # pragma: no cover
+
+    pipeline.llm.chat = AsyncMock(return_value=FailedContinuationStream())
+    ws = FakeWS()
+
+    await pipeline._process(b"audio", ws)
+
+    assert ws.types().count("memory_updated") == expected_updates
+    errors = [message for message in ws.json_messages() if message.get("type") == "error"]
+    assert [error["code"] for error in errors] == ["llm_failed"]
 
 
 @pytest.mark.asyncio
@@ -739,6 +890,92 @@ async def test_process_disables_memory_tools_only_for_current_voice_session() ->
     assert "tools" in first_kwargs
     assert "tools" not in second_kwargs
     assert _make_pipeline()._memory_tools_available is True
+
+
+@pytest.mark.asyncio
+async def test_process_retries_memory_tools_after_transient_fallback() -> None:
+    pipeline = _make_pipeline()
+    pipeline.stt.transcribe = AsyncMock(side_effect=["first", "second"])
+    pipeline.tts.synthesize = AsyncMock(return_value=b"audio")
+
+    class TransientFallbackStream:
+        tools_unsupported = False
+
+        def __init__(self, response: str) -> None:
+            self.response = response
+
+        def __aiter__(self):
+            return self.iterate()
+
+        async def iterate(self):
+            yield self.response
+
+    pipeline.llm.chat = AsyncMock(
+        side_effect=[
+            TransientFallbackStream("First response."),
+            TransientFallbackStream("Second response."),
+        ]
+    )
+    ws = FakeWS()
+
+    await pipeline._process(b"audio", ws)
+    await pipeline._process(b"audio", ws)
+
+    assert "tools" in pipeline.llm.chat.call_args_list[0].kwargs
+    assert "tools" in pipeline.llm.chat.call_args_list[1].kwargs
+
+
+@pytest.mark.asyncio
+async def test_process_discards_partial_text_after_tool_stream_reset() -> None:
+    pipeline = _make_pipeline(user_id=1)
+    pipeline.stt.transcribe = AsyncMock(return_value="hello")
+    pipeline.tts.synthesize = AsyncMock(return_value=b"audio")
+
+    from app.services.llm_adapter import (
+        LLMStreamReset,
+        LLMToolCall,
+        LLMToolResult,
+        LLMToolResultEvent,
+    )
+
+    call = LLMToolCall(
+        id="call_1",
+        name="save_user_memory",
+        arguments={"content": "The user likes tea"},
+        raw_arguments='{"content":"The user likes tea"}',
+    )
+    result = LLMToolResult(call=call, content={"saved": True})
+
+    class ResetStream:
+        tool_results = [result]
+
+        def __aiter__(self):
+            return self.iterate()
+
+        async def iterate(self):
+            yield "Partial response."
+            yield LLMToolResultEvent(result=result)
+            yield LLMStreamReset()
+            yield "Complete normal response."
+
+    pipeline.llm.chat = AsyncMock(return_value=ResetStream())
+    ws = FakeWS()
+
+    await pipeline._process(b"audio", ws)
+
+    pipeline.tts.synthesize.assert_awaited_once_with(
+        "Complete normal response.",
+        None,
+        "en",
+    )
+    assistant_transcripts = [
+        message
+        for message in ws.json_messages()
+        if message.get("type") == "transcript" and message.get("role") == "assistant"
+    ]
+    assert assistant_transcripts[0]["text"] == "Complete normal response."
+    assert pipeline.history[-1]["content"] == "Complete normal response."
+    assert ws.types().count("memory_updated") == 1
 
 
 @pytest.mark.asyncio

@@ -19,9 +19,10 @@ def build_tutor_system_prompt(
     user_context: str,
     memory_context: str,
     language_prompt_overlay: str = "",
+    memory_tools_enabled: bool = True,
 ) -> str:
     overlay_section = f"{language_prompt_overlay}\n" if language_prompt_overlay else ""
-    return f"""\
+    prompt = f"""\
 You are an encouraging and patient {target_language_name} language tutor named {TUTOR_DISPLAY_NAME}.
 You are talking with {student_name}.
 Your student is at {cefr_level} level.
@@ -67,7 +68,10 @@ Guidelines:
   They are strictly forbidden because responses may be read aloud by a text-to-speech
   engine and emoticons produce unnatural noise (e.g. "face with tears of joy").
   Plain text only.
-""" + "\n" + get_memory_system_instruction(native_language)
+"""
+    if memory_tools_enabled:
+        return prompt + "\n" + get_memory_system_instruction(native_language)
+    return prompt
 
 
 def build_conversation_system_prompt(
@@ -79,9 +83,10 @@ def build_conversation_system_prompt(
     user_context: str,
     memory_context: str,
     language_prompt_overlay: str = "",
+    memory_tools_enabled: bool = True,
 ) -> str:
     overlay_section = f"{language_prompt_overlay}\n" if language_prompt_overlay else ""
-    return f"""\
+    prompt = f"""\
 You are an encouraging and patient {target_language_name} conversation partner named {TUTOR_DISPLAY_NAME}.
 You are talking with {student_name}.
 Student level: {cefr_level}.
@@ -117,4 +122,7 @@ Rules:
 - Never break character or mention you are an AI unless directly asked
 - ALWAYS respond in {target_language_name}, regardless of the language the student uses. If they speak in another language, reply in {target_language_name} and gently encourage them to try in {target_language_name}.
 - NEVER use emojis, emoticons, or any Unicode pictographic symbols in your responses. They are strictly forbidden because responses are read aloud by a text-to-speech engine and emoticons produce unnatural noise (e.g. "face with tears of joy"). Plain text only.
-""" + "\n" + get_memory_system_instruction(native_language)
+"""
+    if memory_tools_enabled:
+        return prompt + "\n" + get_memory_system_instruction(native_language)
+    return prompt
