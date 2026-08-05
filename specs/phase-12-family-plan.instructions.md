@@ -81,7 +81,7 @@ Technical billing states are not user access states. A pending, failed, unpaid, 
 
 All Premium features exclusively consult the user's single access state.
 
-- Active or trialing access allows chat, voice conversation, listening and reading exercises, memories, Premium-associated limits, and any future paid feature.
+- Active or trialing access allows chat, voice conversation, listening and reading exercises, Premium-associated limits, and any future paid feature. Authenticated memory management remains available independently of Premium access.
 - No access blocks those features, except explicitly defined product exceptions, such as a limited demo for users without Premium.
 - No feature should recalculate on its own whether the user belongs to a group, is an owner, or whether Stripe has updated a payment.
 

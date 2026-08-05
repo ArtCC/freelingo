@@ -501,9 +501,7 @@ async def conversation_ws(
         memories = []
         try:
             async with db_session() as db_mem:
-                memories = await get_user_memories(
-                    db_mem, user_id, study_plan_id=study_plan_id_for_conv
-                )
+                memories = await get_user_memories(db_mem, user_id)
         except Exception:
             pass
 

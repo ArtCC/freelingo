@@ -78,8 +78,9 @@
     "wordSaveError": "Something went wrong",
     "selectWordHint": "Select a word to save it to your vocabulary",
     "noActivePlan": "No active study plan found",
+    "memorySavedToast": "Lingu saved a new memory. You can review it in Settings.",
     "removeLanguageConfirmTitle": "Remove language",
-    "removeLanguageConfirmMessage": "All data for this language (study plan, progress, flashcards, conversations, and memories) will be permanently deleted. This action cannot be undone.",
+    "removeLanguageConfirmMessage": "All language-specific data (study plan, progress, flashcards, and conversations) will be permanently deleted. Your account memories will be preserved. This action cannot be undone.",
     "removeLanguageConfirmLabel": "Remove",
     "nativeHelpTitle": "Help in {language}",
     "nativeHelpLoading": "Preparing help in {language}...",
@@ -275,6 +276,27 @@
     "memoryClearAllMessage": "This will permanently delete all saved memories. This action cannot be undone.",
     "memoryClearAllConfirm": "Clear All",
     "memoryManage": "Manage memories",
+    "memoryBreadcrumb": "Memory settings",
+    "memoryDescription": "Memories are shared across all your learning languages. Lingu may save useful details during conversations, and you can add or remove them here.",
+    "memoryInputLabel": "Add a memory",
+    "memoryInputPlaceholder": "For example: I prefer concise explanations.",
+    "memoryInputHint": "Maximum {max} characters",
+    "memoryAdd": "Add",
+    "memoryAdding": "Adding...",
+    "memoryAddSuccess": "Memory added.",
+    "memoryAddError": "The memory could not be added. Please try again.",
+    "memoryDuplicateError": "That memory already exists.",
+    "memoryLoadError": "Memories could not be loaded.",
+    "memoryDeleteLabel": "Delete memory: {content}",
+    "memoryDeleteSuccess": "Memory deleted.",
+    "memoryDeleteError": "The memory could not be deleted.",
+    "memoryClearing": "Clearing...",
+    "memoryClearSuccess": "All memories deleted.",
+    "memoryClearError": "Memories could not be cleared.",
+    "memorySourceChat": "Chat",
+    "memorySourceVoice": "Voice",
+    "memorySourceManual": "Manual",
+    "memorySourceUnknown": "Memory",
     "sectionLanguages": "Languages",
     "languagesManage": "My languages",
     "cardProfileAccess": "Profile and access",
@@ -334,7 +356,7 @@
     },
     "privacy": {
       "pageTitle": "Privacy Policy",
-      "updated": "Last updated: June 2026",
+      "updated": "Last updated: August 2026",
       "s1Title": "1. Overview",
       "s1Body": "FreeLingo is available as a self-hosted application and as a hosted service. For self-hosted deployments, all data is stored exclusively on the operator's server and the FreeLingo project authors have no access to it. For the hosted service, the FreeLingo team acts as the data controller and this policy describes how your personal data is collected, used, and protected.",
       "s2Title": "2. Data We Collect",
@@ -347,7 +369,7 @@
       "s2i6": "Flashcard decks, study progress, and spaced-repetition data.",
       "s2i7": "Assessment results and curriculum progress.",
       "s2i8": "Subscription status, plan type, and Stripe customer identifier (for paid service subscribers).",
-      "s2i9": "Memories and preferences the AI tutor learns about you during conversations to personalize future interactions.",
+      "s2i9": "Global account memories and preferences that the AI tutor learns during conversations or that you add manually to personalize future interactions across learning languages.",
       "s2i10": "Feature requests, bug reports, comments, and votes you submit through the feedback board. Only your username is shown publicly; all users can see published suggestions and reports.",
       "s3Title": "3. How We Use Your Data",
       "s3Intro": "Your data is used exclusively to provide the FreeLingo learning experience:",
@@ -365,7 +387,7 @@
       "s6Title": "6. Your Rights (GDPR)",
       "s6Body": "If you are in the European Economic Area, you have the right to: access the personal data we hold about you; request correction of inaccurate data; request deletion of your account and all associated data (available directly from the Settings page); object to processing; and request data portability. To exercise these rights, contact us at the address in section 8 or delete your account directly from Settings. Legal basis for processing (Art. 6(1)(b) GDPR): we process your personal data because it is necessary for the performance of the contract between you and us — providing the FreeLingo learning service. International transfers: when using the hosted service, your conversation content and audio may be processed by OpenAI, Inc. (USA), and payment data is processed by Stripe, Inc. (USA). These transfers are carried out under the Standard Contractual Clauses approved by the European Commission (Art. 46 GDPR), ensuring an adequate level of protection. Right to lodge a complaint: you have the right to lodge a complaint with the Spanish Data Protection Authority (AEPD — aepd.es) or with the supervisory authority in your country of residence.",
       "s7Title": "7. Data Retention & Deletion",
-      "s7Body": "Your data is retained for as long as your account exists. You can permanently delete your account and all associated data at any time from the Settings page. Deletion is immediate and irreversible.",
+      "s7Body": "Your data is retained for as long as your account exists. You can delete individual memories or clear them all from Settings. Removing a learning language deletes its language-specific data but preserves your global account memories. You can permanently delete your account and all associated data at any time from Settings; account deletion is immediate and irreversible.",
       "s8Title": "8. Contact",
       "s8Body": "For privacy-related concerns about the hosted service, contact us via the contact form at freelingo.app. For self-hosted deployments, contact the administrator of the instance you are using. For questions about the FreeLingo open-source project, visit the project repository on GitHub.",
       "s9Title": "9. Severability",
@@ -582,6 +604,8 @@
     "testScore": "Score:",
     "pendingLessons": "Pending lessons",
     "resume": "Resume",
+    "lessonsHeader": "Lessons · {count}",
+    "reviewLesson": "Review",
     "noPlanLabel": "GET STARTED",
     "noPlanTitle": "Create your study plan",
     "noPlanDesc": "Take a quick assessment to discover your level and get a personalized learning path.",
@@ -1135,7 +1159,7 @@
     "switched": "Switched to {language} ({level})",
     "removeLanguage": "Remove language",
     "removeConfirmTitle": "Remove {language}?",
-    "removeConfirmMessage": "All progress, lessons, flashcards and data associated with this language will be permanently deleted. This action cannot be undone.",
+    "removeConfirmMessage": "All progress, lessons, flashcards and conversations associated with this language will be permanently deleted. Your account memories will be preserved. This action cannot be undone.",
     "removeConfirmButton": "Remove",
     "deleteError": "Could not delete {language}. Please try again.",
     "noLanguages": "You have no languages configured.",
@@ -1378,15 +1402,23 @@
   },
   "whatsNew": {
     "title": "What's New",
-    "version": "v1.8.27",
+    "version": "v1.8.30",
     "cta": "Got it",
     "entry1": {
-      "label": "Try everything for free",
-      "desc": "You can now chat with Lingu, practise listening and reading, and try voice conversations without entering any payment details. Start with a free trial, then keep using every feature with daily and weekly practice limits. Upgrade anytime from the dashboard."
+      "label": "Memories that follow you",
+      "desc": "Lingu can now remember useful details across all the languages you learn, in both chat and voice."
     },
     "entry2": {
-      "label": "Bug fixes",
-      "desc": "Various minor bug fixes and stability improvements across the platform."
+      "label": "You're in control",
+      "desc": "Add your own memories or review, delete, and clear them anytime in Settings. Removing a learning language keeps your memories."
+    },
+    "entry3": {
+      "label": "Your lessons, always accessible",
+      "desc": "In My Plan, start your current lesson, continue skipped lessons, or review completed lessons with your saved answers and feedback."
+    },
+    "entry4": {
+      "label": "A smoother experience",
+      "desc": "Bug fixes and small improvements make FreeLingo more reliable and enjoyable to use."
     }
   },
   "contact": {

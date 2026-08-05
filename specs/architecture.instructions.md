@@ -26,8 +26,8 @@ freelingo/
 │   │       ├── it/              # Italian curriculum (A1–C2)
 │   │       └── pt/              # Portuguese curriculum (A1–C2)
 │   ├── alembic/
-│   │   └── versions/            # DB migrations (43)
-│   └── tests/                   # pytest suite (43 test files, 936 tests)
+│   │   └── versions/            # DB migrations (49)
+│   └── tests/                   # pytest suite (43 test files, 966 tests)
 │
 ├── frontend/                    # Next.js 16 App Router
 │   ├── src/
@@ -63,7 +63,7 @@ freelingo/
 │   │   ├── lib/                 # Utilities: api, audio, conversation-ws, locales, mappers, target-languages, utils (7)
 │   │   ├── i18n/                # next-intl locale resolver
 │   │   └── middleware.ts        # Auth guard + locale detection
-│   ├── tests/                   # Vitest suite (33 test files, 420 tests)
+│   ├── tests/                   # Vitest suite (39 test files, 440 tests)
 │   ├── public/                  # Static assets (flags/, vad/ WASM models)
 │   └── scripts/                 # Postinstall helpers (copy-vad-models.js)
 │
@@ -160,8 +160,10 @@ Stored as a simple Redis flag (`maintenance_mode` = `"1"` / `"0"`). Set explicit
 - `get_redis()` — centralized async Redis dependency.
 - `check_maintenance_mode()` — raises HTTP 503 when `maintenance_mode == "1"`. Swallows Redis errors to fail open.
 - `require_subscription` — checks only subscription status. It does not consult maintenance mode.
-- `require_subscription_or_freemium(feature: str)` — factory dependency that checks: 1) `STRIPE_ENABLED=false` → pass, 2) subscribed → pass, 3) freemium trial active → pass, 4) freemium quota available for the feature → pass, 5) else → HTTP 402 with `{reason: "freemium_exhausted"}`. Used on chat, listening, reading, conversation warmup, and lesson completion endpoints. Memories still uses plain `require_subscription`.
-- `require_not_maintenance` — checks only the `maintenance_mode` flag for operational feature availability. Non-admin users receive HTTP 503 when maintenance is active; admins bypass the guard so they can verify gated features during maintenance. Applied explicitly alongside `require_subscription` on chat, listening, reading, and conversation warmup endpoints. The WebSocket (`/ws/conversation`) performs the same maintenance check manually. Memory-management endpoints use only `require_subscription`.
+- `require_subscription_or_freemium(feature: str)` — factory dependency that checks: 1) `STRIPE_ENABLED=false` → pass, 2) subscribed → pass, 3) freemium trial active → pass, 4) freemium quota available for the feature → pass, 5) else → HTTP 402 with `{reason: "freemium_exhausted"}`. Used on chat, listening, reading, conversation warmup, and lesson completion endpoints. Memory management requires authentication only.
+- `require_not_maintenance` — checks only the `maintenance_mode` flag for operational feature availability. Non-admin users receive HTTP 503 when maintenance is active; admins bypass the guard so they can verify gated features during maintenance. Applied explicitly alongside subscription/freemium checks on chat, listening, reading, and conversation warmup endpoints. The WebSocket (`/ws/conversation`) performs the same maintenance check manually. Memory-management endpoints intentionally remain available.
+
+Memories are global per user. Text chat and voice load the same collection, use a normalized native `save_user_memory` tool with one continuation round, and retain `study_plan_id` only as nullable provenance. Deleting a language sets that provenance to `NULL` rather than deleting memory.
 
 **Frontend**: `MaintenanceGate` component renders a static banner when `maintenance_mode` is true for non-admin users. Applied on top of `PaywallGate` in the four subscription-gated pages: `/chat`, `/conversation`, `/listening`, `/reading`. Administrators manage the flag from the dedicated `/admin/system` section; the admin overview keeps a read-only status summary linking to that page.
 
@@ -175,6 +177,6 @@ Testing infrastructure and strategy are documented in [testing.instructions.md](
 
 **Summary:**
 
-- **Backend**: pytest + pytest-asyncio, 43 test files, 936 tests, 85.09% last measured coverage (target: 70%)
-- **Frontend**: Vitest, 33 test files, 420 tests covering stores, components, hooks, lib, i18n, app pages, billing paywall UI, billing success verification, feedback unread labels, and middleware; coverage is not configured/reported
+- **Backend**: pytest + pytest-asyncio, 43 test files, 966 tests, 84.79% last measured coverage (target: 70%)
+- **Frontend**: Vitest, 39 test files, 440 tests covering stores, components, hooks, lib, i18n, app pages, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, chat stream resets, and middleware; coverage is not configured/reported
 - **E2E**: Playwright (planned, not yet implemented)

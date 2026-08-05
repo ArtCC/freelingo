@@ -1,215 +1,119 @@
 ---
-description: "Phase 9 spec — LLM Memory: the AI tutor autonomously remembers important details about the student and injects them into future conversations."
+description: "Phase 9 spec - global LLM memory with native tool calling, user management, and cross-language context."
 applyTo: "backend/**, frontend/**"
 ---
 
-# Phase 9 — LLM Memory
+# Phase 9 - LLM Memory
 
 ## Overview
 
-The AI tutor can silently remember important details about the student (preferences, hobbies, profession, learning goals, struggles, etc.) as they emerge naturally during chat or voice conversations. The LLM appends a structured marker block to its response when it decides something is worth persisting; the backend detects and strips the block before the student ever sees it, then saves the facts to a dedicated `memories` table. Saved memories are injected back into the system prompt for both text chat and voice conversation sessions, giving the tutor persistent cross-session context at zero extra LLM cost (no additional API calls).
+Memories are durable, global context owned by a user. Lingu can save a concise fact during text or voice conversation through the native `save_user_memory` tool, and the user can manually add, list, delete, or clear memories in Settings. The same memory collection is available in every learning language.
 
-Users can view, delete individual, or clear all memories from the Settings page. A brief toast notification appears in both chat and voice when new memories are saved.
+`study_plan_id` is nullable provenance only: it records the plan active when an AI-created memory was saved, but never scopes retrieval or management. Deleting a language deletes its study plan and sets linked memory provenance to `NULL`; it does not delete the user's memories.
 
----
+The 20 most recent memories are injected into text and voice tutor prompts as escaped, untrusted background data. A successful AI save emits the existing `memory_updated` event so chat and voice can notify the user.
 
-## Database model
-
-### `memories`
+## Database Model
 
 **File:** `backend/app/models/memory.py`
 
-- id — Type: integer; Constraints: PK, autoincrement; Notes: —
-- user_id — Type: integer; Constraints: NOT NULL, FK → users(CASCADE), index; Notes: Cascade-deletes with the user
-- content — Type: text; Constraints: NOT NULL; Notes: Max 200 chars enforced by service layer
-- source — Type: string(10); Constraints: NOT NULL, default `"chat"`; Notes: `"chat"` or `"voice"`
-- created_at — Type: datetime; Constraints: NOT NULL, default UTC now (tz-naive); Notes: Used for eviction ordering (oldest first)
+- `id` - Integer primary key.
+- `user_id` - Required FK to `users.id` with `ON DELETE CASCADE`; indexed.
+- `study_plan_id` - Nullable FK to `study_plans.id` with `ON DELETE SET NULL`; indexed provenance only.
+- `content` - Required text; normalized service input is limited to 200 characters.
+- `source` - Required `varchar(10)`: `chat`, `voice`, or `manual`.
+- `created_at` - UTC creation timestamp used with `id` for deterministic oldest-first ordering.
+- `uq_memories_user_content` - Exact unique constraint on `(user_id, content)`.
 
-**Index:** `ix_memories_user_id` on `user_id`.
+Migration `0022_memory` created the table. Phase 10 migration `0029_multi_language` added nullable plan provenance with `SET NULL`. Migration `0049_memory_user_content_unique` removes later exact duplicates per user and adds `uq_memories_user_content`.
 
----
-
-## Alembic migration
-
-**File:** `backend/alembic/versions/0022_memory.py`  
-Revision ID: `0022_memory`, down_revision: `0021_conversation_source`.
-
-Creates the `memories` table with all columns, the FK with CASCADE, and `ix_memories_user_id`. Fully reversible via `downgrade()`.
-
----
-
-## Memory service
+## Memory Service
 
 **File:** `backend/app/services/memory_service.py`
 
-### Constants
+- `MAX_MEMORIES_CONTEXT = 20` - most recent memories injected into a prompt.
+- `MAX_MEMORY_CHARS = 200` - maximum normalized item length.
+- `MAX_MEMORIES_PER_USER = 150` - hard per-user storage cap; oldest rows are evicted first.
+- `build_save_user_memory_tool()` - returns the strict native tool schema with one required `content` string and no additional properties.
+- `build_memory_context(memories)` - escapes each memory and wraps the latest 20 in `<user_memories>` as untrusted data, not instructions.
+- `save_memories(...)` - serializes collection mutations with a per-user row lock, normalizes and exact-deduplicates input, enforces the 150-item cap, optionally records plan provenance, and commits.
+- `create_memory(...)` - creates one `manual` global memory and raises `MemoryAlreadyExistsError` for an exact duplicate.
+- `execute_save_user_memory(...)` - validates and executes a native tool call, returning a structured success or error result without breaking the visible tutor response.
+- `get_user_memories(db, user_id)` - returns every memory for the user, regardless of language, ordered by `created_at` and `id` ascending.
+- `delete_memory(...)` - owner-scoped single deletion with an IDOR-safe not-found result and the same per-user lock used by saves.
+- `clear_all_memories(...)` - deletes the user's complete global collection while holding the same per-user lock used by saves.
 
-- `MEMORY_MARKER_RE` — Value: `r"<<MEMORY>>(.*?)<<ENDMEMORY>>"` (DOTALL); Purpose: Detects and removes the LLM-emitted block
-- `MAX_MEMORIES_CONTEXT` — Value: 20; Purpose: Maximum memories injected into the system prompt (the most recent)
-- `MAX_MEMORY_CHARS` — Value: 200; Purpose: Hard cap on each stored memory item's length
-- `MAX_MEMORIES_PER_USER` — Value: 50; Purpose: Hard cap per user; oldest entries are evicted (FIFO) when exceeded
+## Native Tool Streaming
 
-### `MEMORY_SYSTEM_INSTRUCTION`
+**File:** `backend/app/services/llm_adapter.py`
 
-A multi-line instruction string appended to every system prompt (both chat and voice). It instructs the LLM to:
+`LLMAdapter.chat(..., stream=True, tools=[...], tool_executor=...)` normalizes native streaming tool calls for OpenAI-compatible providers and Anthropic:
 
-- Optionally append `<<MEMORY>>{"items":["..."]}<<ENDMEMORY>>` at the very end of a response when it genuinely learns something new about the student.
-- Limit each item to 200 characters, in English, self-contained.
-- Not repeat already-captured facts.
-- Omit the block entirely in most replies (not every response gets a block).
+1. The initial stream can emit visible text and one or more tool call fragments; visible text is forwarded immediately while tool metadata remains internal.
+2. Tool arguments are assembled and normalized into `LLMToolCall` objects.
+3. The supplied executor runs at most the first call; additional calls receive a controlled error result without being executed.
+4. The adapter makes one continuation request with provider-native assistant tool-call and tool-result messages.
+5. Tools are omitted from the continuation request, so only one tool round is possible.
+6. Successful execution emits an immediate `LLMToolResultEvent`; visible continuation text is forwarded as soon as it arrives, while callers also retain accumulated usage and `tool_results` metadata.
 
-The string uses `{{` / `}}` to escape literal JSON braces so Python's `.format()` call on the composite system prompt correctly converts them to `{` / `}`.
+Native tools require streaming and an executor. OpenAI-compatible continuation uses `assistant.tool_calls` followed by `tool` messages; Anthropic uses `tool_use` and `tool_result` content blocks.
 
-### Functions
+OpenAI GPT-5.6 models use `reasoning_effort="none"` for the initial Chat Completions tool request and its continuation, because that endpoint rejects function tools with the family's default reasoning effort. This parameter is never sent to Anthropic, DeepSeek, Ollama, older OpenAI model families, or ordinary requests without tools.
 
-- **`parse_memory_marker`** — Signature: `(text: str) → list[str]`. Notes: Extracts items from the marker block; returns `[]` on no match or JSON parse error. Items are stripped and truncated to `MAX_MEMORY_CHARS`.
-- **`strip_memory_marker`** — Signature: `(text: str) → str`. Notes: Removes the marker block and trailing whitespace (`MEMORY_MARKER_RE.sub + .rstrip()`).
-- **`build_memory_context`** — Signature: `(memories: list[Memory]) → str`. Notes: Formats the most recent `MAX_MEMORIES_CONTEXT` items into a `"Saved memories..."` section for injection into the system prompt. Returns `""` when list is empty.
-- **`save_memories`** — Signature: `async (db, user_id, items, source) → int`. Notes: Persists new items; skips exact duplicates (case-sensitive). Evicts oldest entries (FIFO) before inserting when the total would exceed `MAX_MEMORIES_PER_USER`. Commits the session. Returns the count of actually saved items.
-- **`get_user_memories`** — Signature: `async (db, user_id) → list[Memory]`. Notes: Returns all memories for a user ordered by `created_at ASC`.
-- **`delete_memory`** — Signature: `async (db, memory_id, user_id) → bool`. Notes: Deletes a single memory only if it belongs to `user_id`. Returns `True` on success, `False` if not found or wrong owner.
-- **`clear_all_memories`** — Signature: `async (db, user_id) → int`. Notes: Deletes all memories for a user; returns deleted row count.
+Memory is best-effort. Any tool-enabled request or stream failure before visible text retries the same turn without tools and does not expose the memory failure to the user. Only explicit tool incompatibility, recognized through wrapped provider error wording, disables tools for later turns in the current voice session; transient fallbacks probe tools again next turn. Known incompatibility or continuation failure after visible text emits `LLMStreamReset` so consumers discard the partial response before a complete no-tools retry. Fallback prompts retain saved-memory context but omit `save_user_memory` instructions, and a fallback with no visible text raises `LLMResponseError`. A generic provider stream failure after visible text remains a normal LLM error when it cannot be attributed to tool handling. The first successfully completed tool-capable stream logs availability once per process; executor failures remain internal failed tool results.
 
----
+## Prompt Policy
 
-## Chat integration
+**File:** `backend/app/services/prompts/common.py`
+
+The shared memory instruction tells Lingu to call `save_user_memory` only for a genuinely new, durable fact useful in future interactions. It forbids temporary details, uncertain inferences, summaries, instructions, and duplicates. AI-created memories are concise, self-contained facts in the user's configured native language, regardless of the language currently being learned. Chat and voice append this policy only when the request offers the native tool; greetings and no-tools fallbacks keep saved-memory context but omit the tool instruction. The tutor must continue its visible response after the tool result and must not claim success after a failed save.
+
+The old `<<MEMORY>>...<<ENDMEMORY>>` marker parser and stream-stripping flow no longer exists.
+
+## Text Chat
 
 **File:** `backend/app/routers/chat.py`
 
-### System prompt construction
+Each request loads the user's global memories in an independent best-effort session, builds the untrusted context block, and enables `save_user_memory` with source `chat` and the active plan ID as optional provenance. Visible text is forwarded progressively and tool fragments remain internal. `{"response_reset": true}` clears invalid partial text before fallback tokens, while a committed save emits `{"memory_updated": true}` immediately and survives a later reset or error. Failed or skipped memory work emits no confirmation. Only a non-empty completed response is persisted; fallback failure emits an error without an assistant row. The frontend dismisses stale word selection on reset and disables selecting the active streaming response.
 
-On every chat request `get_user_memories` is called, the results are passed to `build_memory_context`, and both the memory context and `MEMORY_SYSTEM_INSTRUCTION` are embedded in `TUTOR_SYSTEM_PROMPT` via `.format()`.
-
-### Streaming SSE — marker handling
-
-The SSE generator (`event_stream`) processes tokens from the LLM stream and withholds the memory block from the client:
-
-1. **Detection mid-stream:** when `<<MEMORY>>` is found in the accumulated `full_response`, all text up to that point is yielded to the frontend but no further tokens are forwarded.
-2. **Partial prefix protection:** on each token, if `full_response` ends with a partial `<<MEMORY>>` prefix, those characters are held back until the marker is either confirmed or disproved.
-3. **Post-stream flush:** after the LLM stream ends, `strip_memory_marker` removes the block; any clean text not yet sent (`len(clean_response) > sent_len`) is yielded.
-4. **DB persistence:** the assistant message is saved with `clean_response` (no marker).
-5. **Memory persistence:** `parse_memory_marker(full_response)` extracts items; `save_memories` is called (best-effort, with `db.rollback()` on exception).
-6. **Signal order:** `{"done": true}` is yielded **after** `save_memories` completes; `{"memory_updated": true}` is yielded immediately after `done` if any items were saved.
-
-### Frontend toast (chat)
-
-**File:** `frontend/src/app/(app)/chat/page.tsx`
-
-- `memoryToast` state (boolean).
-- When `data.memory_updated` is received in the SSE loop: `setMemoryToast(true)` + `setTimeout(() => setMemoryToast(false), 3500)`.
-- Toast rendered with `animate-in fade-in slide-in-from-top-2` classes; displays `t('memoryUpdated')`.
-
----
-
-## Voice conversation integration
+## Voice Conversation
 
 **File:** `backend/app/services/conversation_pipeline.py`
 
-### System prompt construction
+Voice uses the same native tool and provider-normalized continuation with source `voice`. The pipeline refreshes the user's complete global memory collection at the start of every turn. Explicit incompatibility disables tools for the remaining WebSocket session; a transient fallback does not. Tool payloads and reset partials never enter TTS or transcripts. A successful committed save emits `{"type": "memory_updated"}` exactly once even if continuation later fails or the turn is cancelled, while failed saves emit nothing.
 
-`get_user_memories` is called once in `conversation.py` before the pipeline is instantiated; the result is passed to `ConversationPipeline.__init__` as the `memories` parameter. `build_memory_context` and `MEMORY_SYSTEM_INSTRUCTION` are embedded in `CONVERSATION_SYSTEM_PROMPT` via `.format()` at construction time.
-
-> **Note:** memories saved during a session are not retroactively injected into the same session's system prompt; they become available from the next session onward.
-
-### Pipeline turn — marker handling
-
-During the LLM streaming loop that drives sentence-by-sentence TTS:
-
-1. **Sentence flush:** when `<<MEMORY>>` appears in a buffered sentence, everything before it is sent to TTS and transcript; the marker and everything after is discarded from the TTS path.
-2. **Partial prefix protection:** same hold-back logic as in chat.
-3. **End-of-stream flush:** `strip_memory_marker(full_response)` produces `clean_full_response`; the `sentence_buffer` is trimmed only when `"<<MEMORY>>" in full_response` (explicit check to avoid a false positive from `.rstrip()` on responses with trailing whitespace).
-4. **DB persistence:** assistant message stored as `clean_full_response`.
-5. **Memory persistence:** `parse_memory_marker(full_response)` → `save_memories` using a fresh `AsyncSessionLocal` session (best-effort, errors silently ignored).
-6. **Signal order:** `{"type": "memory_updated"}` is sent **before** `{"type": "turn_complete"}`.
-
-### Frontend toast (voice)
-
-**File:** `frontend/src/components/conversation/ConversationMode.tsx`
-
-- `memoryToast` state (boolean).
-- `case 'memory_updated':` in the WebSocket message switch: `setMemoryToast(true)` + `setTimeout(() => setMemoryToast(false), 3500)`.
-- Toast rendered with `animate-in fade-in slide-in-from-top-2` classes; displays `t('memoryUpdated')`.
-
----
+Text and voice render the same informational `MemorySavedToast` after a confirmed save. The toast says that Lingu saved a new memory and that it can be reviewed in Settings, uses a polite live region for assistive technology, hides after 3.5 seconds, restarts its single cleanup-safe timer, and remounts the live status so consecutive saves are announced. It does not expose the stored fact on screen or require interaction before disappearing.
 
 ## REST API
 
-**File:** `backend/app/routers/memories.py`  
-**Router prefix:** `/api/memories`  
-**Tag:** `memories`  
-**Auth:** all endpoints require `require_subscription`. Maintenance mode is not applied to these endpoints because memory management is used by text chat and user settings rather than direct LLM service operation.
+**File:** `backend/app/routers/memories.py`
 
-- GET — Path: `/api/memories`; Rate limit: 30/min; Response: `MemoryListResponse`; Notes: Returns all memories for the current user ordered oldest-first.
-- DELETE — Path: `/api/memories/{memory_id}`; Rate limit: 30/min; Response: 204 No Content; Notes: Returns 404 if not found or owned by a different user.
-- DELETE — Path: `/api/memories`; Rate limit: 10/min; Response: `ClearAllResponse`; Notes: Deletes all memories; returns `{"deleted": N}`.
+All endpoints require `get_current_user`. They are not subscription-gated and are available regardless of Stripe, freemium, or maintenance state.
 
-### Schemas
+- `GET /api/memories` - 60/minute. Returns all global memories oldest-first.
+- `POST /api/memories` - 10/minute. Body: `{content: string}` with trimmed length 1-200. Creates source `manual`, returns 201, or 409 `memory_already_exists` for an exact duplicate.
+- `DELETE /api/memories/{memory_id}` - 60/minute. Returns 204 or owner-safe 404.
+- `DELETE /api/memories` - 10/minute. Returns `{deleted: int}` for the complete global collection.
 
-```
-MemoryOut          { id, content, source, created_at: str (ISO-8601) }
-MemoryListResponse { memories: list[MemoryOut] }
-ClearAllResponse   { deleted: int }
-```
+Schemas are `MemoryCreate`, `MemoryOut`, `MemoryListResponse`, and `ClearAllResponse` in `backend/app/schemas/memory.py`.
 
----
+## Settings UI
 
-## Settings page (frontend)
+**Files:**
 
-**File:** `frontend/src/app/(app)/settings/page.tsx`
+- `frontend/src/app/(app)/settings/memories/page.tsx`
+- `frontend/src/lib/memories.ts`
+- `frontend/src/types/api.ts`
+- `frontend/src/components/ui/confirm-dialog.tsx`
 
-A **Memory** section is rendered below the legal links:
+The dedicated Settings page explains that memories are shared across learning languages. It supports manual creation, a 200-character input limit, localized source labels, deterministic list updates, individual deletion, and clear-all confirmation. Loading, retry, duplicate, mutation, success, and error states are surfaced rather than silently ignored. Mutation controls are disabled while another mutation is active, and the confirmation dialog exposes busy/error state with focus management and keyboard containment.
 
-- On mount, `fetchMemories()` calls `GET /api/memories` and populates a `memories: MItem[]` state array.
-- While loading: spinner text (tCommon `loading`).
-- When empty: `t('memoryEmpty')` hint text.
-- When non-empty: scrollable list (max-h-64) of memory items with per-item `×` delete button (`handleDeleteMemory`) and a **Clear all** button with a `ConfirmDialog` guard (`handleClearAllMemories`).
-- Individual deletes are optimistic (local state updated immediately; no reload required).
+All memory management and language-deletion preservation copy is translated in the ten supported UI locales.
 
----
+## Limits And Configuration
 
-## i18n keys added
+No environment variables are added. The 20-context, 200-character, and 150-storage limits are constants in `memory_service.py`.
 
-Keys added to all 10 locale files (`messages/*.json`):
+## Test Coverage
 
-- `settings` — Key: `sectionMemory`; Purpose: Section header
-- `settings` — Key: `memoryEmpty`; Purpose: Empty-state hint
-- `settings` — Key: `memoryClearAll`; Purpose: "Clear all" button label
-- `settings` — Key: `memoryClearAllTitle`; Purpose: ConfirmDialog title
-- `settings` — Key: `memoryClearAllMessage`; Purpose: ConfirmDialog body
-- `settings` — Key: `memoryClearAllConfirm`; Purpose: ConfirmDialog confirm button
-- `chat` — Key: `memoryUpdated`; Purpose: Toast text in text chat
-- `conversation` — Key: `memoryUpdated`; Purpose: Toast text in voice conversation
-
----
-
-## Configuration
-
-No new environment variables. All limits are hard-coded constants in `memory_service.py` and can be changed there without schema migrations.
-
-- `MAX_MEMORIES_PER_USER` — Default: 50; Effect: FIFO eviction threshold
-- `MAX_MEMORIES_CONTEXT` — Default: 20; Effect: Max injected into prompt per request
-- `MAX_MEMORY_CHARS` — Default: 200; Effect: Max length per stored item
-
----
-
-## Tests
-
-**File:** `backend/tests/test_memories.py`
-
-- **`TestParseMemoryMarker`** — single item, multiple items, no marker, invalid JSON, missing `items` key, truncation to 200 chars, multiline marker, empty item filtering
-- **`TestStripMemoryMarker`** — removes marker from end, no-op when absent, multiline
-- **`TestBuildMemoryContext`** — empty list, formatting, `MAX_MEMORIES_CONTEXT` limiting
-- **`test_list_memories_empty`** — GET returns `{"memories": []}`
-- **`test_list_memories_with_items`** — GET returns correct content and source
-- **`test_delete_memory`** — 204, item gone from DB
-- **`test_delete_memory_not_found`** — 404 on unknown id
-- **`test_delete_memory_wrong_user`** — 404 when user tries to delete another user's memory (IDOR guard)
-- **`test_clear_all_memories`** — 200, count matches, DB empty
-- **`test_memories_require_subscription`** — 200 with `STRIPE_ENABLED=false` (self-hosted)
-- **`test_memories_blocked_without_stripe_subscription`** — 402 with `STRIPE_ENABLED=true` and no subscription (via `monkeypatch`)
-- **`test_save_memories_persists_and_dedupes`** — saves new items, skips exact duplicates
-- **`test_get_user_memories_ordered`** — oldest-first ordering
-- **`test_delete_memory_service`** — service-layer delete and ownership guard
-- **`test_delete_memory_wrong_user_service`** — returns `False` when wrong user_id
-- **`test_clear_all_memories_service`** — clears only target user, leaves other users' memories intact
-- **`test_chat_strips_memory_marker_from_response`** — marker does not appear in SSE stream body
+Backend and frontend tests cover the strict tool schema, escaped context, manual creation and duplicate handling, validation, ownership, global retrieval, in-batch deduplication, FIFO hard-cap behavior, immediate native text/voice result events, cancellation-safe confirmation, wrapped incompatibility wording, reset-and-fallback behavior, empty fallback rejection, one-call execution, per-session voice capability state, global cross-language behavior, language-deletion preservation, memory API helpers, robust Settings states, visible SSE reset transitions, streaming selection, and truncated SSE detection.

@@ -279,6 +279,14 @@ Only **generated** lessons appear here. Lesson slots that were never accessed (n
 
 ---
 
+## `GET /api/study-plan/lessons` — generated lesson metadata
+
+Returns every persisted `Lesson` row for the active plan in week/day/ID order. The lightweight response contains `id`, `title`, `lesson_type`, `week_number`, `day_number`, `unit_id`, and `is_completed`; lesson content and exercises are intentionally omitted.
+
+The endpoint is read-only: it does not generate future lessons, auto-advance `progress_day`, or change completion state. The plan page uses it to recover IDs and completion states for generated lessons while retaining `generated_plan` as the source of all scheduled lesson slots.
+
+---
+
 ## Lesson lifecycle
 
 ```
@@ -309,6 +317,8 @@ slot in generated_plan
   → if yes: progress_day += 1
 ```
 
+`POST /api/lessons/{id}/complete` locks the lesson row before checking completion. Completion, daily progress, XP, and unit competencies are flushed and committed in one database transaction; a failure rolls all of them back. Concurrent requests serialize on the same row, and retries for an already-completed lesson return the existing state before checking freemium quota or updating timestamps, quota, progress, XP, or competencies. Freemium usage is recorded best-effort only after the database transaction succeeds.
+
 ---
 
 ## Frontend integration
@@ -338,11 +348,21 @@ The **assessment button** is shown only when the user has no active plan (`hasPl
 
 When Stripe is enabled and `isSubscribed(user, stripeEnabled)` is false, the dashboard shows a compact Premium banner above quick actions. For `none`, `incomplete`, `incomplete_expired`, and `canceled`, its CTA expands inline monthly/yearly plan buttons; the selected plan posts to `POST /api/billing/checkout` and redirects to Stripe Checkout. For `past_due`, `unpaid`, and `paused`, it shows payment-recovery copy and opens the Stripe Customer Portal via `POST /api/billing/portal`. The banner does not render for subscribed/trialing users or self-hosted deployments with Stripe disabled.
 
+### My Plan (`frontend/src/app/(app)/plan/page.tsx`)
+
+The plan page combines the scheduled slots from `generated_plan` with persisted metadata from `GET /api/study-plan/lessons`, the current-day response from `GET /api/study-plan/today`, and skipped incomplete lessons from `GET /api/study-plan/pending-lessons`. Matching uses the same stable week/day/title identity enforced by the lesson uniqueness constraint.
+
+The unit drawer shows **Start** for the current lesson, **Resume** for a generated lesson left pending after a skipped day, **Review** for a completed lesson, and no action for a future slot that has not been generated. All actions open the existing lesson route by ID. The drawer reuses the plan overview's solid primary action style, includes a localized lesson-count heading, gives lesson rows slightly more vertical space, and keeps its close action visible while scrolling.
+
 ### Lesson player (`frontend/src/app/(app)/lesson/[id]/page.tsx`)
 
 On mount, stores the current `progress_day` (fetched from `GET /today`) in `progressDayAtStart`.
 
 After `POST /lessons/{id}/complete` succeeds, calls `GET /today` again. If the returned `progress_day > progressDayAtStart`, it means the auto-advance fired — the day is complete. A **"Day complete"** banner is shown to the user.
+
+When `GET /lessons/{id}` returns `is_completed=true`, the player enters review mode: saved answers, scores, feedback, explanations, vocabulary, and navigation remain visible, but answering and regeneration controls are disabled, quota UI is hidden, and the final action returns to My Plan without calling the completion endpoint.
+
+The completion button is guarded by both an immediate in-memory lock and a disabled loading state. After any successful completion response, unsubscribed users refresh `/api/freemium/status` without the normal 60-second cache so retries or another browser tab cannot leave the displayed lesson quota stale.
 
 ---
 

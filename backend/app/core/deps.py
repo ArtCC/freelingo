@@ -73,6 +73,67 @@ async def require_subscription(
     return current_user
 
 
+async def check_subscription_or_freemium_access(
+    feature: str, redis: Redis, current_user: User
+) -> None:
+    """Raise unless the user has subscription, trial, or remaining feature quota."""
+    if not settings.STRIPE_ENABLED:
+        return
+
+    if is_subscribed(current_user, settings.STRIPE_ENABLED):
+        return
+
+    from app.services.freemium_service import is_freemium_trial_active
+
+    if is_freemium_trial_active(current_user.freemium_trial_ends_at):
+        return
+
+    try:
+        from app.services.freemium_service import (
+            check_chat_quota,
+            check_lesson_quota,
+            check_listening_quota,
+            check_reading_quota,
+            check_voice_quota,
+        )
+
+        check_map = {
+            "chat": check_chat_quota,
+            "lessons": check_lesson_quota,
+            "listening": check_listening_quota,
+            "reading": check_reading_quota,
+            "voice": check_voice_quota,
+        }
+        checker = check_map.get(feature)
+        if checker is None:
+            raise HTTPException(status_code=402, detail="subscription_required")
+
+        result = await checker(redis, current_user.id)
+        if not result.allowed:
+            raise HTTPException(
+                status_code=402,
+                detail={
+                    "reason": "freemium_exhausted",
+                    "feature": feature,
+                    "remaining": result.remaining,
+                    "limit": result.limit,
+                },
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        # Redis unavailable or other error → block access safely
+        raise HTTPException(
+            status_code=402,
+            detail={
+                "reason": "freemium_unavailable",
+                "feature": feature,
+                "remaining": 0,
+                "limit": 0,
+            },
+        ) from None
+
+
 def require_subscription_or_freemium(feature: str):
     """Factory that returns a FastAPI dependency checking subscription OR freemium quota.
 
@@ -90,62 +151,7 @@ def require_subscription_or_freemium(feature: str):
         redis: Redis = Depends(get_redis),
         current_user: User = Depends(get_current_user),
     ) -> User:
-        if not settings.STRIPE_ENABLED:
-            return current_user
-
-        if is_subscribed(current_user, settings.STRIPE_ENABLED):
-            return current_user
-
-        from app.services.freemium_service import is_freemium_trial_active
-
-        if is_freemium_trial_active(current_user.freemium_trial_ends_at):
-            return current_user
-
-        try:
-            from app.services.freemium_service import (
-                check_chat_quota,
-                check_lesson_quota,
-                check_listening_quota,
-                check_reading_quota,
-                check_voice_quota,
-            )
-
-            check_map = {
-                "chat": check_chat_quota,
-                "lessons": check_lesson_quota,
-                "listening": check_listening_quota,
-                "reading": check_reading_quota,
-                "voice": check_voice_quota,
-            }
-            checker = check_map.get(feature)
-            if checker is None:
-                raise HTTPException(status_code=402, detail="subscription_required")
-
-            result = await checker(redis, current_user.id)
-            if not result.allowed:
-                raise HTTPException(
-                    status_code=402,
-                    detail={
-                        "reason": "freemium_exhausted",
-                        "feature": feature,
-                        "remaining": result.remaining,
-                        "limit": result.limit,
-                    },
-                )
-        except HTTPException:
-            raise
-        except Exception:
-            # Redis unavailable or other error → block access safely
-            raise HTTPException(
-                status_code=402,
-                detail={
-                    "reason": "freemium_unavailable",
-                    "feature": feature,
-                    "remaining": 0,
-                    "limit": 0,
-                },
-            ) from None
-
+        await check_subscription_or_freemium_access(feature, redis, current_user)
         return current_user
 
     return _check

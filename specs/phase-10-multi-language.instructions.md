@@ -11,7 +11,7 @@ This is the index file for Phase 10. Each sub-phase has its own dedicated spec f
 
 ## Overview
 
-FreeLingo moves from "one user = one language = one study plan" to an architecture where **each user can have multiple active study plans, one per language**, with progress, flashcards, conversations, memories, and competencies completely isolated by language.
+FreeLingo moves from "one user = one language = one study plan" to an architecture where **each user can have multiple active study plans, one per language**. Progress, flashcards, conversations, and competencies are isolated by language; memories are intentionally global per user.
 
 ### User flow
 
@@ -21,7 +21,7 @@ FreeLingo moves from "one user = one language = one study plan" to an architectu
 4. **Add new language**: from Settings → "My Languages", the user sees a dedicated page with per-language cards (summarised progress) and an "Add new language" button that starts the language selection flow to create a new study plan.
 5. **Settings management**: the "My Languages" page shows all the user's languages with their CEFR level, streak, % completed, and allows switching the active language. The current active language and the last language cannot be deleted.
 6. **Change confirmation**: toast "Switching to Italian (A2)..." so the user always knows what changed.
-7. **Language-isolated data**: each language has its own progress, flashcards, conversations, memories, and competencies.
+7. **Scoped and global data**: each language has its own progress, flashcards, conversations, and competencies. Memories are shared across languages; `study_plan_id` is nullable provenance only.
 8. **Language-specific curriculum**: curriculum for each language is different and adapted to that language.
 9. **Adapted prompts**: system prompts use the target language name and never hardcode "English".
 10. **Supported languages**: Spanish, Italian, Portuguese, French, German, Japanese, Korean, and Mainland Chinese have backend learning data in addition to the existing English variants.

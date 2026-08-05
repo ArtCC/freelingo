@@ -78,8 +78,9 @@
     "wordSaveError": "Es ist ein Problem aufgetreten",
     "selectWordHint": "Wähle ein Wort aus, um es in dein Vokabular zu speichern",
     "noActivePlan": "Kein aktiver Lernplan gefunden",
+    "memorySavedToast": "Lingu hat eine neue Erinnerung gespeichert. Du kannst sie in den Einstellungen ansehen.",
     "removeLanguageConfirmTitle": "Sprache entfernen",
-    "removeLanguageConfirmMessage": "Alle Daten für diese Sprache (Studienplan, Fortschritt, Karteikarten, Konversationen und Erinnerungen) werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "removeLanguageConfirmMessage": "Alle sprachspezifischen Daten (Studienplan, Fortschritt, Karteikarten und Konversationen) werden dauerhaft gelöscht. Deine Konto-Erinnerungen bleiben erhalten. Diese Aktion kann nicht rückgängig gemacht werden.",
     "removeLanguageConfirmLabel": "Entfernen",
     "nativeHelpTitle": "Hilfe auf {language}",
     "nativeHelpLoading": "Hilfe auf {language} wird vorbereitet...",
@@ -275,6 +276,27 @@
     "memoryClearAllMessage": "Dadurch werden alle gespeicherten Erinnerungen dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
     "memoryClearAllConfirm": "Alles löschen",
     "memoryManage": "Erinnerungen verwalten",
+    "memoryBreadcrumb": "Erinnerungseinstellungen",
+    "memoryDescription": "Erinnerungen werden in allen deinen Lernsprachen geteilt. Lingu kann nützliche Details in Gesprächen speichern, und du kannst sie hier hinzufügen oder entfernen.",
+    "memoryInputLabel": "Erinnerung hinzufügen",
+    "memoryInputPlaceholder": "Zum Beispiel: Ich bevorzuge kurze Erklärungen.",
+    "memoryInputHint": "Maximal {max} Zeichen",
+    "memoryAdd": "Hinzufügen",
+    "memoryAdding": "Wird hinzugefügt...",
+    "memoryAddSuccess": "Erinnerung hinzugefügt.",
+    "memoryAddError": "Die Erinnerung konnte nicht hinzugefügt werden. Bitte versuche es erneut.",
+    "memoryDuplicateError": "Diese Erinnerung existiert bereits.",
+    "memoryLoadError": "Erinnerungen konnten nicht geladen werden.",
+    "memoryDeleteLabel": "Erinnerung löschen: {content}",
+    "memoryDeleteSuccess": "Erinnerung gelöscht.",
+    "memoryDeleteError": "Die Erinnerung konnte nicht gelöscht werden.",
+    "memoryClearing": "Wird gelöscht...",
+    "memoryClearSuccess": "Alle Erinnerungen wurden gelöscht.",
+    "memoryClearError": "Erinnerungen konnten nicht gelöscht werden.",
+    "memorySourceChat": "Chat",
+    "memorySourceVoice": "Stimme",
+    "memorySourceManual": "Manuell",
+    "memorySourceUnknown": "Erinnerung",
     "sectionLanguages": "Sprachen",
     "languagesManage": "Meine Sprachen",
     "cardProfileAccess": "Profil und Zugang",
@@ -334,7 +356,7 @@
     },
     "privacy": {
       "pageTitle": "Datenschutzerklärung",
-      "updated": "Zuletzt aktualisiert: Juni 2026",
+      "updated": "Zuletzt aktualisiert: August 2026",
       "s1Title": "1. Überblick",
       "s1Body": "FreeLingo ist als selbst gehostete Anwendung und als gehosteter Dienst verfügbar. Bei selbst gehosteten Installationen werden alle Daten ausschließlich auf dem Server des Betreibers gespeichert, und die Autoren des FreeLingo-Projekts haben keinen Zugriff darauf. Beim gehosteten Dienst agiert das FreeLingo-Team als Verantwortlicher und diese Richtlinie beschreibt, wie Ihre personenbezogenen Daten erhoben, genutzt und geschützt werden.",
       "s2Title": "2. Erhobene Daten",
@@ -347,7 +369,7 @@
       "s2i6": "Karteikarten-Decks, Lernfortschritt und Daten zur Wiederholungsintervall-Methode.",
       "s2i7": "Bewertungsergebnisse und Lehrplanfortschritt.",
       "s2i8": "Abonnementstatus, Plantyp und Stripe-Kundennummer (für Abonnenten des kostenpflichtigen Dienstes).",
-      "s2i9": "Erinnerungen und Vorlieben, die der KI-Tutor während der Gespräche über Sie lernt, um zukünftige Interaktionen zu personalisieren.",
+      "s2i9": "Globale Konto-Erinnerungen und Vorlieben, die der KI-Tutor in Gesprächen lernt oder die Sie manuell hinzufügen, um künftige Interaktionen über alle Lernsprachen hinweg zu personalisieren.",
       "s2i10": "Funktionswünsche, Fehlerberichte, Kommentare und Abstimmungen, die Sie über das Feedback-Board einreichen. Nur Ihr Benutzername wird öffentlich angezeigt; alle Benutzer können veröffentlichte Vorschläge und Berichte einsehen.",
       "s3Title": "3. Verwendung Ihrer Daten",
       "s3Intro": "Ihre Daten werden ausschließlich zur Bereitstellung des FreeLingo-Lernerlebnisses verwendet:",
@@ -365,7 +387,7 @@
       "s6Title": "6. Ihre Rechte (DSGVO)",
       "s6Body": "Wenn Sie sich im Europäischen Wirtschaftsraum befinden, haben Sie das Recht auf: Auskunft über die von uns gespeicherten personenbezogenen Daten; Berichtigung unrichtiger Daten; Löschung Ihres Kontos und aller zugehörigen Daten (direkt über die Einstellungsseite verfügbar); Widerspruch gegen die Verarbeitung; und Datenübertragbarkeit. Um diese Rechte auszuüben, kontaktieren Sie uns unter der Adresse in Abschnitt 8 oder löschen Sie Ihr Konto direkt in den Einstellungen. Rechtsgrundlage der Verarbeitung (Art. 6 Abs. 1 lit. b DS-GVO): Wir verarbeiten Ihre personenbezogenen Daten, da dies zur Erfüllung des Vertrages zwischen Ihnen und uns — der Bereitstellung des FreeLingo-Dienstes — erforderlich ist. Internationale Übermittlungen: Bei Nutzung des gehosteten Dienstes können Ihre Gesprächsinhalte und Audiodaten von OpenAI, Inc. (USA) verarbeitet werden, und Zahlungsdaten werden von Stripe, Inc. (USA) verarbeitet. Diese Übermittlungen erfolgen auf Grundlage der von der Europäischen Kommission genehmigten Standardvertragsklauseln (Art. 46 DS-GVO), die ein angemessenes Schutzniveau gewährleisten. Beschwerderecht: Sie haben das Recht, eine Beschwerde beim Bundesbeauftragten für den Datenschutz und die Informationsfreiheit (BfDI — bfdi.bund.de) oder bei der Datenschutzaufsichtsbehörde Ihres Wohnsitzlandes einzureichen.",
       "s7Title": "7. Datenspeicherung und Löschung",
-      "s7Body": "Ihre Daten werden so lange gespeichert, wie Ihr Konto besteht. Sie können Ihr Konto und alle zugehörigen Daten jederzeit dauerhaft über die Einstellungsseite löschen. Die Löschung ist sofortig und unwiderruflich.",
+      "s7Body": "Ihre Daten werden gespeichert, solange Ihr Konto besteht. In den Einstellungen können Sie einzelne Erinnerungen oder alle Erinnerungen löschen. Beim Entfernen einer Lernsprache werden deren sprachspezifische Daten gelöscht, Ihre globalen Konto-Erinnerungen bleiben jedoch erhalten. Sie können Ihr Konto und alle zugehörigen Daten jederzeit in den Einstellungen löschen; die Kontolöschung ist sofortig und unwiderruflich.",
       "s8Title": "8. Kontakt",
       "s8Body": "Für datenschutzbezogene Anfragen zum gehosteten Dienst kontaktieren Sie uns über das Kontaktformular auf freelingo.app. Bei selbst gehosteten Installationen wenden Sie sich an den Administrator der von Ihnen genutzten Instanz. Für Fragen zum FreeLingo-Open-Source-Projekt besuchen Sie das Projektrepository auf GitHub.",
       "s9Title": "9. Salvatorische Klausel",
@@ -582,6 +604,8 @@
     "testScore": "Punktzahl:",
     "pendingLessons": "Ausstehende Lektionen",
     "resume": "Fortsetzen",
+    "lessonsHeader": "Lektionen · {count}",
+    "reviewLesson": "Wieder ansehen",
     "noPlanLabel": "LOS GEHTS",
     "noPlanTitle": "Erstelle deinen Lernplan",
     "noPlanDesc": "Mach eine kurze Einschätzung, um dein Niveau zu entdecken und einen persönlichen Lernplan zu erhalten.",
@@ -1135,7 +1159,7 @@
     "switched": "Gewechselt zu {language} ({level})",
     "removeLanguage": "Sprache entfernen",
     "removeConfirmTitle": "{language} entfernen?",
-    "removeConfirmMessage": "Alle Fortschritte, Lektionen, Flashcards und Daten dieser Sprache werden dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "removeConfirmMessage": "Alle Fortschritte, Lektionen, Flashcards und Konversationen dieser Sprache werden dauerhaft gelöscht. Deine Konto-Erinnerungen bleiben erhalten. Diese Aktion kann nicht rückgängig gemacht werden.",
     "removeConfirmButton": "Entfernen",
     "deleteError": "Konnte {language} nicht löschen. Bitte versuche es erneut.",
     "noLanguages": "Keine Sprachen konfiguriert.",
@@ -1378,15 +1402,23 @@
   },
   "whatsNew": {
     "title": "Neuigkeiten",
-    "version": "v1.8.27",
+    "version": "v1.8.30",
     "cta": "Verstanden",
     "entry1": {
-      "label": "Alles kostenlos testen",
-      "desc": "Du kannst jetzt mit Lingu chatten, Hören und Lesen üben und Sprachkonversationen ausprobieren, ohne Zahlungsdaten einzugeben. Starte mit einer kostenlosen Testphase und nutze alle Funktionen mit täglichen und wöchentlichen Limits. Upgrade jederzeit vom Dashboard."
+      "label": "Erinnerungen, die dich begleiten",
+      "desc": "Lingu kann sich jetzt im Chat und in Sprachgesprächen über alle deine Lernsprachen hinweg an nützliche Details erinnern."
     },
     "entry2": {
-      "label": "Fehlerbehebungen",
-      "desc": "Verschiedene kleinere Fehlerbehebungen und Stabilitätsverbesserungen in der gesamten Plattform."
+      "label": "Du hast die Kontrolle",
+      "desc": "Füge eigene Erinnerungen hinzu oder prüfe, lösche und leere sie jederzeit in den Einstellungen. Beim Entfernen einer Lernsprache bleiben deine Erinnerungen erhalten."
+    },
+    "entry3": {
+      "label": "Deine Lektionen, immer verfügbar",
+      "desc": "In Mein Plan kannst du deine aktuelle Lektion starten, übersprungene Lektionen fortsetzen oder abgeschlossene Lektionen mit deinen gespeicherten Antworten und Rückmeldungen ansehen."
+    },
+    "entry4": {
+      "label": "Ein flüssigeres Erlebnis",
+      "desc": "Fehlerbehebungen und kleine Verbesserungen machen FreeLingo zuverlässiger und angenehmer in der Nutzung."
     }
   },
   "contact": {

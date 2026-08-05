@@ -247,6 +247,7 @@ const mockLessons = [
     week: 1,
     day: 1,
     completed: true,
+    action: 'review' as const,
   },
   {
     id: 2,
@@ -255,6 +256,7 @@ const mockLessons = [
     week: 1,
     day: 2,
     completed: false,
+    action: 'continue' as const,
   },
   {
     id: 3,
@@ -263,6 +265,7 @@ const mockLessons = [
     week: 2,
     day: 1,
     completed: false,
+    action: 'start' as const,
   },
 ]
 
@@ -282,6 +285,7 @@ const mockLessonsWithNullId = [
     week: 3,
     day: 2,
     completed: false,
+    action: 'start' as const,
   },
 ]
 
@@ -295,6 +299,7 @@ function renderUnitDrawer(
       week: number
       day: number
       completed: boolean
+      action?: 'start' | 'continue' | 'review'
     }>
     onClose: () => void
     onStartLesson: (lessonId: number) => void
@@ -346,6 +351,7 @@ describe('UnitDrawer', () => {
 
   it('renders all lesson titles', () => {
     renderUnitDrawer()
+    expect(screen.getByText('lessonsHeader')).toBeInTheDocument()
     expect(screen.getByText('Verb Conjugation')).toBeInTheDocument()
     expect(screen.getByText('Common Phrases')).toBeInTheDocument()
     expect(screen.getByText('Reading Comprehension')).toBeInTheDocument()
@@ -387,40 +393,33 @@ describe('UnitDrawer', () => {
     expect(screen.getByText('noLessons')).toBeInTheDocument()
   })
 
-  // ── Start lesson button ────────────────────────────────────────────────
+  // ── Lesson action buttons ──────────────────────────────────────────────
 
-  it('renders start button for incomplete lessons that have an id', () => {
+  it('renders the action matching each available lesson state', () => {
     renderUnitDrawer()
-    const startButtons = screen.getAllByText('start')
-    // lesson 1 is completed (no start), lessons 2 & 3 are incomplete (both start)
-    expect(startButtons.length).toBe(2)
-  })
-
-  it('does not render start button for completed lessons', () => {
-    renderUnitDrawer()
-    // Completed lesson "Verb Conjugation" should not have a start button near it
-    const conjugationRow = screen.getByText('Verb Conjugation').closest('.flex')
-    expect(conjugationRow).toBeInTheDocument()
-    // The row for a completed lesson should not contain a 'start' button
-    const startInConjugation = conjugationRow!.textContent
-    expect(startInConjugation).not.toContain('start')
+    expect(screen.getByText('reviewLesson')).toBeInTheDocument()
+    expect(screen.getByText('resume')).toBeInTheDocument()
+    expect(screen.getByText('start →')).toBeInTheDocument()
   })
 
   it('does not render start button when lesson id is null', () => {
     renderUnitDrawer({ lessons: mockLessonsWithNullId })
-    const startButtons = screen.getAllByText('start')
-    // Only lesson with id:4 (Final Test) gets a start button
-    expect(startButtons.length).toBe(1)
+    expect(screen.getAllByText('start →')).toHaveLength(1)
   })
 
   it('calls onStartLesson with correct lesson id when start is clicked', () => {
     const onStartLesson = vi.fn()
     renderUnitDrawer({ onStartLesson })
-    const startButtons = screen.getAllByText('start')
-    fireEvent.click(startButtons[0])
+    fireEvent.click(screen.getByText('resume'))
     expect(onStartLesson).toHaveBeenCalledTimes(1)
-    // The first incomplete lesson is id:2 (Common Phrases)
     expect(onStartLesson).toHaveBeenCalledWith(2)
+  })
+
+  it('opens a completed lesson for review', () => {
+    const onStartLesson = vi.fn()
+    renderUnitDrawer({ onStartLesson })
+    fireEvent.click(screen.getByText('reviewLesson'))
+    expect(onStartLesson).toHaveBeenCalledWith(1)
   })
 
   // ── Close interactions ─────────────────────────────────────────────────

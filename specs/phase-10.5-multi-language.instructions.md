@@ -76,7 +76,7 @@ Opens a modal with the language selector showing only languages the user has **n
 
 - Not shown if the user has only one language.
 - Not shown for the currently active language (user must switch first).
-- Shows a confirmation modal: "Delete Italian? All progress, lessons, flashcards and data associated with this language will be removed. This action cannot be undone."
+- Shows a confirmation modal explaining that language-scoped progress, lessons, flashcards, and conversations are removed while global account memories are preserved.
 - On confirm: `DELETE /api/languages/{code}` → `fetchLanguages()`
 
 ---
@@ -152,7 +152,7 @@ Opens a modal with the language selector showing only languages the user has **n
   "switched": "Switched to {language} ({level})",
   "removeLanguage": "Remove language",
   "removeConfirmTitle": "Remove {language}?",
-  "removeConfirmMessage": "All progress, lessons, flashcards and data associated with this language will be permanently deleted. This action cannot be undone.",
+  "removeConfirmMessage": "All progress, lessons, flashcards and conversations associated with this language will be permanently deleted. Your account memories will be preserved. This action cannot be undone.",
   "removeConfirmButton": "Remove",
   "noLanguages": "You have no languages configured.",
   "progressLabel": "Progress",

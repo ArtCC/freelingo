@@ -78,8 +78,9 @@
     "wordSaveError": "A apărut o problemă",
     "selectWordHint": "Selectează un cuvânt pentru a-l salva în vocabularul tău",
     "noActivePlan": "Nu a fost găsit niciun plan de studiu activ",
+    "memorySavedToast": "Lingu a salvat o amintire nouă. O poți verifica în Setări.",
     "removeLanguageConfirmTitle": "Elimină limba",
-    "removeLanguageConfirmMessage": "Toate datele pentru această limbă (plan de studiu, progres, flashcards, conversații și amintiri) vor fi șterse permanent. Această acțiune nu poate fi anulată.",
+    "removeLanguageConfirmMessage": "Toate datele specifice acestei limbi (plan de studiu, progres, flashcarduri și conversații) vor fi șterse permanent. Amintirile contului vor fi păstrate. Această acțiune nu poate fi anulată.",
     "removeLanguageConfirmLabel": "Elimină",
     "nativeHelpTitle": "Ajutor în {language}",
     "nativeHelpLoading": "Se pregătește ajutorul în {language}...",
@@ -275,6 +276,27 @@
     "memoryClearAllMessage": "Aceasta va șterge permanent toate amintirile salvate. Această acțiune nu poate fi anulată.",
     "memoryClearAllConfirm": "Șterge tot",
     "memoryManage": "Gestionează amintirile",
+    "memoryBreadcrumb": "Setări memorie",
+    "memoryDescription": "Amintirile sunt partajate între toate limbile studiate. Lingu poate salva detalii utile în conversații, iar aici le poți adăuga sau elimina.",
+    "memoryInputLabel": "Adaugă o amintire",
+    "memoryInputPlaceholder": "De exemplu: Prefer explicațiile concise.",
+    "memoryInputHint": "Maximum {max} caractere",
+    "memoryAdd": "Adaugă",
+    "memoryAdding": "Se adaugă...",
+    "memoryAddSuccess": "Amintire adăugată.",
+    "memoryAddError": "Amintirea nu a putut fi adăugată. Încearcă din nou.",
+    "memoryDuplicateError": "Această amintire există deja.",
+    "memoryLoadError": "Amintirile nu au putut fi încărcate.",
+    "memoryDeleteLabel": "Șterge amintirea: {content}",
+    "memoryDeleteSuccess": "Amintire ștearsă.",
+    "memoryDeleteError": "Amintirea nu a putut fi ștearsă.",
+    "memoryClearing": "Se șterge...",
+    "memoryClearSuccess": "Toate amintirile au fost șterse.",
+    "memoryClearError": "Amintirile nu au putut fi șterse.",
+    "memorySourceChat": "Chat",
+    "memorySourceVoice": "Voce",
+    "memorySourceManual": "Manual",
+    "memorySourceUnknown": "Amintire",
     "sectionLanguages": "Limbi",
     "languagesManage": "Limbile mele",
     "cardProfileAccess": "Profil și acces",
@@ -334,7 +356,7 @@
     },
     "privacy": {
       "pageTitle": "Politică de confidențialitate",
-      "updated": "Ultima actualizare: iunie 2026",
+      "updated": "Ultima actualizare: august 2026",
       "s1Title": "1. Prezentare generală",
       "s1Body": "FreeLingo este disponibil ca aplicație auto-găzduită și ca serviciu găzduit. Pentru implementările auto-găzduite, toate datele sunt stocate exclusiv pe serverul operatorului.",
       "s2Title": "2. Date pe care le colectăm",
@@ -347,7 +369,7 @@
       "s2i6": "Seturi de carduri flash, progresul studiului și datele de repetiție spațiată.",
       "s2i7": "Rezultatele evaluărilor și progresul curricular.",
       "s2i8": "Starea abonamentului, tipul de plan şi identificatorul de client Stripe (pentru abonanţii serviciului plătit).",
-      "s2i9": "Amintiri și preferințe pe care tutorele AI le învață despre tine în timpul conversațiilor pentru a personaliza interacțiunile viitoare.",
+      "s2i9": "Amintiri și preferințe globale ale contului, pe care tutorele AI le învață în conversații sau pe care le adaugi manual pentru a personaliza interacțiunile în toate limbile studiate.",
       "s2i10": "Sugestii, rapoarte de erori, comentarii și voturi pe care le trimiți prin panoul de sugestii. Doar numele tău de utilizator este afișat public; toți utilizatorii pot vedea sugestiile și rapoartele publicate.",
       "s3Title": "3. Cum folosim datele tale",
       "s3Intro": "Datele tale sunt folosite exclusiv pentru a furniza experiența de învățare FreeLingo:",
@@ -365,7 +387,7 @@
       "s6Title": "6. Drepturile tale (GDPR)",
       "s6Body": "Dacă te afli în Spațiul Economic European, ai dreptul de acces, rectificare, ștergere, opoziție și portabilitate a datelor. Pentru a exercita aceste drepturi, contactează-ne la adresa din secțiunea 8 sau șterge-ți contul din setări. Bază juridică a prelucrării (Art. 6(1)(b) GDPR): prelucrăm datele tale personale deoarece este necesar pentru executarea contractului dintre tine și noi. Transferări internaționale: la utilizarea serviciului găzduit, conținutul conversațiilor și audio pot fi procesate de OpenAI, Inc. (SUA), iar datele de plată sunt procesate de Stripe, Inc. (SUA). Aceste transferări se efectuează în baza Clauzelor Contractuale Standard aprobate de Comisia Europeană (Art. 46 GDPR). Drept de reclamație: ai dreptul de a depune o plângere la Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP — dataprotection.ro) sau la autoritatea de supraveghere din țara ta de reședință.",
       "s7Title": "7. Retenția și ștergerea datelor",
-      "s7Body": "Datele tale sunt păstrate atât timp cât contul tău există. Poți șterge permanent contul și toate datele asociate în orice moment din pagina setări.",
+      "s7Body": "Datele tale sunt păstrate cât timp există contul. Din Setări poți șterge amintiri individuale sau pe toate. Eliminarea unei limbi șterge datele specifice acelei limbi, dar păstrează amintirile globale ale contului. Poți șterge contul și toate datele asociate oricând din Setări; ștergerea contului este imediată și ireversibilă.",
       "s8Title": "8. Contact",
       "s8Body": "Pentru întrebări legate de confidențialitate, contactează-ne prin formularul de contact de pe freelingo.app.",
       "s9Title": "9. Separabilitate",
@@ -582,6 +604,8 @@
     "testScore": "Scor:",
     "pendingLessons": "Lecții restante",
     "resume": "Reia",
+    "lessonsHeader": "Lecții · {count}",
+    "reviewLesson": "Revizuiește",
     "noPlanLabel": "ÎNCEPE",
     "noPlanTitle": "Creează-ți planul de studiu",
     "noPlanDesc": "Fă o evaluare rapidă pentru a-ți descoperi nivelul și a obține un plan de învățare personalizat.",
@@ -1135,7 +1159,7 @@
     "switched": "S-a comutat la {language} ({level})",
     "removeLanguage": "Elimină limba",
     "removeConfirmTitle": "Elimini {language}?",
-    "removeConfirmMessage": "Toate progresele, lecțiile, flashcard-urile și datele asociate acestei limbi vor fi șterse permanent. Această acțiune nu poate fi anulată.",
+    "removeConfirmMessage": "Toate progresele, lecțiile, flashcardurile și conversațiile asociate acestei limbi vor fi șterse permanent. Amintirile contului vor fi păstrate. Această acțiune nu poate fi anulată.",
     "removeConfirmButton": "Elimină",
     "deleteError": "Nu s-a putut șterge {language}. Încearcă din nou.",
     "noLanguages": "Nicio limbă configurată.",
@@ -1378,15 +1402,23 @@
   },
   "whatsNew": {
     "title": "Noutăți",
-    "version": "v1.8.27",
+    "version": "v1.8.30",
     "cta": "Am înțeles",
     "entry1": {
-      "label": "Încearcă totul gratuit",
-      "desc": "Acum poți discuta cu Lingu, exersa ascultarea și citirea și încerca conversațiile vocale fără a introduce date de plată. Începe cu o perioadă de probă gratuită, apoi continuă să folosești toate funcțiile cu limite zilnice și săptămânale. Fă upgrade oricând din tabloul de bord."
+      "label": "Amintiri care te însoțesc",
+      "desc": "Lingu poate acum să rețină detalii utile în toate limbile pe care le studiezi, atât în chat, cât și în conversațiile vocale."
     },
     "entry2": {
-      "label": "Corectări de erori",
-      "desc": "Diverse corectări minore de erori și îmbunătățiri ale stabilității pe întreaga platformă."
+      "label": "Tu deții controlul",
+      "desc": "Adaugă propriile amintiri sau consultă-le, șterge-le și golește-le oricând din Setări. Eliminarea unei limbi îți păstrează amintirile."
+    },
+    "entry3": {
+      "label": "Lecțiile tale, mereu accesibile",
+      "desc": "În Planul meu poți începe lecția curentă, continua lecțiile omise sau revizui lecțiile finalizate cu răspunsurile și feedbackul salvate."
+    },
+    "entry4": {
+      "label": "O experiență mai fluidă",
+      "desc": "Remedierile de erori și micile îmbunătățiri fac FreeLingo mai stabil și mai plăcut de utilizat."
     }
   },
   "contact": {

@@ -82,6 +82,7 @@ This replaces "one active plan per user" with "one active plan per user per lang
 
 - Add `study_plan_id` — integer, FK → study_plans (SET NULL), nullable permanently
 - No backfill — Existing memories remain without an assigned plan
+- Current semantics: provenance only. Memory ownership and retrieval remain global by `user_id`, and deleting the plan preserves the memory with `study_plan_id=NULL`.
 
 ### Table `llm_usage`
 
@@ -415,7 +416,7 @@ The partial unique index `uq_active_plan_per_lang` (`UNIQUE(user_id, target_lang
 - `test_progress_isolated_by_language` — XP and streak are independent per language
 - `test_flashcards_isolated_by_language` — Flashcards filtered by `study_plan_id` — no cross-language leakage
 - `test_conversations_isolated_by_language` — Conversations filtered by active language
-- `test_memories_isolated_by_language` — Memories filtered by `study_plan_id`
+- `test_memories_shared_across_languages` — Memories from different plan provenances are retrieved together by `user_id`
 - `test_unique_index_prevents_duplicate_active_plans` — Partial unique index enforces one active plan per user+language
 
 ### Existing test updates

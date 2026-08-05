@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.30] - 2026-08-05
+
+### Added
+
+- **Manual memory control**: every authenticated user can add a concise memory from Settings, alongside listing, deleting, and clearing stored memories. The page now provides explicit loading, retry, duplicate, busy, success, and error states in all ten UI languages.
+- **Native memory tool calling**: text and voice tutoring can save durable learner facts through normalized OpenAI-compatible and Anthropic streaming tool calls, with one tool round and a visible-response continuation.
+- **Memory integrity**: migration `0049_memory_user_content_unique` removes later exact duplicates and enforces one exact `(user_id, content)` pair per user.
+
+### Changed
+
+- **Global memories across languages**: memories now follow the user across every learning language. `study_plan_id` remains nullable creation provenance only, and deleting a language preserves linked memories by setting that provenance to `NULL`.
+- **User-controlled access**: memory list, manual creation, individual deletion, and clear-all require authentication but are no longer subscription-gated.
+- **Voice memory freshness**: voice conversation reloads the user's global memories every turn, so manual and newly saved context is available without reconnecting.
+- **Memory limits and safety**: memory items remain limited to 200 characters, storage is capped at 150 items per user with deterministic oldest-first eviction, and injected memory text is escaped and treated as untrusted prompt data.
+- **Privacy and deletion copy**: all ten locales now explain manual/global memories and clarify that removing a learning language does not remove account memories.
+- **What's New version marker**: bumped to `v1.8.30` with localized memory redesign highlights.
+- **Memory save notification**: text and voice now share an accessible informational toast that confirms Lingu saved a memory, points users to Settings without a timed action, safely restarts and re-announces consecutive saves, and survives SSE events split across network chunks.
+- **Native-language memories**: Lingu now writes new automatic memories in the user's configured native language, independently of the language being studied, so saved facts remain directly readable in Settings. Manual and existing memories are left unchanged.
+
+### Fixed
+
+- **Study-plan lesson actions**: unit drawers now use persisted lesson state to offer Start for the current lesson, Resume for skipped pending lessons, and read-only Review for completed lessons. Their action buttons now match the plan overview, while a lesson-count heading, roomier rows, wider desktop layout, and sticky close footer improve readability without changing the drawer structure. Reviewing preserves saved answers and feedback without consuming quota or awarding progress again. Lesson completion now serializes concurrent requests, atomically commits completion with progress and competencies, permits quota-exhausted retries, blocks duplicate frontend submissions, and refreshes displayed freemium quota from the server.
+- **Progressive chat streaming with memory tools**: visible text from the initial response and the post-tool continuation is forwarded as soon as the provider emits it instead of being buffered until each generation completes. If a known tool incompatibility or failed tool continuation appears after partial text, chat discards that partial response before streaming one complete no-tools fallback; an empty fallback is reported as an error and is never persisted as a successful assistant message.
+- **Serialized memory deletion**: individual deletion and clear-all now use the same per-user database lock as memory creation, so an already-running save completes before the deletion transaction decides what to remove.
+- **Provider-safe memory tools**: OpenAI GPT-5.6 Chat Completions now use `reasoning_effort="none"` during the native memory-tool round, as required by the provider. OpenAI, Anthropic, DeepSeek, and Ollama tool incompatibilities or tool-stream failures fall back to the same turn with a prompt that does not advertise unavailable memory tools. Explicit incompatibility is recognized through wrapped provider errors and remembered only for the current voice session; transient failures are retried with tools on later turns.
+- **Durable memory confirmation**: a committed automatic memory save now emits its confirmation before any later continuation failure, including voice barge-in cancellation, without exposing failed or duplicate saves. Memory reads remain best-effort and cannot block text or voice tutoring.
+
 ## [1.8.27] - 2026-06-28
 
 ### Fixed
