@@ -604,7 +604,7 @@
     "testScore": "Wynik:",
     "pendingLessons": "Zaległe lekcje",
     "resume": "Wznów",
-    "continueLesson": "Kontynuuj",
+    "lessonsHeader": "Lekcje · {count}",
     "reviewLesson": "Przejrzyj",
     "noPlanLabel": "ZACZNIJ",
     "noPlanTitle": "Stwórz plan nauki",

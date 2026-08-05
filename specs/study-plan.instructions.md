@@ -352,7 +352,7 @@ When Stripe is enabled and `isSubscribed(user, stripeEnabled)` is false, the das
 
 The plan page combines the scheduled slots from `generated_plan` with persisted metadata from `GET /api/study-plan/lessons`, the current-day response from `GET /api/study-plan/today`, and skipped incomplete lessons from `GET /api/study-plan/pending-lessons`. Matching uses the same stable week/day/title identity enforced by the lesson uniqueness constraint.
 
-The unit drawer shows **Start** for the current lesson, **Continue** for a generated lesson left pending after a skipped day, **Review** for a completed lesson, and no action for a future slot that has not been generated. All actions open the existing lesson route by ID.
+The unit drawer shows **Start** for the current lesson, **Resume** for a generated lesson left pending after a skipped day, **Review** for a completed lesson, and no action for a future slot that has not been generated. All actions open the existing lesson route by ID. The drawer reuses the plan overview's solid primary action style, includes a localized lesson-count heading, gives lesson rows slightly more vertical space, and keeps its close action visible while scrolling.
 
 ### Lesson player (`frontend/src/app/(app)/lesson/[id]/page.tsx`)
 
