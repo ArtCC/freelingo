@@ -1268,7 +1268,13 @@ class TestNativeToolStreaming:
             adapter.client.chat.completions,
             "create",
             new_callable=AsyncMock,
-            side_effect=[RuntimeError("model does not support tools"), fallback_stream()],
+            side_effect=[
+                RuntimeError(
+                    "Function tools with reasoning_effort are not supported for "
+                    "this model in /v1/chat/completions"
+                ),
+                fallback_stream(),
+            ],
         ) as create:
             stream = await adapter.chat(
                 [{"role": "user", "content": "Hi"}],
@@ -1284,8 +1290,80 @@ class TestNativeToolStreaming:
         assert "tools" not in create.call_args_list[1].kwargs
 
     @pytest.mark.asyncio
-    async def test_openai_tool_call_executes_and_continues(self, monkeypatch):
+    async def test_unknown_tool_request_failure_falls_back_without_tools(self, monkeypatch):
         _make_ollama_settings(monkeypatch)
+        from app.services.llm_adapter import LLMAdapter, LLMError, LLMTool, LLMToolResult
+
+        async def fallback_stream():
+            yield FakeOpenAIChunk("Normal response.")
+
+        adapter = LLMAdapter()
+        tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+
+        async def executor(call):
+            return LLMToolResult(call=call, content={"saved": True})
+
+        with patch.object(
+            adapter,
+            "_call_with_retry",
+            new_callable=AsyncMock,
+            side_effect=[LLMError("unexpected tool request failure"), fallback_stream()],
+        ) as call:
+            stream = await adapter.chat(
+                [{"role": "user", "content": "Hi"}],
+                stream=True,
+                tools=[tool],
+                tool_executor=executor,
+            )
+            assert [part async for part in stream] == ["Normal response."]
+
+        assert stream.tools_unsupported is True
+        assert call.await_count == 2
+        assert call.call_args_list[0].args[3] == [tool]
+        assert call.call_args_list[1].args[3] is None
+
+    @pytest.mark.asyncio
+    async def test_tool_stream_failure_before_text_falls_back_without_tools(self, monkeypatch):
+        _make_ollama_settings(monkeypatch)
+        from app.services.llm_adapter import LLMAdapter, LLMTool, LLMToolResult
+
+        async def broken_stream():
+            raise RuntimeError("unexpected tool stream failure")
+            yield  # pragma: no cover
+
+        async def fallback_stream():
+            yield FakeOpenAIChunk("Normal response.")
+
+        adapter = LLMAdapter()
+        tool = LLMTool("save_user_memory", "Save memory", {"type": "object"})
+
+        async def executor(call):
+            return LLMToolResult(call=call, content={"saved": True})
+
+        with patch.object(
+            adapter.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            side_effect=[broken_stream(), fallback_stream()],
+        ) as create:
+            stream = await adapter.chat(
+                [{"role": "user", "content": "Hi"}],
+                stream=True,
+                tools=[tool],
+                tool_executor=executor,
+            )
+            assert [part async for part in stream] == ["Normal response."]
+
+        assert stream.tools_unsupported is True
+        assert len(create.call_args_list) == 2
+        assert "tools" in create.call_args_list[0].kwargs
+        assert "tools" not in create.call_args_list[1].kwargs
+
+    @pytest.mark.asyncio
+    async def test_openai_tool_call_executes_and_continues(self, monkeypatch, caplog):
+        monkeypatch.setattr("app.core.config.settings.LLM_PROVIDER", "openai")
+        monkeypatch.setattr("app.core.config.settings.OPENAI_API_KEY", "sk-test")
+        monkeypatch.setattr("app.core.config.settings.OPENAI_MODEL", "gpt-5.6-luna")
         from app.services.llm_adapter import (
             LLMAdapter,
             LLMTool,
@@ -1345,10 +1423,16 @@ class TestNativeToolStreaming:
         assert stream.prompt_tokens == 22
         assert stream.completion_tokens == 7
         assert "tools" in create.call_args_list[0].kwargs
+        assert create.call_args_list[0].kwargs["reasoning_effort"] == "none"
         assert "tools" not in create.call_args_list[1].kwargs
+        assert create.call_args_list[1].kwargs["reasoning_effort"] == "none"
         continuation = create.call_args_list[1].kwargs["messages"]
         assert continuation[-2]["role"] == "assistant"
         assert continuation[-1]["role"] == "tool"
+        adapter._log_native_tools_available()
+        assert (
+            caplog.text.count("Native tools available for provider=openai model=gpt-5.6-luna") == 1
+        )
 
     @pytest.mark.asyncio
     async def test_anthropic_tool_call_uses_native_result_blocks(self, monkeypatch):
@@ -1516,13 +1600,12 @@ class TestNativeToolStreaming:
             await adapter.chat([], tools=[tool])
 
     @pytest.mark.asyncio
-    async def test_stream_iteration_connection_error_is_typed(self, monkeypatch):
+    async def test_tool_continuation_failure_after_text_keeps_partial_response(self, monkeypatch):
         _make_ollama_settings(monkeypatch)
         from app.services.llm_adapter import (
             LLMAdapter,
             LLMTool,
             LLMToolResult,
-            LLMUnavailableError,
         )
 
         def tool_chunk():
@@ -1561,6 +1644,6 @@ class TestNativeToolStreaming:
             )
             iterator = stream.__aiter__()
             assert await asyncio.wait_for(anext(iterator), timeout=0.1) == "Partial"
-            with pytest.raises(LLMUnavailableError, match="unreachable"):
+            with pytest.raises(StopAsyncIteration):
                 await anext(iterator)
             assert len(create.call_args_list) == 2

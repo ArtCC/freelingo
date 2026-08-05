@@ -71,6 +71,8 @@ def _is_tools_unsupported_error(exc: BaseException) -> bool:
             "doesn't support tools",
             "tools are not supported",
             "tool use is not supported",
+            "function tools with reasoning_effort are not supported",
+            "function tools with reasoning effort are not supported",
             "unsupported parameter: 'tools'",
             'unsupported parameter: "tools"',
         )
@@ -333,17 +335,22 @@ class LLMToolStream(LLMStream):
                 initial_parts.append(text)
                 visible_text_emitted = True
                 yield text
-        except LLMToolsUnsupportedError:
+        except LLMToolsUnsupportedError as exc:
             if visible_text_emitted:
-                logger.warning(
-                    "%s rejected tools after visible text was streamed; "
-                    "cannot retry without duplicating output",
+                logger.info(
+                    "Native tools unavailable for provider=%s model=%s after visible text; "
+                    "keeping the partial response: %s",
                     self._adapter.provider,
-                    exc_info=True,
+                    self._adapter.model,
+                    exc,
                 )
-                raise
+                self.tools_unsupported = True
+                return
             logger.info(
-                "%s model rejected native tools; continuing without them", self._adapter.provider
+                "Native tools unavailable for provider=%s model=%s; continuing without them: %s",
+                self._adapter.provider,
+                self._adapter.model,
+                exc,
             )
             self.tools_unsupported = True
             fallback = await self._adapter._call_with_retry(
@@ -355,6 +362,34 @@ class LLMToolStream(LLMStream):
             async for text in self._provider_text_and_calls(fallback, collect_calls=False):
                 yield text
             return
+        except LLMError as exc:
+            if visible_text_emitted:
+                logger.warning(
+                    "%s tool-enabled stream failed after visible text was emitted; "
+                    "cannot retry without duplicating output",
+                    self._adapter.provider,
+                    exc_info=True,
+                )
+                raise
+            logger.info(
+                "Native tool stream failed for provider=%s model=%s; "
+                "continuing without tools: %s",
+                self._adapter.provider,
+                self._adapter.model,
+                exc,
+            )
+            self.tools_unsupported = True
+            fallback = await self._adapter._call_with_retry(
+                self._adapter._do_chat,
+                self._messages,
+                True,
+                None,
+            )
+            async for text in self._provider_text_and_calls(fallback, collect_calls=False):
+                yield text
+            return
+
+        self._adapter._log_native_tools_available()
 
         if not self.tool_calls:
             return
@@ -393,6 +428,7 @@ class LLMToolStream(LLMStream):
                 continuation_messages,
                 True,
                 None,
+                reasoning_effort=self._adapter._tool_reasoning_effort(self._tools),
             )
             async for text in self._provider_text_and_calls(
                 continuation,
@@ -400,19 +436,22 @@ class LLMToolStream(LLMStream):
             ):
                 visible_text_emitted = True
                 yield text
-        except LLMError:
+        except LLMError as exc:
             if visible_text_emitted:
-                logger.warning(
-                    "%s tool continuation failed after visible text was streamed; "
-                    "cannot retry without duplicating output",
+                logger.info(
+                    "Native tool continuation failed for provider=%s model=%s after visible "
+                    "text; keeping the partial response: %s",
                     self._adapter.provider,
-                    exc_info=True,
+                    self._adapter.model,
+                    exc,
                 )
-                raise
-            logger.warning(
-                "%s tool continuation failed; retrying the turn without tools",
+                return
+            logger.info(
+                "Native tool continuation failed for provider=%s model=%s; "
+                "retrying the turn without tools: %s",
                 self._adapter.provider,
-                exc_info=True,
+                self._adapter.model,
+                exc,
             )
             fallback = await self._adapter._call_with_retry(
                 self._adapter._do_chat,
@@ -427,6 +466,7 @@ class LLMToolStream(LLMStream):
 class LLMAdapter:
     def __init__(self):
         self.provider = settings.LLM_PROVIDER
+        self._native_tools_available_logged = False
         if self.provider == "ollama":
             self.client = AsyncOpenAI(
                 base_url=f"{settings.OLLAMA_BASE_URL}/v1",
@@ -504,9 +544,27 @@ class LLMAdapter:
                 stream,
                 tools,
                 tools_requested=bool(tools),
+                reasoning_effort=self._tool_reasoning_effort(tools),
             )
-        except LLMToolsUnsupportedError:
-            logger.info("%s model rejected native tools; continuing without them", self.provider)
+        except LLMToolsUnsupportedError as exc:
+            logger.info(
+                "Native tools unavailable for provider=%s model=%s; continuing without them: %s",
+                self.provider,
+                self.model,
+                exc,
+            )
+            result = await self._call_with_retry(self._do_chat, messages, stream, None)
+            tools_unsupported = True
+        except LLMError as exc:
+            if not tools:
+                raise
+            logger.info(
+                "Native tool request failed for provider=%s model=%s; "
+                "continuing without tools: %s",
+                self.provider,
+                self.model,
+                exc,
+            )
             result = await self._call_with_retry(self._do_chat, messages, stream, None)
             tools_unsupported = True
         if not stream:
@@ -529,6 +587,8 @@ class LLMAdapter:
         messages: list[dict],
         stream: bool = False,
         tools: list[LLMTool] | None = None,
+        *,
+        reasoning_effort: str | None = None,
     ):
         if self.provider == "anthropic":
             return await self._anthropic_chat(messages, stream, tools)
@@ -551,6 +611,8 @@ class LLMAdapter:
                 }
                 for tool in tools
             ]
+        if reasoning_effort is not None:
+            extra["reasoning_effort"] = reasoning_effort
 
         response = await self.client.chat.completions.create(
             model=self.model,
@@ -566,6 +628,21 @@ class LLMAdapter:
         if not content:
             raise LLMResponseError("LLM returned empty response")
         return content
+
+    def _log_native_tools_available(self) -> None:
+        if self._native_tools_available_logged:
+            return
+        logger.info(
+            "Native tools available for provider=%s model=%s",
+            self.provider,
+            self.model,
+        )
+        self._native_tools_available_logged = True
+
+    def _tool_reasoning_effort(self, tools: list[LLMTool] | None) -> str | None:
+        if tools and self.provider == "openai" and self.model.startswith("gpt-5.6"):
+            return "none"
+        return None
 
     async def structured_output(self, messages: list[dict], schema: type[BaseModel]) -> BaseModel:
         # Use JSON mode for all providers — more reliable across versions

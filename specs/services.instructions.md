@@ -19,10 +19,10 @@ Singleton providing provider-agnostic LLM access. Supports four providers select
 **Key capabilities:**
 
 - `chat(messages, stream=False, tools=None, tool_executor=None)` — returns a string or normalized async stream; native tools require streaming and an executor
-- Native tool streaming supports OpenAI-compatible and Anthropic event formats, forwards visible text progressively while keeping tool metadata internal, executes at most the first tool call, then performs one provider-native continuation without re-offering tools. Explicitly unsupported tools and failed continuations fall back once to the original turn without tools only when no visible text has been emitted; this prevents duplicate partial responses. Executor failures stay internal, and the returned stream exposes normalized `tool_results` and combined token usage.
+- Native tool streaming supports OpenAI-compatible and Anthropic event formats, forwards visible text progressively while keeping tool metadata internal, executes at most the first tool call, then performs one provider-native continuation without re-offering tools. OpenAI GPT-5.6 Chat Completions use `reasoning_effort="none"` only for that tool round; Anthropic, DeepSeek, Ollama, older OpenAI families, and ordinary no-tool requests receive no such parameter. Tool-enabled request or stream failures before visible output fall back once to the original turn without tools across every provider. Continuation failures after visible output keep the partial response rather than duplicate it or fail the conversation. The first successful tool-capable stream logs provider/model availability once per process; unavailable and fallback paths log provider, model, and reason at `INFO`. Executor failures stay internal, and the returned stream exposes normalized `tool_results` and combined token usage.
 - `structured_output(messages, schema)` — returns validated Pydantic model (JSON mode + retry on parse failure)
 - `parse_llm_json(raw)` — module-level utility; strips optional code fences and parses JSON from LLM output. Kept for lower-level parsing tests and any legacy callers; reading/listening generation now uses `structured_output()`.
-- 2 automatic retries with exponential backoff, 60 s timeout
+- 2 automatic retries with exponential backoff, 120 s timeout
 - Custom exception hierarchy: `LLMError`, `LLMTimeoutError`, `LLMUnavailableError`, `LLMResponseError`, `LLMContextOverflowError`
 
 ## Assessment Service (`assessment.py`)
