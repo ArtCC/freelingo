@@ -351,6 +351,7 @@ describe('UnitDrawer', () => {
 
   it('renders all lesson titles', () => {
     renderUnitDrawer()
+    expect(screen.getByText('lessonsHeader')).toBeInTheDocument()
     expect(screen.getByText('Verb Conjugation')).toBeInTheDocument()
     expect(screen.getByText('Common Phrases')).toBeInTheDocument()
     expect(screen.getByText('Reading Comprehension')).toBeInTheDocument()
@@ -397,19 +398,19 @@ describe('UnitDrawer', () => {
   it('renders the action matching each available lesson state', () => {
     renderUnitDrawer()
     expect(screen.getByText('reviewLesson')).toBeInTheDocument()
-    expect(screen.getByText('continueLesson')).toBeInTheDocument()
-    expect(screen.getByText('start')).toBeInTheDocument()
+    expect(screen.getByText('resume')).toBeInTheDocument()
+    expect(screen.getByText('start →')).toBeInTheDocument()
   })
 
   it('does not render start button when lesson id is null', () => {
     renderUnitDrawer({ lessons: mockLessonsWithNullId })
-    expect(screen.getAllByText('start')).toHaveLength(1)
+    expect(screen.getAllByText('start →')).toHaveLength(1)
   })
 
   it('calls onStartLesson with correct lesson id when start is clicked', () => {
     const onStartLesson = vi.fn()
     renderUnitDrawer({ onStartLesson })
-    fireEvent.click(screen.getByText('continueLesson'))
+    fireEvent.click(screen.getByText('resume'))
     expect(onStartLesson).toHaveBeenCalledTimes(1)
     expect(onStartLesson).toHaveBeenCalledWith(2)
   })

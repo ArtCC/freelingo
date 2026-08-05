@@ -604,7 +604,7 @@
     "testScore": "Score:",
     "pendingLessons": "Openstaande lessen",
     "resume": "Hervatten",
-    "continueLesson": "Doorgaan",
+    "lessonsHeader": "Lessen · {count}",
     "reviewLesson": "Bekijken",
     "noPlanLabel": "BEGINNEN",
     "noPlanTitle": "Maak je studieplan",

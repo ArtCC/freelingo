@@ -604,7 +604,7 @@
     "testScore": "Score:",
     "pendingLessons": "Pending lessons",
     "resume": "Resume",
-    "continueLesson": "Continue",
+    "lessonsHeader": "Lessons · {count}",
     "reviewLesson": "Review",
     "noPlanLabel": "GET STARTED",
     "noPlanTitle": "Create your study plan",

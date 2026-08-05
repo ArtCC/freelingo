@@ -604,7 +604,7 @@
     "testScore": "Punktzahl:",
     "pendingLessons": "Ausstehende Lektionen",
     "resume": "Fortsetzen",
-    "continueLesson": "Fortsetzen",
+    "lessonsHeader": "Lektionen · {count}",
     "reviewLesson": "Wieder ansehen",
     "noPlanLabel": "LOS GEHTS",
     "noPlanTitle": "Erstelle deinen Lernplan",
