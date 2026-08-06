@@ -322,7 +322,7 @@
   "legal": {
     "terms": {
       "pageTitle": "Conditions d'utilisation",
-      "updated": "Dernière mise à jour : juin 2026",
+      "updated": "Dernière mise à jour : août 2026",
       "s1Title": "1. À propos de FreeLingo",
       "s1Body": "FreeLingo est une plateforme d'apprentissage des langues propulsée par l'IA, disponible en deux modes : (1) auto-hébergé, où vous l'exécutez sur votre propre infrastructure sans frais, et (2) comme service hébergé opéré par l'équipe FreeLingo, avec un forfait gratuit et des abonnements payants. En utilisant ce service dans l'un ou l'autre mode, vous acceptez ces Conditions d'utilisation.",
       "s2Title": "2. Utilisation acceptable",
@@ -338,21 +338,21 @@
       "s5Title": "5. Modalités du service",
       "s5Body": "Les déploiements auto-hébergés sont gratuits et l'opérateur conserve le contrôle total de ses données et de son infrastructure. Le service hébergé opéré par l'équipe FreeLingo propose un forfait gratuit avec des limites d'utilisation et des abonnements payants pour un accès illimité, disponibles en formule mensuelle ou annuelle. Le forfait gratuit inclut un essai de 7 jours en accès complet (sans moyen de paiement requis) puis des quotas quotidiens limités pour les leçons et le chat IA, ainsi que des quotas hebdomadaires pour les exercices d'écoute, de lecture et les conversations vocales. Les abonnements payants suppriment toutes les limites d'utilisation de ces fonctionnalités. Dans le service hébergé, vos données sont stockées sur des serveurs opérés par l'équipe FreeLingo. Les limites d'utilisation actuelles de votre compte sont disponibles sur votre tableau de bord.",
       "s6Title": "6. Abonnement et facturation",
-      "s6Body": "Le forfait gratuit inclut un accès limité aux fonctionnalités d'IA avec un essai de 7 jours en accès complet pour les nouveaux utilisateurs (sans moyen de paiement requis). Les abonnements payants sont disponibles en cycle de facturation mensuel ou annuel et se renouvellent automatiquement sauf annulation avant la date de renouvellement. Les nouveaux abonnés à un forfait payant bénéficient d'une période d'essai gratuite (coordonnées de paiement requises ; aucun prélèvement n'est effectué pendant l'essai). Vous pouvez annuler à tout moment depuis les paramètres de votre compte, avec effet à la fin de la période de facturation en cours. Si vous annulez dans les 14 jours suivant votre premier paiement et n'avez pas utilisé le service de manière significative, vous pouvez demander un remboursement complet au titre du droit de rétractation de l'UE. Aucun remboursement partiel n'est accordé pour le temps non utilisé au-delà de ce droit. Les prix actuels des abonnements sont affichés lors du paiement.",
+      "s6Body": "Le forfait gratuit offre un accès limité aux fonctions d'IA avec un essai complet de 7 jours pour les nouveaux utilisateurs. Les abonnements payants sont mensuels ou annuels et se renouvellent automatiquement sauf annulation préalable. Vous pouvez annuler depuis les paramètres, avec effet à la fin de la période en cours. L'opérateur peut aussi annuler les renouvellements ou abonnements si le service est modifié ou fermé. Si le service prend fin avant une période déjà payée, le remboursement exigé par le droit de la consommation s'applique.",
       "s7Title": "7. Disponibilité",
-      "s7Body": "Ce service est fourni sans garantie de disponibilité. L'opérateur peut suspendre ou interrompre le service pour maintenance, mises à jour ou toute autre raison, avec un préavis raisonnable dans la mesure du possible.",
+      "s7Body": "Le service hébergé est fourni sans garantie de continuité ni de disponibilité. L'opérateur peut le modifier, le suspendre ou le fermer à tout moment pour des raisons techniques, économiques ou autres. Dans la mesure du raisonnable, les fermetures planifiées seront annoncées dans l'application ou par e-mail. Après la date annoncée, les comptes et données opérationnelles pourront être supprimés sans récupération. FreeLingo ne fournit ni service de sauvegarde ni outil d'exportation automatique.",
       "s8Title": "8. Limitation de responsabilité",
       "s8Body": "FreeLingo et ses contributeurs ne sont pas responsables des dommages directs, indirects, accessoires ou consécutifs découlant de votre utilisation ou de l'impossibilité d'utiliser ce service. Dans la limite maximale autorisée par la loi applicable, la responsabilité totale ne dépassera pas le montant payé par vous au cours des trois mois précédant la réclamation. Vous acceptez d'indemniser et de dégager de toute responsabilité FreeLingo et ses contributeurs contre toute réclamation, dommage ou dépense de tiers découlant de votre utilisation du service en violation des présentes conditions.",
       "s9Title": "9. Droit applicable",
       "s9Body": "Ces conditions sont régies par le droit espagnol. Tout litige découlant de ces conditions sera soumis à la juridiction exclusive des tribunaux espagnols, sauf si la législation sur la protection des consommateurs de votre pays de résidence prévoit le contraire.",
       "s10Title": "10. Modifications des conditions",
-      "s10Body": "Ces conditions peuvent être mises à jour à tout moment. Nous informerons les utilisateurs des modifications importantes via l'interface du service. L'utilisation continue du service après les modifications vaut acceptation des conditions révisées.",
+      "s10Body": "Ces conditions peuvent être mises à jour à tout moment. Les modifications importantes seront communiquées via l'interface ou par e-mail lorsque cela est approprié. La poursuite de l'utilisation vaut acceptation des conditions révisées.",
       "s11Title": "11. Divisibilité",
       "s11Body": "Si une disposition des présentes conditions est jugée invalide ou inapplicable par un tribunal compétent, cette disposition sera limitée ou supprimée dans la mesure minimale nécessaire et les autres dispositions resteront pleinement en vigueur.",
       "linkPrivacy": "Politique de confidentialité",
       "linkBack": "Retour à l'inscription",
       "linkBackSettings": "Retour aux paramètres",
-      "linkContact": "Pour toute question concernant ces conditions, contactez-nous via le formulaire de contact sur freelingo.app."
+      "linkContact": "Pour toute question, utilisez le formulaire de freelingo.app tant qu'il est disponible ou le canal de contact publié dans le dépôt GitHub de FreeLingo."
     },
     "privacy": {
       "pageTitle": "Politique de confidentialité",
@@ -385,11 +385,11 @@
       "s5Title": "5. Cookies et jetons de session",
       "s5Body": "FreeLingo utilise deux cookies techniques strictement nécessaires au fonctionnement du service : un refresh_token (httpOnly, expiration 30 jours) pour l'authentification de session, et NEXT_LOCALE (expiration 1 an) pour mémoriser votre préférence de langue. Aucun cookie de suivi ou publicitaire n'est utilisé. Pour la mesure anonyme du trafic, nous utilisons Umami — un outil d'analyse auto-hébergé et open source qui n'utilise pas de cookies, ne collecte aucune donnée personnelle et conserve toutes les données sur nos serveurs.",
       "s6Title": "6. Vos droits (RGPD)",
-      "s6Body": "Si vous résidez dans l'Espace économique européen, vous avez le droit d'accéder aux données personnelles que nous détenons sur vous ; de demander la correction de données inexactes ; de demander la suppression de votre compte et de toutes les données associées (disponible directement depuis la page Paramètres) ; de vous opposer au traitement ; et de demander la portabilité de vos données. Pour exercer ces droits, contactez-nous à l'adresse indiquée à la section 8 ou supprimez votre compte directement depuis paramètres. Base juridique du traitement (Art. 6(1)(b) RGPD) : nous traitons vos données personnelles car cela est nécessaire à l'exécution du contrat entre vous et nous — la fourniture du service FreeLingo. Transferts internationaux : lors de l'utilisation du service hébergé, le contenu de vos conversations et vos données audio peuvent être traités par OpenAI, Inc. (États-Unis), et les données de paiement sont traitées par Stripe, Inc. (États-Unis). Ces transferts sont réalisés dans le cadre des Clauses Contractuelles Types approuvées par la Commission européenne (Art. 46 RGPD), garantissant un niveau de protection adéquat. Droit de réclamation : vous avez le droit d'introduire une réclamation auprès de la Commission nationale de l'informatique et des libertés (CNIL — cnil.fr) ou auprès de l'autorité de contrôle de votre pays de résidence.",
+      "s6Body": "Dans l'Espace économique européen, vous disposez des droits RGPD d'accès, de rectification, de suppression, d'opposition et de portabilité. Vous pouvez supprimer votre compte depuis les Paramètres. Les autres demandes sont traitées manuellement via le contact de la section 8 ; FreeLingo ne fournit pas d'outil d'exportation automatique. Les données sont traitées pour fournir le service (art. 6(1)(b) RGPD). OpenAI et Stripe peuvent traiter des données aux États-Unis selon les garanties applicables aux transferts internationaux. Vous pouvez saisir votre autorité de contrôle.",
       "s7Title": "7. Conservation et suppression des données",
-      "s7Body": "Vos données sont conservées tant que votre compte existe. Vous pouvez supprimer certains souvenirs ou tous les effacer depuis les Paramètres. La suppression d'une langue efface ses données propres, mais conserve les souvenirs globaux de votre compte. Vous pouvez supprimer votre compte et toutes les données associées à tout moment depuis les Paramètres ; cette suppression est immédiate et irréversible.",
+      "s7Body": "Les données opérationnelles sont conservées tant que votre compte existe et que le service hébergé reste actif. Vous pouvez supprimer des souvenirs, des langues ou tout votre compte depuis les Paramètres. À la fermeture du service, l'opérateur peut supprimer tous les comptes et leurs données après le préavis raisonnablement possible. La suppression est irréversible. Après suppression des systèmes et copies sous le contrôle de l'opérateur, FreeLingo ne conservera aucune donnée personnelle. Stripe pourra conserver les informations de paiement et de transaction selon sa propre politique et ses obligations légales.",
       "s8Title": "8. Contact",
-      "s8Body": "Pour toute question relative à la confidentialité du service hébergé, contactez-nous via le formulaire de contact sur freelingo.app. Pour les déploiements auto-hébergés, contactez l'administrateur de l'instance que vous utilisez. Pour les questions sur le projet open source FreeLingo, visitez le dépôt du projet sur GitHub.",
+      "s8Body": "Pour les questions de confidentialité du service hébergé, utilisez le formulaire de freelingo.app tant qu'il est disponible. Après la fermeture, utilisez le canal de contact publié dans le dépôt GitHub de FreeLingo et ne publiez aucune donnée personnelle dans une issue publique. Pour une installation auto-hébergée, contactez son administrateur.",
       "s9Title": "9. Divisibilité",
       "s9Body": "Si une disposition de cette politique est jugée invalide ou inapplicable, cette disposition sera limitée dans la mesure minimale nécessaire et les autres dispositions resteront pleinement en vigueur.",
       "linkTerms": "Conditions d'utilisation",
@@ -448,7 +448,9 @@
     "premiumBannerPastDueDesc": "Mettez à jour votre moyen de paiement pour rétablir l'accès Premium au chat, à la conversation vocale, au reading et au listening.",
     "premiumBannerPastDueCta": "Rétablir Premium",
     "freemiumTrialTitle": "{days, plural, one {# jour d'essai gratuit} other {# jours d'essai gratuit}}",
-    "freemiumTrialDesc": "Profitez d'un accès illimité au chat, à la voix, au listening et au reading. Essayez tout Premium gratuitement."
+    "freemiumTrialDesc": "Profitez d'un accès illimité au chat, à la voix, au listening et au reading. Essayez tout Premium gratuitement.",
+    "announcementDismiss": "Fermer l'annonce",
+    "announcementDismissError": "Impossible de fermer l'annonce. Réessayez."
   },
   "assessment": {
     "title": "Évaluation",
@@ -980,7 +982,41 @@
     "pendingBugs": "Bugs en attente",
     "pendingBugsDesc": "Rapports de bugs en attente de triage administrateur.",
     "pastDueSubscriptions": "Abonnements en retard",
-    "pastDueSubscriptionsDesc": "Comptes avec des problèmes de paiement pouvant nécessiter une vérification."
+    "pastDueSubscriptionsDesc": "Comptes avec des problèmes de paiement pouvant nécessiter une vérification.",
+    "dashboardBanner": {
+      "title": "Annonce du tableau de bord",
+      "description": "Créez, traduisez, vérifiez et publiez une annonce sur le tableau de bord de chaque apprenant.",
+      "loading": "Chargement de l'annonce...",
+      "loadError": "Impossible de charger l'annonce du tableau de bord.",
+      "sourceLocale": "Langue source",
+      "activeLabel": "Publier l'annonce",
+      "activeHint": "Les annonces inactives sont enregistrées mais masquées aux apprenants.",
+      "fieldTitle": "Titre",
+      "fieldSubtitle": "Sous-titre",
+      "fieldDescription": "Description",
+      "translate": "Traduire",
+      "translateSuccess": "Traductions générées. Vérifiez-les avant d'enregistrer.",
+      "translateError": "La traduction a échoué. Votre contenu actuel a été conservé.",
+      "editTranslation": "Traduction à modifier",
+      "completion": "{complete}/{total} langues complètes",
+      "save": "Enregistrer l'annonce",
+      "saveSuccess": "Annonce du tableau de bord enregistrée.",
+      "saveError": "Impossible d'enregistrer l'annonce du tableau de bord.",
+      "revision": "Révision {revision}",
+      "updated": "Mis à jour le {date}",
+      "locales": {
+        "en": "Anglais",
+        "es": "Espagnol",
+        "fr": "Français",
+        "pt": "Portugais",
+        "de": "Allemand",
+        "it": "Italien",
+        "ru": "Russe",
+        "nl": "Néerlandais",
+        "pl": "Polonais",
+        "ro": "Roumain"
+      }
+    }
   },
   "faq": {
     "title": "FAQ",
@@ -1402,7 +1438,7 @@
   },
   "whatsNew": {
     "title": "Nouveautés",
-    "version": "v1.8.30",
+    "version": "v1.8.35",
     "cta": "Compris",
     "entry1": {
       "label": "Des souvenirs qui vous suivent",

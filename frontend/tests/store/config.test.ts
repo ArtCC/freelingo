@@ -12,6 +12,7 @@ describe('useConfigStore', () => {
       ttsProvider: 'local',
       openaiTtsVoice: 'nova',
       maintenanceMode: false,
+      dashboardBanner: null,
       loaded: false,
     })
     vi.stubGlobal('fetch', vi.fn())
@@ -32,6 +33,12 @@ describe('useConfigStore', () => {
           openai_tts_voice: 'alloy',
           maintenance_mode: true,
           freemium_trial_enabled: false,
+          dashboard_banner: {
+            revision: 3,
+            translations: {
+              en: { title: 'News', subtitle: 'Today', description: 'Details' },
+            },
+          },
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       )
@@ -45,6 +52,7 @@ describe('useConfigStore', () => {
     expect(useConfigStore.getState().openaiTtsVoice).toBe('alloy')
     expect(useConfigStore.getState().maintenanceMode).toBe(true)
     expect(useConfigStore.getState().freemiumTrialEnabled).toBe(false)
+    expect(useConfigStore.getState().dashboardBanner?.revision).toBe(3)
     expect(useConfigStore.getState().loaded).toBe(true)
   })
 
@@ -99,5 +107,6 @@ describe('useConfigStore', () => {
     expect(useConfigStore.getState().openaiTtsVoice).toBe('nova')
     expect(useConfigStore.getState().maintenanceMode).toBe(false)
     expect(useConfigStore.getState().freemiumTrialEnabled).toBe(true)
+    expect(useConfigStore.getState().dashboardBanner).toBeNull()
   })
 })

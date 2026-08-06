@@ -322,7 +322,7 @@
   "legal": {
     "terms": {
       "pageTitle": "Terms of Service",
-      "updated": "Last updated: June 2026",
+      "updated": "Last updated: August 2026",
       "s1Title": "1. About FreeLingo",
       "s1Body": "FreeLingo is an open-source AI-powered language learning platform available in two modes: (1) self-hosted, where you run it on your own infrastructure at no cost, and (2) as a hosted service operated by the FreeLingo team with a free plan and paid subscriptions. By using this service in either mode, you agree to these Terms of Service.",
       "s2Title": "2. Acceptable Use",
@@ -338,21 +338,21 @@
       "s5Title": "5. Service Modalities",
       "s5Body": "Self-hosted deployments are free and the operator retains full control over their data and infrastructure. The hosted service operated by the FreeLingo team offers a free plan with usage limits and paid subscriptions for unlimited access, available on a monthly or yearly basis. The free plan includes a 7-day full-access trial (no payment method required) and thereafter limited daily quotas for lessons and AI chat, plus weekly quotas for listening exercises, reading exercises, and voice conversations. Paid subscriptions remove all usage limits on these features. In the hosted service your data is stored on servers operated by the FreeLingo team. Current usage limits for your account are available on your dashboard.",
       "s6Title": "6. Subscription & Billing",
-      "s6Body": "The free plan includes limited access to AI-powered features with a 7-day full-access trial for new users (no payment method required). Paid subscriptions are available on a monthly or yearly billing cycle and renew automatically unless cancelled before the renewal date. New subscribers to a paid plan receive a free trial period (payment details required to start; no charge is made until the trial ends). You may cancel at any time from your account settings, effective at the end of the current billing period. If you cancel within 14 days of your first subscription payment and have not meaningfully used the service, you may request a full refund under EU consumer law. No partial refunds are issued for unused time beyond this statutory right. Current subscription prices are displayed at checkout.",
+      "s6Body": "The free plan provides limited access to AI features with a 7-day full-access trial for new users (no payment method required). Paid subscriptions are available monthly or yearly and renew automatically unless cancelled beforehand. You may cancel from Settings at any time, effective at the end of the current period. The operator may also cancel renewals or subscriptions if the service is changed or closed. If the service ends before a paid period finishes, any refund required by consumer law will apply. Withdrawal rights and applicable prices are displayed and handled in accordance with current law.",
       "s7Title": "7. Availability",
-      "s7Body": "This service is provided without uptime guarantees. The operator may suspend or discontinue the service for maintenance, updates, or any other reason, with reasonable notice where possible.",
+      "s7Body": "The hosted service is provided without continuity or availability guarantees. The operator may change, suspend, or close it at any time for technical, financial, or any other reasons. Where reasonably possible, planned closures will be announced through the application or by email. After the announced date, accounts and operational data may be deleted without recovery. FreeLingo does not provide a backup service or an automated export tool.",
       "s8Title": "8. Limitation of Liability",
       "s8Body": "FreeLingo and its contributors are not liable for any direct, indirect, incidental or consequential damages arising from your use of, or inability to use, this service. To the maximum extent permitted by applicable law, total liability shall not exceed the amount paid by you in the three months preceding the claim. You agree to indemnify and hold harmless FreeLingo and its contributors from any third-party claims, damages, or expenses arising from your use of the service in violation of these terms.",
       "s9Title": "9. Governing Law",
       "s9Body": "These terms are governed by the laws of Spain. Any disputes arising from these terms shall be subject to the exclusive jurisdiction of the courts of Spain, unless mandatory consumer protection law in your country of residence provides otherwise.",
       "s10Title": "10. Changes to These Terms",
-      "s10Body": "These terms may be updated at any time. We will notify users of material changes via the service interface. Continued use of the service after changes constitutes acceptance of the revised terms.",
+      "s10Body": "These terms may be updated at any time. Material changes will be communicated through the service interface or by email when appropriate. Continued use after a change constitutes acceptance of the revised terms.",
       "s11Title": "11. Severability",
       "s11Body": "If any provision of these terms is found to be invalid or unenforceable by a court of competent jurisdiction, that provision will be limited or eliminated to the minimum extent necessary and the remaining provisions will remain in full force and effect.",
       "linkPrivacy": "Privacy Policy",
       "linkBack": "Back to Register",
       "linkBackSettings": "Back to Settings",
-      "linkContact": "For questions about these terms, contact us via the contact form at freelingo.app."
+      "linkContact": "For questions about these terms, use the contact form at freelingo.app while available or the contact channel published in the FreeLingo GitHub repository."
     },
     "privacy": {
       "pageTitle": "Privacy Policy",
@@ -385,11 +385,11 @@
       "s5Title": "5. Cookies & Session Tokens",
       "s5Body": "FreeLingo uses two technical cookies strictly necessary for the service to function: a refresh_token (httpOnly, 30-day expiry) used for session authentication, and NEXT_LOCALE (1-year expiry) to remember your language preference. No tracking or advertising cookies are used. For anonymous traffic measurement, we use Umami — a self-hosted, open-source analytics tool that does not use cookies, collects no personal data, and keeps all data on our servers.",
       "s6Title": "6. Your Rights (GDPR)",
-      "s6Body": "If you are in the European Economic Area, you have the right to: access the personal data we hold about you; request correction of inaccurate data; request deletion of your account and all associated data (available directly from the Settings page); object to processing; and request data portability. To exercise these rights, contact us at the address in section 8 or delete your account directly from Settings. Legal basis for processing (Art. 6(1)(b) GDPR): we process your personal data because it is necessary for the performance of the contract between you and us — providing the FreeLingo learning service. International transfers: when using the hosted service, your conversation content and audio may be processed by OpenAI, Inc. (USA), and payment data is processed by Stripe, Inc. (USA). These transfers are carried out under the Standard Contractual Clauses approved by the European Commission (Art. 46 GDPR), ensuring an adequate level of protection. Right to lodge a complaint: you have the right to lodge a complaint with the Spanish Data Protection Authority (AEPD — aepd.es) or with the supervisory authority in your country of residence.",
+      "s6Body": "If you are in the European Economic Area, you have the GDPR rights of access, correction, deletion, objection, and data portability. You can delete your account directly from Settings. Other requests are handled manually through the contact in section 8; FreeLingo does not provide an automated export tool. We process data to provide the service (Art. 6(1)(b) GDPR). OpenAI and Stripe may process data in the USA under the safeguards applicable to international transfers. You may complain to the Spanish Data Protection Authority (aepd.es) or your local supervisory authority.",
       "s7Title": "7. Data Retention & Deletion",
-      "s7Body": "Your data is retained for as long as your account exists. You can delete individual memories or clear them all from Settings. Removing a learning language deletes its language-specific data but preserves your global account memories. You can permanently delete your account and all associated data at any time from Settings; account deletion is immediate and irreversible.",
+      "s7Body": "Operational data is kept while your account exists and the hosted service remains active. You can delete memories, languages, or your entire account from Settings. The operator may also delete all accounts and their data when closing the service, after whatever reasonable notice is possible. Deletion cannot be undone. After deleting the systems and copies under the operator's control, FreeLingo will not retain personal data. Stripe may retain payment and transaction information under its own policy and legal obligations.",
       "s8Title": "8. Contact",
-      "s8Body": "For privacy-related concerns about the hosted service, contact us via the contact form at freelingo.app. For self-hosted deployments, contact the administrator of the instance you are using. For questions about the FreeLingo open-source project, visit the project repository on GitHub.",
+      "s8Body": "For hosted-service privacy questions, use the contact form at freelingo.app while available. After closure, use the contact channel published in the FreeLingo GitHub repository and do not post personal data in public issues. For self-hosted deployments, contact that instance's administrator.",
       "s9Title": "9. Severability",
       "s9Body": "If any provision of this policy is found to be invalid or unenforceable, that provision will be limited to the minimum extent necessary and the remaining provisions will remain in full force and effect.",
       "linkTerms": "Terms of Service",
@@ -448,7 +448,9 @@
     "premiumBannerPastDueDesc": "Update your payment method to restore Premium access to chat, voice conversation, reading and listening.",
     "premiumBannerPastDueCta": "Restore Premium",
     "freemiumTrialTitle": "{days, plural, one {# day of free trial} other {# days of free trial}}",
-    "freemiumTrialDesc": "Enjoy unlimited access to chat, voice, listening and reading. Try everything Premium for free."
+    "freemiumTrialDesc": "Enjoy unlimited access to chat, voice, listening and reading. Try everything Premium for free.",
+    "announcementDismiss": "Dismiss announcement",
+    "announcementDismissError": "Could not dismiss the announcement. Try again."
   },
   "assessment": {
     "title": "Assessment",
@@ -980,7 +982,41 @@
     "pendingBugs": "Pending bug reports",
     "pendingBugsDesc": "Bug reports waiting for admin triage.",
     "pastDueSubscriptions": "Past due subscriptions",
-    "pastDueSubscriptionsDesc": "Accounts with payment issues that may need review."
+    "pastDueSubscriptionsDesc": "Accounts with payment issues that may need review.",
+    "dashboardBanner": {
+      "title": "Dashboard announcement",
+      "description": "Create, translate, review and publish an announcement for every learner dashboard.",
+      "loading": "Loading announcement...",
+      "loadError": "Failed to load the dashboard announcement.",
+      "sourceLocale": "Source language",
+      "activeLabel": "Publish announcement",
+      "activeHint": "Inactive announcements are saved but hidden from learners.",
+      "fieldTitle": "Title",
+      "fieldSubtitle": "Subtitle",
+      "fieldDescription": "Description",
+      "translate": "Translate",
+      "translateSuccess": "Translations generated. Review them before saving.",
+      "translateError": "Translation failed. Your current content was kept.",
+      "editTranslation": "Translation to edit",
+      "completion": "{complete}/{total} languages complete",
+      "save": "Save announcement",
+      "saveSuccess": "Dashboard announcement saved.",
+      "saveError": "Failed to save the dashboard announcement.",
+      "revision": "Revision {revision}",
+      "updated": "Updated {date}",
+      "locales": {
+        "en": "English",
+        "es": "Spanish",
+        "fr": "French",
+        "pt": "Portuguese",
+        "de": "German",
+        "it": "Italian",
+        "ru": "Russian",
+        "nl": "Dutch",
+        "pl": "Polish",
+        "ro": "Romanian"
+      }
+    }
   },
   "faq": {
     "title": "FAQ",
@@ -1402,7 +1438,7 @@
   },
   "whatsNew": {
     "title": "What's New",
-    "version": "v1.8.30",
+    "version": "v1.8.35",
     "cta": "Got it",
     "entry1": {
       "label": "Memories that follow you",

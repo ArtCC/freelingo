@@ -1,5 +1,16 @@
 import { create } from 'zustand'
 
+export interface DashboardBannerTranslation {
+  title: string
+  subtitle: string
+  description: string
+}
+
+export interface DashboardBanner {
+  revision: number
+  translations: Record<string, DashboardBannerTranslation>
+}
+
 interface ConfigStore {
   stripeEnabled: boolean
   stripeTrialDays: number
@@ -11,6 +22,7 @@ interface ConfigStore {
   priceYearly: number
   totalPriceMonthly: number
   totalPriceYearly: number
+  dashboardBanner: DashboardBanner | null
   loaded: boolean
   load: () => Promise<void>
 }
@@ -26,6 +38,7 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
   priceYearly: 0.0,
   totalPriceMonthly: 0.0,
   totalPriceYearly: 0.0,
+  dashboardBanner: null,
   loaded: false,
   load: async () => {
     if (get().loaded) return
@@ -44,6 +57,7 @@ export const useConfigStore = create<ConfigStore>((set, get) => ({
         priceYearly: data.price_yearly ?? 0.0,
         totalPriceMonthly: data.total_price_monthly ?? 0.0,
         totalPriceYearly: data.total_price_yearly ?? 0.0,
+        dashboardBanner: data.dashboard_banner ?? null,
         loaded: true,
       })
     } catch {

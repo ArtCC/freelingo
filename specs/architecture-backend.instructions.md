@@ -25,7 +25,7 @@ backend/
 │   │   ├── app_logger.py        # Structured logging (structlog)
 │   │   └── limiter.py           # slowapi rate limiter setup
 │   │
-│   ├── models/                  # SQLAlchemy 2.0 ORM models (16 files, 22 model classes)
+│   ├── models/                  # SQLAlchemy 2.0 ORM models (17 files, 23 model classes)
 │   │   ├── __init__.py
 │   │   ├── user.py              # User, UserPreferences, user quotas, avatar
 │   │   ├── user_language.py     # UserLanguage (phase 10: multi-language learning)
@@ -35,6 +35,7 @@ backend/
 │   │   ├── competency.py        # UserCompetency (curriculum tracking)
 │   │   ├── flashcard.py         # Flashcard (SM-2 algorithm)
 │   │   ├── conversation.py      # Conversation (voice sessions)
+│   │   ├── dashboard_banner.py  # Singleton multilingual dashboard announcement
 │   │   ├── chat_history.py      # ChatHistory (text chat messages)
 │   │   ├── listening.py         # ListeningExercise, ListeningAttempt
 │   │   ├── reading.py           # ReadingExercise, ReadingAttempt
@@ -44,12 +45,13 @@ backend/
 │   │   ├── memory.py            # Memory (persistent LLM context)
 │   │   └── llm_usage.py         # LLMUsage (token audit trail)
 │   │
-│   ├── schemas/                 # Pydantic v2 request/response schemas (15 modules)
+│   ├── schemas/                 # Pydantic v2 request/response schemas (20 modules)
 │   │   ├── __init__.py
 │   │   ├── auth.py
 │   │   ├── admin.py
 │   │   ├── assessment.py
 │   │   ├── chat.py
+│   │   ├── dashboard_banner.py  # Translation, admin update/public response, and dismissal contracts
 │   │   ├── feedback.py
 │   │   ├── flashcards.py
 │   │   ├── language.py
@@ -64,17 +66,19 @@ backend/
 │   │   ├── curriculum.py
 │   │   └── phrasebook.py
 │   │
-│   ├── routers/                 # FastAPI routers (23 REST + 1 WebSocket = 24 total)
+│   ├── routers/                 # FastAPI router modules (28; conversation also exposes the voice WebSocket)
 │   │   ├── __init__.py
 │   │   ├── admin.py             # Admin overview metrics, review signals, user management, filtered lists, maintenance toggle
+│   │   ├── admin_dashboard_banner.py # Admin read/translate/update for the singleton announcement
 │   │   ├── assessment.py        # Level assessment quiz + completion + static bank
 │   │   ├── auth.py              # Register, login, refresh, logout, avatar upload/private retrieval/delete, verify-email, reset-password
 │   │   ├── billing.py           # Stripe checkout, customer portal, webhook with current-subscription matching
 │   │   ├── chat.py              # SSE chat streaming
-│   │   ├── config.py            # Public config endpoint (maintenance mode, features)
+│   │   ├── config.py            # Public config endpoint (maintenance mode, features, active dashboard banner)
 │   │   ├── contact.py           # Contact form submission
 │   │   ├── conversation.py      # WebSocket voice conversation
 │   │   ├── curriculum.py        # Curriculum data (now auth-required)
+│   │   ├── dashboard_banner.py  # Authenticated account-persistent banner dismissal
 │   │   ├── feedback.py          # Feedback CRUD, search, unread counters, author roles, admin status management
 │   │   ├── flashcards.py        # Spaced-repetition flashcard CRUD + review
 │   │   ├── freemium.py          # Freemium quota status and trial state
@@ -136,16 +140,16 @@ backend/
 │       └── pt/                   # Portuguese — curriculum, assessment bank, vocabulary, phrasebook
 │
 ├── alembic/
-│   └── versions/                # DB migrations (49 migrations)
+│   └── versions/                # DB migrations (50 migrations)
 │
-└── tests/                       # pytest suite (43 test files, 966 tests)
+└── tests/                       # pytest suite (44 test files, 973 tests)
 ```
 
 ## Database models
 
-The application uses 22 SQLAlchemy ORM model sections organized into 5 domains:
+The application uses 23 SQLAlchemy ORM model classes organized by domain:
 
-- **Core**: User (authentication, preferences, quotas, Stripe state, post-assessment voice demo state, freemium trial state), Progress (daily XP/streak/skills)
+- **Core**: User (authentication, preferences, quotas, Stripe state, post-assessment voice demo state, freemium trial state, dashboard-banner dismissal revision), Progress (daily XP/streak/skills), DashboardBanner (global multilingual announcement singleton)
 - **Study plan**: StudyPlan, Lesson, Exercise, UserCompetency (curriculum tracking)
 - **Spaced repetition**: Flashcard (SM-2 algorithm)
 - **Conversations**: Conversation, ChatHistory (text and voice transcripts)
@@ -168,7 +172,7 @@ For complete schema details, relationships, constraints, and business rules, see
 
 All external dependencies are accessed through the service layer. The frontend never calls Ollama, Kokoro, or Whisper directly — the backend is the single gateway.
 
-The application uses 18 services plus a centralized `services/prompts/` package organized into 5 domains:
+The application uses 21 services plus a centralized `services/prompts/` package organized by domain:
 
 - **LLM & AI**: LLM Adapter (multi-provider), Assessment, Study Plan Generator, Lesson Generator, Flashcard SM-2
 - **Media**: TTS Service, STT Service, Conversation Pipeline (WebSocket voice orchestrator)
@@ -187,6 +191,7 @@ Key architectural decisions:
 - **TTS/STT services** abstract local (Kokoro/Whisper) and cloud (OpenAI) providers behind common interfaces
 - **Conversation Pipeline** orchestrates real-time voice: cancellable greeting, STT → full LLM response → sentence-level TTS chunks, serialized WebSocket sends, empty-STT guard, and backend barge-in support with frontend automatic interruption disabled
 - **Language Helpers** centralize target-language display names, ISO codes, script metadata, romanization metadata, word-spacing metadata, and reading/listening length guidance. Japanese (`ja-JP`), Korean (`ko-KR`), and Mainland Chinese (`zh-CN`) are enabled in backend language allow-lists and static content dispatchers.
+- **Dashboard banner translation** remains router-level orchestration rather than a dedicated service: the admin router uses the existing LLM Adapter's structured output to generate all ten UI-locale translations, preserves the validated source text, and leaves every translation editable before the singleton is saved.
 
 For complete service details, APIs, and implementation notes, see [services.instructions.md](services.instructions.md).
 
@@ -209,8 +214,8 @@ Testing infrastructure and strategy are documented in [testing.instructions.md](
 **Summary:**
 
 - **Framework**: pytest + pytest-asyncio + httpx AsyncClient
-- **Test files**: 43 (plus conftest.py for shared fixtures)
-- **Tests**: 945
+- **Test files**: 44 (plus conftest.py for shared fixtures)
+- **Tests**: 973
 - **Coverage**: 84.79% last measured (target: ≥70%)
 - **Key fixtures**: async database session, test client with auth headers, Redis mock, user_language fixture
 

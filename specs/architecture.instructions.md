@@ -16,9 +16,9 @@ freelingo/
 ├── backend/                     # Python 3.14 FastAPI
 │   ├── app/
 │   │   ├── core/                # Config, DB engine, security, deps, rate limiter (7 modules)
-│   │   ├── models/              # SQLAlchemy 2.0 ORM models (16 files, 22 model classes)
-│   │   ├── schemas/             # Pydantic v2 request/response schemas (15 modules)
-│   │   ├── routers/             # 24 routers (23 REST + 1 WebSocket)
+│   │   ├── models/              # SQLAlchemy 2.0 ORM models (17 files, 23 model classes)
+│   │   ├── schemas/             # Pydantic v2 request/response schemas (20 modules)
+│   │   ├── routers/             # 28 router modules; conversation also exposes the voice WebSocket
 │   │   ├── services/            # Business logic + external service clients (21 modules + prompts package)
 │   │   └── data/                # Static curriculum and content data (9 language modules)
 │   │       ├── en/              # English curriculum (A1–C2)
@@ -26,8 +26,8 @@ freelingo/
 │   │       ├── it/              # Italian curriculum (A1–C2)
 │   │       └── pt/              # Portuguese curriculum (A1–C2)
 │   ├── alembic/
-│   │   └── versions/            # DB migrations (49)
-│   └── tests/                   # pytest suite (43 test files, 966 tests)
+│   │   └── versions/            # DB migrations (50)
+│   └── tests/                   # pytest suite (44 test files, 973 tests)
 │
 ├── frontend/                    # Next.js 16 App Router
 │   ├── src/
@@ -38,11 +38,11 @@ freelingo/
 │   │   │   │   ├── admin/users/ # User management (admin only)
 │   │   │   │   ├── admin/feedback/ # Feedback board admin panel (admin only)
 │   │   │   │   ├── admin/reviews/ # Review moderation (admin only)
-│   │   │   │   ├── admin/system/ # Runtime system controls (admin only)
+│   │   │   │   ├── admin/system/ # Maintenance + dashboard announcement controls (admin only)
 │   │   │   │   ├── assessment/  # Level test entry + adaptive quiz
 │   │   │   │   ├── chat/        # AI tutor chat (SSE streaming, conversation history)
 │   │   │   │   ├── conversation/ # Real-time voice conversation (WebSocket + VAD)
-│   │   │   │   ├── dashboard/   # Home with XP, streak, plan summary
+│   │   │   │   ├── dashboard/   # Home with global announcement, XP, streak, plan summary
 │   │   │   │   ├── faq/         # Frequently asked questions
 │   │   │   │   ├── feedback/    # Feature requests & bug reports board
 │   │   │   │   ├── flashcards/  # Spaced-repetition flashcard review
@@ -57,13 +57,13 @@ freelingo/
 │   │   │   │   └── vocabulary/  # Vocabulary hub (index + [setId] detail)
 │   │   │   ├── (legal)/         # Terms and Privacy pages — minimal layout
 │   │   │   └── api/             # Next.js Route Handlers: chat (SSE), tts, stt proxies
-│   │   ├── components/          # 11 component directories + 4 standalone files
+│   │   ├── components/          # 14 component directories + 7 standalone files
 │   │   ├── data/                # Data access layer (API-backed for curriculum, vocab, phrasebook; static for grammar)
-│   │   ├── store/               # Zustand stores: auth, config, language, loading, progress, theme (6)
-│   │   ├── lib/                 # Utilities: api, audio, conversation-ws, locales, mappers, target-languages, utils (7)
+│   │   ├── store/               # Zustand stores: auth, config, freemium, language, loading, progress, theme (7)
+│   │   ├── lib/                 # Shared API, media, locale, mapping, review, billing, and language utilities (11)
 │   │   ├── i18n/                # next-intl locale resolver
 │   │   └── middleware.ts        # Auth guard + locale detection
-│   ├── tests/                   # Vitest suite (39 test files, 440 tests)
+│   ├── tests/                   # Vitest suite (41 test files, 446 tests)
 │   ├── public/                  # Static assets (flags/, vad/ WASM models)
 │   └── scripts/                 # Postinstall helpers (copy-vad-models.js)
 │
@@ -165,6 +165,8 @@ Stored as a simple Redis flag (`maintenance_mode` = `"1"` / `"0"`). Set explicit
 
 Memories are global per user. Text chat and voice load the same collection, use a normalized native `save_user_memory` tool with one continuation round, and retain `study_plan_id` only as nullable provenance. Deleting a language sets that provenance to `NULL` rather than deleting memory.
 
+The dashboard announcement is a global PostgreSQL singleton. Admins generate its ten UI-locale translations through the existing LLM adapter and can edit them before saving; public config exposes only an active banner's translations and revision. Authenticated dismissal stores that revision on the user, so content revisions reappear while activation-only changes preserve dismissal.
+
 **Frontend**: `MaintenanceGate` component renders a static banner when `maintenance_mode` is true for non-admin users. Applied on top of `PaywallGate` in the four subscription-gated pages: `/chat`, `/conversation`, `/listening`, `/reading`. Administrators manage the flag from the dedicated `/admin/system` section; the admin overview keeps a read-only status summary linking to that page.
 
 **Public exposure**: `GET /api/config` returns `maintenance_mode: bool` so the frontend can read the state without an authenticated request.
@@ -177,6 +179,6 @@ Testing infrastructure and strategy are documented in [testing.instructions.md](
 
 **Summary:**
 
-- **Backend**: pytest + pytest-asyncio, 43 test files, 966 tests, 84.79% last measured coverage (target: 70%)
-- **Frontend**: Vitest, 39 test files, 440 tests covering stores, components, hooks, lib, i18n, app pages, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, chat stream resets, and middleware; coverage is not configured/reported
+- **Backend**: pytest + pytest-asyncio, 44 test files, 973 tests, 84.79% last measured coverage (target: 70%)
+- **Frontend**: Vitest, 41 test files, 446 tests covering stores, components, hooks, lib, i18n, app pages, dashboard announcements, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, chat stream resets, and middleware; coverage is not configured/reported
 - **E2E**: Playwright (planned, not yet implemented)

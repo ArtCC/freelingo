@@ -65,6 +65,10 @@ Only endpoints with explicit `@limiter.limit()` decorators are listed here. Ever
 - `GET /api/admin/reviews` — Limit: 60/minute; Access: Admin; Rationale: Review moderation list
 - `PATCH /api/admin/reviews/{review_id}` — Limit: 60/minute; Access: Admin; Rationale: Review moderation update
 - `DELETE /api/admin/reviews/{review_id}` — Limit: 60/minute; Access: Admin; Rationale: Review deletion
+- `GET /api/admin/dashboard-banner` — Limit: 60/minute; Access: Admin; Rationale: Announcement editor load
+- `POST /api/admin/dashboard-banner/translate` — Limit: 10/minute; Access: Admin; Rationale: LLM-backed translation generation
+- `PUT /api/admin/dashboard-banner` — Limit: 60/minute; Access: Admin; Rationale: Global announcement create/update
+- `PUT /api/dashboard-banner/dismiss` — Limit: 60/minute; Access: Authenticated; Rationale: Persist current announcement revision dismissal
 - `POST /api/billing/checkout` — Limit: 60/minute; Access: Authenticated; Rationale: Stripe Checkout creation
 - `POST /api/billing/portal` — Limit: 60/minute; Access: Authenticated; Rationale: Stripe Customer Portal creation
 - `POST /api/billing/webhook` — Limit: 200/minute; Access: Stripe signature; Rationale: Stripe webhook burst tolerance
