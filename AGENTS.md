@@ -6,6 +6,8 @@
 
 ## Architecture at a glance
 
+Active Reading and Listening exercises let users select and save one word from question prompts through the shared flashcard lookup flow; answer options are not selectable vocabulary surfaces.
+
 My Plan unit drawers offer Start for the current lesson, Resume for skipped pending lessons, and read-only Review for completed lessons without awarding progress again. Drawer actions share the solid primary button treatment used by the plan overview.
 
 Lesson completion locks the lesson row, commits completion/progress/competencies atomically, returns completed retries before checking freemium quota, and refreshes frontend quota after success.

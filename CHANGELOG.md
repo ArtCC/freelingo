@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Global dashboard announcement**: administrators can compose an announcement in any supported source language, use the LLM to translate it into all ten UI locales, edit every translation, and save it as active or inactive from the System page.
 - **Persistent announcement dismissal**: active announcements appear on the dashboard above the next-step card and can be dismissed per account, while a server-managed content revision makes updated announcements visible again.
+- **Question vocabulary saving**: words selected in active Reading and Listening question prompts can now be saved to the learner's flashcards through the existing word lookup flow.
 
 ### Changed
 
