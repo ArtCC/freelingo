@@ -17,7 +17,7 @@ Most REST endpoints are prefixed under `/api`. The public health check is at `/h
 
 ## Config — `/api/config`
 
-- **GET `/api/config`** — Rate limit: 60/min. Public runtime configuration flags for the frontend. Returns non-sensitive values including Stripe enablement/prices, TTS provider/voice, `maintenance_mode`, and `freemium_trial_enabled`.
+- **GET `/api/config`** — Rate limit: 60/min. Public runtime configuration flags for the frontend. Returns non-sensitive values including Stripe enablement/prices, TTS provider/voice, `maintenance_mode`, `freemium_trial_enabled`, and `dashboard_banner`. The banner field is `null` when no active singleton exists; otherwise it is `{revision, translations}` and omits admin-only source locale, active state, and timestamps.
 
 ---
 
@@ -33,7 +33,7 @@ Most REST endpoints are prefixed under `/api`. The public health check is at `/h
 - **POST `/login`** — Rate limit: 10/min. Returns access_token (JWT, 15 min) + refresh_token in httpOnly cookie (30 days)
 - **POST `/refresh`** — Rate limit: 60/min. Rotates refresh token, returns new access_token
 - **POST `/logout`** — Rate limit: 60/min. Deletes refresh token from Redis, clears cookie
-- **GET `/me`** — Rate limit: 60/min. Returns authenticated user profile, including subscription fields (`subscription_status`, `subscription_ends_at`, `trial_used`, `assessment_voice_trial_used`) and freemium fields (`freemium_trial_ends_at`, `freemium_trial_used`) so the frontend can distinguish Stripe trial eligibility, freemium trial state, post-assessment voice-demo eligibility, and active subscription state.
+- **GET `/me`** — Rate limit: 60/min. Returns authenticated user profile, including subscription fields (`subscription_status`, `subscription_ends_at`, `trial_used`, `assessment_voice_trial_used`), freemium fields (`freemium_trial_ends_at`, `freemium_trial_used`), and nullable `dismissed_dashboard_banner_revision` so the frontend can distinguish access state and suppress the exact announcement revision already dismissed by this account.
 - **PATCH `/me`** — Rate limit: 60/min. Updates display name, email, password, native language, target language, UI locale, bio, learning goals, and conversation settings. `native_language` is validated against the same supported UI-language codes used at registration (`en`, `es`, `fr`, `pt`, `de`, `it`, `ru`, `nl`, `pl`, `ro`); unsupported codes return HTTP 422 even when the API is called outside the selector-based frontend.
 - **POST `/me/avatar`** — Rate limit: 60/min. Uploads the authenticated user's profile avatar (JPEG/PNG, max 2 MB). Validates the declared content type, image signature, and minimal image structure, stores the image on disk under `/app/avatars` using a non-predictable UUID filename, and returns the user profile with `avatar` set to a cache-busted internal reference (`/api/avatars/{uuid}.{ext}?v={ms}`). The file reference is not publicly served.
 - **GET `/me/avatar-file`** — Rate limit: 60/min. Authenticated current-user avatar retrieval endpoint. Returns only the authenticated user's own avatar file; this is the supported image retrieval path used by the frontend. Responses are marked `Cache-Control: private, no-store`; client-side avatar reuse is handled by the frontend blob cache keyed by the stored avatar reference.
@@ -67,6 +67,22 @@ Requires `role="admin"`. All endpoints return 403 for non-admin users.
 - **GET `/reviews`** — Rate limit: 60/min. Lists reviews for admin moderation. Query params: `is_approved`, `rating` (1–5), `target_language`, `order` (`asc`|`desc`), `skip` (default 0), `limit` (default 10, max 100). Returns `{items, total, skip, limit}`.
 - **PATCH `/reviews/{review_id}`** — Rate limit: 60/min. Updates review approval state. Body: `{is_approved: bool}`. Returns updated review.
 - **DELETE `/reviews/{review_id}`** — Rate limit: 60/min. Permanently deletes a review. Returns HTTP 204.
+
+---
+
+## Admin Dashboard Banner — `/api/admin/dashboard-banner`
+
+Requires `role="admin"`. Every translation map must contain exactly `en`, `es`, `fr`, `pt`, `de`, `it`, `ru`, `nl`, `pl`, and `ro`, each with nonblank plain-text `title` (max 160), `subtitle` (max 240), and `description` (max 2000).
+
+- **GET ``** — Rate limit: 60/min. Returns the singleton with `revision`, translations, `source_locale`, `is_active`, and timestamps, or `null` before the first save.
+- **POST `/translate`** — Rate limit: 10/min. Uses the configured LLM to translate `{source_locale, title, subtitle, description}` into all ten UI locales, preserving the validated source text exactly after trimming. Returns `{translations}` as an editable preview without saving; LLM failure returns HTTP 502.
+- **PUT ``** — Rate limit: 60/min. Creates or updates the singleton from `{source_locale, is_active, translations}`. The server starts at revision 1 and increments the revision when source locale or translated content changes; changing only `is_active` does not increment it.
+
+---
+
+## Dashboard Banner — `/api/dashboard-banner`
+
+- **PUT `/dismiss`** — Rate limit: 60/min. Auth: get_current_user. Body: `{revision: int >= 1}`. Stores the revision on the authenticated user and returns HTTP 204 when it matches the currently active singleton; repeated dismissal is idempotent, while stale, missing, or inactive revisions return HTTP 409.
 
 ---
 

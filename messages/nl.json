@@ -322,7 +322,7 @@
   "legal": {
     "terms": {
       "pageTitle": "Gebruiksvoorwaarden",
-      "updated": "Laatst bijgewerkt: juni 2026",
+      "updated": "Laatst bijgewerkt: augustus 2026",
       "s1Title": "1. Over FreeLingo",
       "s1Body": "FreeLingo is een open-source AI-gestuurd taalleerleerplatform dat beschikbaar is in twee modi: (1) zelf gehost, waarbij je het op je eigen infrastructuur uitvoert zonder kosten, en (2) als een gehoste service die wordt beheerd door het FreeLingo-team, met een gratis abonnement en betaalde abonnementen. Door deze service in een van beide modi te gebruiken, ga je akkoord met deze Gebruiksvoorwaarden.",
       "s2Title": "2. Toegestaan gebruik",
@@ -338,21 +338,21 @@
       "s5Title": "5. Servicemodi",
       "s5Body": "Zelf gehoste implementaties zijn gratis en de operator behoudt volledige controle over zijn gegevens en infrastructuur. De gehoste service die wordt beheerd door het FreeLingo-team biedt een gratis abonnement met gebruikslimieten en betaalde abonnementen voor onbeperkte toegang, beschikbaar op maandelijkse of jaarlijkse basis. Het gratis abonnement omvat een proefperiode van 7 dagen met volledige toegang (geen betaalmethode vereist) en daarna beperkte dagelijkse quota voor lessen en AI-chat, plus wekelijkse quota voor luisteroefeningen, leesoefeningen en spraakgesprekken. Betaalde abonnementen verwijderen alle gebruikslimieten op deze functies. In de gehoste service worden je gegevens opgeslagen op servers beheerd door het FreeLingo-team. De huidige gebruikslimieten voor je account zijn beschikbaar op je dashboard.",
       "s6Title": "6. Abonnement en facturering",
-      "s6Body": "Het gratis abonnement omvat beperkte toegang tot AI-functies met een proefperiode van 7 dagen met volledige toegang voor nieuwe gebruikers (geen betaalmethode vereist). Betaalde abonnementen zijn beschikbaar op maandelijkse of jaarlijkse factureringscyclus en worden automatisch verlengd, tenzij ze vóór de verlengingsdatum worden opgezegd. Nieuwe abonnees op een betaald abonnement ontvangen een gratis proefperiode (betaalgegevens vereist; er wordt niets in rekening gebracht tot het einde van de proefperiode). Je kunt op elk moment opzeggen via je accountinstellingen, met ingang van het einde van de huidige factureringsperiode. Als je binnen 14 dagen na je eerste betaling opzegt en de service niet wezenlijk hebt gebruikt, kun je een volledige terugbetaling aanvragen op grond van het EU-consumentenrecht. Voor niet-gebruikte tijd worden buiten dit recht geen gedeeltelijke terugbetalingen verstrekt. De huidige abonnementsprijzen worden weergegeven bij het afrekenen.",
+      "s6Body": "Het gratis abonnement biedt beperkte toegang tot AI-functies met een volledige proefperiode van 7 dagen voor nieuwe gebruikers. Betaalde abonnementen zijn maandelijks of jaarlijks en worden automatisch verlengd tenzij ze vooraf worden opgezegd. Je kunt via Instellingen opzeggen aan het einde van de lopende periode. De operator kan verlengingen of abonnementen ook beëindigen als de service wordt gewijzigd of gesloten. Eindigt de service vóór een betaalde periode, dan geldt de terugbetaling die het consumentenrecht vereist.",
       "s7Title": "7. Beschikbaarheid",
-      "s7Body": "Deze service wordt aangeboden zonder uptime-garanties. De operator kan de service opschorten of stopzetten voor onderhoud, updates of om andere reden, met redelijke kennisgeving waar mogelijk.",
+      "s7Body": "De gehoste service wordt zonder garanties voor continuïteit of beschikbaarheid aangeboden. De operator kan deze op elk moment om technische, financiële of andere redenen wijzigen, opschorten of sluiten. Geplande sluitingen worden waar redelijk mogelijk via de applicatie of e-mail aangekondigd. Daarna kunnen accounts en operationele gegevens zonder herstel worden verwijderd. FreeLingo biedt geen back-upservice of automatische exporttool.",
       "s8Title": "8. Beperking van aansprakelijkheid",
       "s8Body": "FreeLingo en zijn bijdragers zijn niet aansprakelijk voor directe, indirecte, incidentele of gevolgschade die voortvloeit uit je gebruik van of onvermogen om deze service te gebruiken. Je vrijwaart FreeLingo en zijn bijdragers van alle aanspraken, schade of kosten van derden die voortvloeien uit jouw gebruik van de dienst in strijd met deze voorwaarden.",
       "s9Title": "9. Toepasselijk recht",
       "s9Body": "Deze voorwaarden worden beheerst door het recht van Spanje. Eventuele geschillen die voortvloeien uit deze voorwaarden zijn onderworpen aan de exclusieve jurisdictie van de rechtbanken van Spanje.",
       "s10Title": "10. Wijzigingen in deze voorwaarden",
-      "s10Body": "Deze voorwaarden kunnen op elk moment worden bijgewerkt. We stellen gebruikers op de hoogte van materiële wijzigingen via de service-interface. Voortgezet gebruik van de service na wijzigingen vormt acceptatie van de herziene voorwaarden.",
+      "s10Body": "Deze voorwaarden kunnen op elk moment worden bijgewerkt. Belangrijke wijzigingen worden waar passend via de interface of e-mail gemeld. Voortgezet gebruik geldt als aanvaarding van de herziene voorwaarden.",
       "s11Title": "11. Scheidbaarheid",
       "s11Body": "Indien een bepaling van deze voorwaarden door een bevoegde rechtbank ongeldig of niet-afdwingbaar wordt verklaard, wordt die bepaling in de minimaal noodzakelijke mate beperkt of geschrapt en blijven de overige bepalingen volledig van kracht.",
       "linkPrivacy": "Privacybeleid",
       "linkBack": "Terug naar registratie",
       "linkBackSettings": "Terug naar instellingen",
-      "linkContact": "Voor vragen over deze voorwaarden, neem contact met ons op via het contactformulier op freelingo.app."
+      "linkContact": "Gebruik voor vragen het formulier op freelingo.app zolang dit beschikbaar is, of het contactkanaal in de GitHub-repository van FreeLingo."
     },
     "privacy": {
       "pageTitle": "Privacybeleid",
@@ -385,11 +385,11 @@
       "s5Title": "5. Cookies en sessietokens",
       "s5Body": "FreeLingo gebruikt twee technische cookies die strikt noodzakelijk zijn voor de service: een refresh_token (httpOnly, vervaldatum 30 dagen) voor sessieauthenticatie, en NEXT_LOCALE (vervaldatum 1 jaar) om je taalvoorkeur te onthouden. Er worden geen tracking- of advertentiecookies gebruikt. Voor anonieme verkeersmeting gebruiken we Umami — een zelf gehoste, open-source analysetool die geen cookies gebruikt, geen persoonsgegevens verzamelt en alle data op onze servers bewaart.",
       "s6Title": "6. Jouw rechten (AVG)",
-      "s6Body": "Als je in de Europese Economische Ruimte bent, heb je het recht op: toegang tot de persoonsgegevens die we over je bewaren; correctie van onjuiste gegevens; verwijdering van je account en alle bijbehorende gegevens (beschikbaar rechtstreeks via de pagina Instellingen); bezwaar tegen verwerking; en overdraagbaarheid van gegevens. Om deze rechten uit te oefenen, neem contact met ons op via het adres in sectie 8 of verwijder je account rechtstreeks via instellingen. Rechtsgrondslag voor verwerking (Art. 6(1)(b) AVG): we verwerken je persoonsgegevens omdat dit noodzakelijk is voor de uitvoering van de overeenkomst tussen jou en ons — de levering van de FreeLingo-service. Internationale doorgiften: bij gebruik van de gehoste service kunnen je gespreksinhoud en audio worden verwerkt door OpenAI, Inc. (VS), en betalingsgegevens worden verwerkt door Stripe, Inc. (VS). Deze doorgiften worden uitgevoerd op grond van de door de Europese Commissie goedgekeurde Standaardcontractbepalingen (Art. 46 AVG), waarmee een adequaat beschermingsniveau wordt gewaarborgd. Klachtrecht: je hebt het recht een klacht in te dienen bij de Autoriteit Persoonsgegevens (AP — autoriteitpersoonsgegevens.nl) of bij de toezichthoudende autoriteit in je land van verblijf.",
+      "s6Body": "In de Europese Economische Ruimte heb je AVG-rechten op inzage, correctie, verwijdering, bezwaar en overdraagbaarheid. Je kunt je account verwijderen via Instellingen. Andere verzoeken worden handmatig afgehandeld via het contact in sectie 8; FreeLingo biedt geen automatische exporttool. Gegevens worden verwerkt om de service te leveren (Art. 6(1)(b) AVG). OpenAI en Stripe kunnen gegevens in de VS verwerken onder de toepasselijke waarborgen voor internationale doorgiften. Je kunt een klacht indienen bij de bevoegde toezichthouder.",
       "s7Title": "7. Bewaring en verwijdering van gegevens",
-      "s7Body": "Je gegevens worden bewaard zolang je account bestaat. In Instellingen kun je afzonderlijke herinneringen verwijderen of alles wissen. Als je een leertaal verwijdert, worden de taalspecifieke gegevens verwijderd, maar blijven je wereldwijde accountherinneringen behouden. Je kunt je account en alle bijbehorende gegevens op elk moment via Instellingen verwijderen; accountverwijdering is onmiddellijk en onomkeerbaar.",
+      "s7Body": "Operationele gegevens worden bewaard zolang je account bestaat en de gehoste service actief is. Je kunt herinneringen, talen of je volledige account via Instellingen verwijderen. Bij sluiting kan de operator na een redelijk mogelijke kennisgeving alle accounts en gegevens verwijderen. Verwijdering is onomkeerbaar. Na verwijdering van de systemen en kopieën onder beheer van de operator bewaart FreeLingo geen persoonsgegevens. Stripe kan betalings- en transactiegegevens bewaren volgens het eigen beleid en wettelijke verplichtingen.",
       "s8Title": "8. Contact",
-      "s8Body": "Voor privacygerelateerde vragen over de gehoste service, neem contact met ons op via het contactformulier op freelingo.app.",
+      "s8Body": "Gebruik voor privacyvragen over de gehoste service het formulier op freelingo.app zolang dit beschikbaar is. Gebruik na sluiting het contactkanaal in de GitHub-repository van FreeLingo en plaats geen persoonsgegevens in openbare issues. Neem bij zelfhosting contact op met de beheerder van die instantie.",
       "s9Title": "9. Scheidbaarheid",
       "s9Body": "Indien een bepaling van dit beleid ongeldig of niet-afdwingbaar wordt verklaard, wordt die bepaling in de minimaal noodzakelijke mate beperkt en blijven de overige bepalingen van kracht.",
       "linkTerms": "Gebruiksvoorwaarden",
@@ -448,7 +448,9 @@
     "premiumBannerPastDueDesc": "Werk je betaalmethode bij om Premium-toegang tot chat, spraakgesprekken, reading en listening te herstellen.",
     "premiumBannerPastDueCta": "Premium herstellen",
     "freemiumTrialTitle": "{days, plural, one {# dag gratis proefperiode} other {# dagen gratis proefperiode}}",
-    "freemiumTrialDesc": "Geniet van onbeperkte toegang tot chat, spraak, listening en reading. Probeer alles Premium gratis."
+    "freemiumTrialDesc": "Geniet van onbeperkte toegang tot chat, spraak, listening en reading. Probeer alles Premium gratis.",
+    "announcementDismiss": "Aankondiging sluiten",
+    "announcementDismissError": "De aankondiging kon niet worden gesloten. Probeer opnieuw."
   },
   "assessment": {
     "title": "Beoordeling",
@@ -980,7 +982,41 @@
     "pendingBugs": "Openstaande bugrapporten",
     "pendingBugsDesc": "Bugrapporten die wachten op beoordeling door een admin.",
     "pastDueSubscriptions": "Achterstallige abonnementen",
-    "pastDueSubscriptionsDesc": "Accounts met betalingsproblemen die mogelijk controle nodig hebben."
+    "pastDueSubscriptionsDesc": "Accounts met betalingsproblemen die mogelijk controle nodig hebben.",
+    "dashboardBanner": {
+      "title": "Dashboardaankondiging",
+      "description": "Maak, vertaal, controleer en publiceer een aankondiging voor elk leerlingendashboard.",
+      "loading": "Aankondiging laden...",
+      "loadError": "De dashboardaankondiging kon niet worden geladen.",
+      "sourceLocale": "Brontaal",
+      "activeLabel": "Aankondiging publiceren",
+      "activeHint": "Inactieve aankondigingen worden opgeslagen maar niet aan leerlingen getoond.",
+      "fieldTitle": "Titel",
+      "fieldSubtitle": "Ondertitel",
+      "fieldDescription": "Beschrijving",
+      "translate": "Vertalen",
+      "translateSuccess": "Vertalingen gegenereerd. Controleer ze voor het opslaan.",
+      "translateError": "Vertalen mislukt. De huidige inhoud is behouden.",
+      "editTranslation": "Vertaling bewerken",
+      "completion": "{complete}/{total} talen compleet",
+      "save": "Aankondiging opslaan",
+      "saveSuccess": "Dashboardaankondiging opgeslagen.",
+      "saveError": "De dashboardaankondiging kon niet worden opgeslagen.",
+      "revision": "Revisie {revision}",
+      "updated": "Bijgewerkt: {date}",
+      "locales": {
+        "en": "Engels",
+        "es": "Spaans",
+        "fr": "Frans",
+        "pt": "Portugees",
+        "de": "Duits",
+        "it": "Italiaans",
+        "ru": "Russisch",
+        "nl": "Nederlands",
+        "pl": "Pools",
+        "ro": "Roemeens"
+      }
+    }
   },
   "faq": {
     "title": "FAQ",
@@ -1402,7 +1438,7 @@
   },
   "whatsNew": {
     "title": "Nieuw",
-    "version": "v1.8.30",
+    "version": "v1.8.35",
     "cta": "Begrepen",
     "entry1": {
       "label": "Herinneringen die met je meegaan",

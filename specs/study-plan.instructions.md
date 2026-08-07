@@ -325,7 +325,7 @@ slot in generated_plan
 
 ### Dashboard (`frontend/src/app/(app)/dashboard/page.tsx`)
 
-On load, calls `GET /api/progress/summary` and `GET /api/study-plan/today` in parallel. The dashboard does not add extra requests for its action-oriented overview.
+On load, calls `GET /api/progress/summary` and `GET /api/study-plan/today` in parallel. The action-oriented overview adds no other initial request; the global dashboard announcement comes from the already-loaded public config store.
 
 From the progress summary it reads:
 
@@ -345,6 +345,8 @@ From the today response it reads:
 The **"Skip today"** button is shown when `lessons.length > 0`. It calls `POST /api/study-plan/skip-day` then refreshes the page data.
 
 The **assessment button** is shown only when the user has no active plan (`hasPlan = false`, i.e. the `/today` call returned 404).
+
+When public config contains an active dashboard announcement whose revision does not match `user.dismissed_dashboard_banner_revision`, `DashboardAnnouncement` renders it above the next-step card in the current UI locale, with English then first-available fallback. Its close button calls `PUT /api/dashboard-banner/dismiss`; a successful response updates auth state immediately and persists the revision on the account, while a failure keeps the announcement visible with a compact error. Content or source-locale changes create a new server revision and make the announcement visible again; activation-only changes do not.
 
 When Stripe is enabled and `isSubscribed(user, stripeEnabled)` is false, the dashboard shows a compact Premium banner above quick actions. For `none`, `incomplete`, `incomplete_expired`, and `canceled`, its CTA expands inline monthly/yearly plan buttons; the selected plan posts to `POST /api/billing/checkout` and redirects to Stripe Checkout. For `past_due`, `unpaid`, and `paused`, it shows payment-recovery copy and opens the Stripe Customer Portal via `POST /api/billing/portal`. The banner does not render for subscribed/trialing users or self-hosted deployments with Stripe disabled.
 

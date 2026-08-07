@@ -611,7 +611,10 @@ function ReadingPage() {
                     <TargetLanguageText
                       as="p"
                       languageCode={exercise.target_language}
-                      className="text-fl-fg mb-3"
+                      onPointerUp={() =>
+                        handleTextSelection(q.question, exercise.level)
+                      }
+                      className="text-fl-fg word-selectable mb-3 cursor-text select-text"
                     >
                       {q.index + 1}. {q.question}
                     </TargetLanguageText>

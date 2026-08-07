@@ -1,5 +1,5 @@
 ---
-description: "Database models reference for FreeLingo: 22 SQLAlchemy ORM models with full schema details, relationships, constraints, and business rules."
+description: "Database models reference for FreeLingo: 23 SQLAlchemy ORM models with full schema details, relationships, constraints, and business rules."
 applyTo: "backend/app/models/**, backend/alembic/**"
 ---
 
@@ -40,6 +40,7 @@ Registration, authentication, and user preferences.
 - `avatar` — nullable text cache-busted internal avatar reference, for example `/api/avatars/{uuid}.{ext}?v={ms}`. Files are stored under `/app/avatars` and retrieved through authenticated profile endpoints with private no-store responses, not public static serving. Legacy base64 data URLs may still exist until replaced.
 - `bio` — nullable text profile bio.
 - `learning_goals` — nullable text JSON-encoded array of learning goal strings.
+- `dismissed_dashboard_banner_revision` — nullable integer storing the last global dashboard-banner revision dismissed by this account. A new content revision differs from this marker and becomes visible again.
 - `created_at` — datetime set automatically on creation.
 - `last_login` — nullable datetime updated on each successful login.
 
@@ -55,6 +56,20 @@ Registration, authentication, and user preferences.
 - `freemium_trial_ends_at` and `freemium_trial_used` are surfaced through authenticated user profile responses. When `STRIPE_ENABLED=true` and `FREEMIUM_TRIAL_ENABLED=true`, new users are granted a 7-day freemium trial on registration (`freemium_trial_ends_at` = `now + FREEMIUM_TRIAL_DAYS` days, `freemium_trial_used` = `true`). After the trial expires, freemium quota limits apply. Freemium quotas (chat messages, lesson completions, listening/reading exercises, voice minutes) are stored in Redis with keys like `freemium:{feature}:{user_id}:{date/week}` and auto-expiring TTL, managed by an atomic Lua script — they are not stored in the database.
 - `stripe_subscription_id` is set from `checkout.session.completed` and backfilled from `customer.subscription.updated` for existing users when missing. Once present, subscription update/delete and invoice payment-failed webhooks whose subscription ID does not match are ignored as stale events.
 - Only `trialing` and `active` grant premium access. `past_due`, `unpaid`, and `paused` route users to payment recovery through Stripe Customer Portal. `none`, `incomplete`, `incomplete_expired`, and `canceled` show normal monthly/yearly plan-selection UI.
+
+## DashboardBanner (`dashboard_banners`)
+
+Singleton global announcement managed by administrators and displayed on authenticated dashboards.
+
+- `id` — integer primary key constrained to `1` by `ck_dashboard_banners_singleton`.
+- `translations` — required PostgreSQL JSONB object containing `title`, `subtitle`, and `description` for exactly the ten UI locales: `en`, `es`, `fr`, `pt`, `de`, `it`, `ru`, `nl`, `pl`, and `ro`.
+- `source_locale` — required two-character UI locale used to create the translation set.
+- `is_active` — required boolean controlling public visibility; default `false` at the ORM level.
+- `revision` — required integer server revision, initially `1`. It increments when the source locale or translated content changes, but not for an active-state-only change.
+- `created_at` — datetime set on singleton creation.
+- `updated_at` — datetime set on creation and updated on modification.
+
+Migration `0050_dashboard_banner` creates the singleton table and adds `users.dismissed_dashboard_banner_revision`. Dismissal is valid only for the currently active revision.
 
 ## UserLanguage (`user_languages`)
 

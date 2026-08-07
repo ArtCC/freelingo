@@ -35,6 +35,7 @@ export interface User {
   assessment_voice_trial_used?: boolean
   freemium_trial_ends_at?: string | null
   freemium_trial_used?: boolean
+  dismissed_dashboard_banner_revision?: number | null
 }
 
 /** Returns true when the user has an active/trialing subscription, or when Stripe is disabled (self-hosted). */
@@ -73,6 +74,7 @@ interface AuthStore {
   user: User | null
   setTokens: (access: string) => void
   setUser: (user: User) => void
+  setDismissedDashboardBannerRevision: (revision: number) => void
   logout: () => void
 }
 
@@ -81,6 +83,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
   user: null,
   setTokens: (access: string) => set({ accessToken: access }),
   setUser: (user: User) => set({ user }),
+  setDismissedDashboardBannerRevision: (revision: number) =>
+    set((state) => ({
+      user: state.user
+        ? { ...state.user, dismissed_dashboard_banner_revision: revision }
+        : null,
+    })),
   logout: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('fl_tour_done')
