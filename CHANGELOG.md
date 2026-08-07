@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.35] - 2026-08-07
+
+### Added
+
+- **Global dashboard announcement**: administrators can compose an announcement in any supported source language, use the LLM to translate it into all ten UI locales, edit every translation, and save it as active or inactive from the System page.
+- **Persistent announcement dismissal**: active announcements appear on the dashboard above the next-step card and can be dismissed per account, while a server-managed content revision makes updated announcements visible again.
+- **Question vocabulary saving**: words selected in active Reading and Listening question prompts can now be saved to the learner's flashcards through the existing word lookup flow.
+
+### Changed
+
+- **Simplified legal copy**: all ten locales now clarify hosted-service closure and deletion, the absence of automated data export, Stripe's independent payment-data retention, subscription cancellation and closure terms, and bcrypt password-hash wording.
+
 ## [1.8.30] - 2026-08-05
 
 ### Added
@@ -20,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Voice memory freshness**: voice conversation reloads the user's global memories every turn, so manual and newly saved context is available without reconnecting.
 - **Memory limits and safety**: memory items remain limited to 200 characters, storage is capped at 150 items per user with deterministic oldest-first eviction, and injected memory text is escaped and treated as untrusted prompt data.
 - **Privacy and deletion copy**: all ten locales now explain manual/global memories and clarify that removing a learning language does not remove account memories.
-- **What's New version marker**: bumped to `v1.8.30` with localized memory redesign highlights.
+- **What's New version marker**: bumped to `v1.8.35` with localized memory redesign highlights.
 - **Memory save notification**: text and voice now share an accessible informational toast that confirms Lingu saved a memory, points users to Settings without a timed action, safely restarts and re-announces consecutive saves, and survives SSE events split across network chunks.
 - **Native-language memories**: Lingu now writes new automatic memories in the user's configured native language, independently of the language being studied, so saved facts remain directly readable in Settings. Manual and existing memories are left unchanged.
 

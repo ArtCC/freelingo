@@ -43,6 +43,10 @@ export function mapUser(
       data.freemium_trial_ends_at ?? current?.freemium_trial_ends_at ?? null,
     freemium_trial_used:
       data.freemium_trial_used ?? current?.freemium_trial_used ?? false,
+    dismissed_dashboard_banner_revision:
+      data.dismissed_dashboard_banner_revision ??
+      current?.dismissed_dashboard_banner_revision ??
+      null,
   }
 }
 

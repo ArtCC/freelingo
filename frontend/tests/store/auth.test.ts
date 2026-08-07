@@ -74,6 +74,16 @@ describe('useAuthStore', () => {
     expect(useAuthStore.getState().user).toEqual(user)
   })
 
+  it('updates the dismissed dashboard banner revision on the current user', () => {
+    useAuthStore.setState({ user: { id: 1 } as User })
+
+    useAuthStore.getState().setDismissedDashboardBannerRevision(8)
+
+    expect(
+      useAuthStore.getState().user?.dismissed_dashboard_banner_revision
+    ).toBe(8)
+  })
+
   it('logout clears token, user, and fl_tour_done from localStorage', () => {
     useAuthStore.setState({ accessToken: 'token', user: { id: 1 } as User })
     localStorage.setItem('fl_tour_done', 'true')

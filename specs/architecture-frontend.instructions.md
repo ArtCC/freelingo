@@ -29,11 +29,11 @@ frontend/
 │   │   │   ├── admin/users/     # User list + [id] detail: tabs, quotas, subscription override
 │   │   │   ├── admin/feedback/  # Feedback queue admin panel: search, filters, responsive table/cards
 │   │   │   ├── admin/reviews/   # Review moderation: filters, approve/unapprove, delete
-│   │   │   ├── admin/system/    # Runtime system controls: maintenance mode
+│   │   │   ├── admin/system/    # Maintenance mode + dashboard announcement editor
 │   │   │   ├── assessment/      # Level test: BeginnerGate → AdaptiveQuizCard → DurationSelector → optional/persistent voice trial offer
 │   │   │   ├── chat/            # AI tutor SSE chat + conversation history
 │   │   │   ├── conversation/    # Real-time voice conversation (WebSocket + VAD) + post-assessment trial entry/profile sync
-│   │   │   ├── dashboard/       # Home: next step, progress stats, plan summary, daily lessons
+│   │   │   ├── dashboard/       # Home: announcement, next step, progress stats, plan summary, daily lessons
 │   │   │   ├── faq/             # Frequently asked questions
 │   │   │   ├── feedback/        # Feature requests & bug reports board
 │   │   │   ├── flashcards/      # Spaced-repetition flashcard review
@@ -57,12 +57,13 @@ frontend/
 │   │       ├── stt/route.ts     # STT proxy
 │   │       └── tts/route.ts     # TTS proxy
 │   │
-│   ├── components/              # 12 directories + 6 standalone files
+│   ├── components/              # 14 directories + 7 standalone files
 │   │   ├── assessment/          # AdaptiveQuizCard, BeginnerGate, DurationSelector
 │   │   ├── admin/               # AdminNav + AdminShell primitives shared across admin pages
 │   │   ├── billing/             # Stripe subscription UI components
 │   │   ├── chat/                # Chat message components
 │   │   ├── conversation/        # ConversationMode, MicButton, StatusIndicator, TranscriptBubble...
+│   │   ├── dashboard/           # Locale-aware dismissible DashboardAnnouncement
 │   │   ├── flashcard/           # Flashcard review components
 │   │   ├── lesson/              # Lesson exercise components
 │   │   ├── plan/                # LevelTestBanner, UnitCard, UnitDrawer
@@ -89,8 +90,8 @@ frontend/
 │   │   └── pt/                   # Portuguese (3 files)
 │   │
 │   ├── store/                   # Zustand stores (7)
-│   │   ├── auth.ts              # Access token, user info, login/refresh/logout, freemium trial helpers
-│   │   ├── config.ts            # Public config: maintenance mode, feature flags, languages, freemium trial enabled
+│   │   ├── auth.ts              # Access token, user info, login/refresh/logout, banner dismissal revision
+│   │   ├── config.ts            # Public config: runtime flags, prices, maintenance, active dashboard banner
 │   │   ├── freemium.ts          # Freemium quota status, fetchStatus(), decrement per-feature
 │   │   ├── language.ts          # UI locale + target language state
 │   │   ├── loading.ts           # Global loading spinner state
@@ -115,7 +116,7 @@ frontend/
 │   │
 │   └── middleware.ts            # Auth guard (redirect to /login) + locale detection
 │
-├── tests/                       # Vitest suite (39 test files, 440 tests; coverage not configured)
+├── tests/                       # Vitest suite (41 test files, 446 tests; coverage not configured)
 │   ├── setup.ts                 # Global mocks: localStorage, next/navigation, next-intl
 │   ├── middleware.test.ts
 │   ├── components/
@@ -176,7 +177,7 @@ frontend/
 
 ### Authenticated routes — `(app)/`
 
-- `/dashboard` — Home: action-oriented overview using existing progress and study-plan data. Shows the active language/level, a primary next-step card, streak/XP/lesson/accuracy stats, plan-progress summary with compact current-level vocabulary progress, today's lessons with completion count and next pending lesson highlight, recent-performance areas derived from `skills`, pending-lesson link, a freemium trial countdown banner when the trial is active, a compact Premium banner for unsubscribed users when Stripe is enabled, and shortcuts to plan, flashcards, tutor, and assessment. The Premium banner presents trial-focused messaging and the shared subscription buttons directly, recommending yearly first and keeping monthly as the flexible alternative. If the user's subscription is `past_due`, `unpaid`, or `paused`, the banner instead shows payment-recovery copy and opens the Stripe Customer Portal to update payment details.
+- `/dashboard` — Home: action-oriented overview using existing progress and study-plan data. An active global announcement is inserted above the next-step card, selects the current UI-locale translation with English fallback, and hides when the authenticated user's dismissed revision matches the server revision; dismissing persists through `PUT /api/dashboard-banner/dismiss` and updates auth state without a reload. The page also shows the active language/level, a primary next-step card, streak/XP/lesson/accuracy stats, plan-progress summary with compact current-level vocabulary progress, today's lessons with completion count and next pending lesson highlight, recent-performance areas derived from `skills`, pending-lesson link, a freemium trial countdown banner when the trial is active, a compact Premium banner for unsubscribed users when Stripe is enabled, and shortcuts to plan, flashcards, tutor, and assessment. The Premium banner presents trial-focused messaging and the shared subscription buttons directly, recommending yearly first and keeping monthly as the flexible alternative. If the user's subscription is `past_due`, `unpaid`, or `paused`, the banner instead shows payment-recovery copy and opens the Stripe Customer Portal to update payment details.
 - `/assessment` — Level placement test (`BeginnerGate` → `AdaptiveQuiz` → `DurationSelector`).
 - `/plan` — Study plan overview: unit cards, `LevelTestBanner`, and `UnitDrawer`. Scheduled slots are merged with generated lesson metadata, today's lessons, and skipped pending lessons so the drawer offers Start, Resume, or Review according to persisted state while leaving future ungenerated slots unavailable. Drawer actions reuse the overview's solid primary button treatment; its moderately wider desktop layout adds a localized lesson-count heading, roomier actionable rows, and a sticky close footer without changing the mobile full-width presentation.
 - `/lesson/[id]` — Lesson player: content + interactive exercises. If `content.native_explanation` exists, it is shown below the target-language explanation in a collapsible section that opens by default for A1/A2 and stays collapsed by default for B1+. The section renders translated text, key points, examples, common traps, and a mini-glossary when present. If it is missing, the expanded section shows a native-language button that calls `POST /api/lessons/{id}/native-explanation` and stores the returned explanation in local lesson state. Before an unanswered exercise, the page can show a native-language hint button; if the exercise response includes `native_hint`, it renders immediately when requested, otherwise the button calls `POST /api/lessons/exercises/{id}/native-hint` and patches the exercise in local state. The exercise card header also includes a small `Regenerate exercise` action for unanswered exercises; it calls `POST /api/lessons/exercises/{id}/regenerate`, replaces the current exercise in local state when the backend confirms a technical issue, and shows a small inline error if regeneration is rejected or fails. Exercise feedback still shows the target-language explanation first; when an exercise response includes `native_explanation`, the lesson page renders that native-language clarification directly below the target-language exercise explanation. When the exercise has a target-language explanation but lacks native text, the same button pattern calls `POST /api/lessons/exercises/{id}/native-explanation` and patches the exercise in local state. The lesson vocabulary block renders target-language word, definition, example audio, and example text, plus optional reading, native-language translation, example translation, and usage note when present; older vocabulary items without those optional fields still render normally. Completing a lesson may open the reusable review prompt when it advances the user out of the completed curriculum unit, subject to duplicate-review checks and local dismissal cooldown.
@@ -190,8 +191,8 @@ frontend/
 - `/vocabulary` — Vocabulary hub overview.
 - `/vocabulary/[setId]` — Vocabulary set detail. Includes an on-demand native-language helper section that calls `POST /api/vocabulary/{set_id}/native-help`, then renders a summary, study tips, selected word notes, common traps, mini-glossary entries, and practice prompts. The section stays collapsed until requested to avoid LLM calls on page load.
 - `/phrasebook` — Common phrases by category. Each category can show native-language study help generated through `POST /api/phrasebook/{category_id}/native-help`: A1/A2 categories open the helper panel by default but still require a click to generate, while B1-C2 categories stay collapsed until requested. The helper renders summary, usage tips, register notes, phrase notes, common traps, and mini-glossary entries.
-- `/listening` — AI-generated listening comprehension exercises. Its attempt history uses the shared pagination component with 10 results per page and sends `skip`/`limit` to the backend. Free-tier users see a `FreemiumQuotaBanner` with weekly exercise counter; when quota is exhausted, a compact `PaywallBanner` is shown. Completing a new listening attempt may open the reusable review prompt, subject to duplicate-review checks and local dismissal cooldown; replay attempts from history do not trigger it.
-- `/reading` — AI-generated reading comprehension exercises. Its attempt history uses the shared pagination component with 10 results per page and sends `skip`/`limit` to the backend. Free-tier users see a `FreemiumQuotaBanner` with weekly exercise counter; when quota is exhausted, a compact `PaywallBanner` is shown. Completing a new reading attempt may open the reusable review prompt, subject to duplicate-review checks and local dismissal cooldown; replay attempts from history do not trigger it.
+- `/listening` — AI-generated listening comprehension exercises. During an active exercise, selecting one word in a question prompt opens the shared vocabulary-save tooltip and submits the prompt as lookup context; answer options remain normal selection controls. Its attempt history uses the shared pagination component with 10 results per page and sends `skip`/`limit` to the backend. Free-tier users see a `FreemiumQuotaBanner` with weekly exercise counter; when quota is exhausted, a compact `PaywallBanner` is shown. Completing a new listening attempt may open the reusable review prompt, subject to duplicate-review checks and local dismissal cooldown; replay attempts from history do not trigger it.
+- `/reading` — AI-generated reading comprehension exercises. During an active exercise, the passage and question prompts allow one selected word to be saved through the shared vocabulary-save tooltip; answer options remain normal selection controls. Its attempt history uses the shared pagination component with 10 results per page and sends `skip`/`limit` to the backend. Free-tier users see a `FreemiumQuotaBanner` with weekly exercise counter; when quota is exhausted, a compact `PaywallBanner` is shown. Completing a new reading attempt may open the reusable review prompt, subject to duplicate-review checks and local dismissal cooldown; replay attempts from history do not trigger it.
 - `/progress` — Skills tracker with radar chart and multi-level vocabulary progress toggle.
 - `/settings` — Settings hub with an admin-inspired header/nav, quick action cards, and grouped panels. Account contains profile/avatar/password plus legal/session actions; avatars are uploaded/deleted through authenticated profile endpoints and rendered through the authenticated `/api/auth/me/avatar-file` endpoint with a shared client-side blob cache. Avatar fetches retry once through the refresh-token flow after a 401, and UI surfaces use the same initial-letter placeholder while the private image blob is loading or unavailable. Avatar file references are not public static URLs. Learning links to My Languages and Memory; `/settings/memories` explains global cross-language memory and supports authenticated manual add, list, individual delete, and clear-all with explicit loading, retry, duplicate, busy, success, and error states. Voice contains conversation and TTS voice preferences; Plan contains billing and usage limits with shared subscription buttons that recommend yearly first for unsubscribed users; `past_due`, `unpaid`, and `paused` subscriptions show payment-recovery copy and a Stripe Customer Portal action instead of new plan buttons. `none`, `incomplete`, `incomplete_expired`, and `canceled` show normal monthly/yearly plan buttons. Community contains review creation/editing.
 - `/faq` — Frequently asked questions.
@@ -203,7 +204,7 @@ frontend/
 - `/admin/users` — User management with responsive table/cards, search, filters, invite copy workflow, and a create-user sheet with required email (admin only). The desktop table uses fixed column widths: user 25%, email 25%, role 12.5%, status 12.5%, subscription 15%, actions 10%; subscription badges stay on one line and truncate with an ellipsis when localized labels exceed the available width. Invite and create-user action buttons rely on their icons for the leading action affordance and do not include a duplicate `+` in localized labels.
 - `/admin/users/[id]` — Admin user detail with summary header and tabs for Profile, Languages, Activity, Quotas, and Subscription. Quotas separate current usage from configured limits; email verification and subscription overrides use confirmation dialogs.
 - `/admin/feedback` — Feedback queue admin panel with 10 entries per page, search, type/status/sort filters, filtered metrics by feedback type, desktop table, mobile cards, status updates, delete confirmation, and the same administrator-author badge used by the community board. Status updates refresh the queue when the updated entry no longer matches the active filter (admin only).
-- `/admin/system` — Dedicated runtime system-controls page. It preserves the existing explicit `PUT /api/admin/maintenance` request, `{maintenance_mode}` payload, `useConfigStore` update, status colours, loading state, and error handling previously located on `/admin/users`. The inactive enable action uses the standard `bg-fl-accent` button treatment; yellow remains reserved for the active maintenance warning state.
+- `/admin/system` — Dedicated system-controls page. It preserves the explicit `PUT /api/admin/maintenance` flow and also loads `GET /api/admin/dashboard-banner`, lets an admin compose source text in any of the ten UI locales, previews LLM-generated translations, edits each locale, selects active/inactive state, and saves the complete map with `PUT /api/admin/dashboard-banner`. Translation is preview-only until Save, and the editor keeps source content when generation fails.
 
 ### Legal routes — `(legal)/`
 
@@ -222,8 +223,8 @@ These are Next.js Route Handlers that proxy requests to the backend:
 
 Seven Zustand stores hold all client-side state. No React Context is used for global state.
 
-- `auth` — Persisted?: No (JS memory); Key state: `accessToken`, `user`, `isAuthenticated`, `login()`, `refresh()`, `logout()`, `isFreemiumTrialActive()`
-- `config` — Persisted?: No; Key state: `maintenanceMode`, `availableLanguages`, `stripeEnabled`, `freemiumTrialEnabled`, feature flags from `GET /api/config`
+- `auth` — Persisted?: No (JS memory); Key state: `accessToken`, `user` including `dismissed_dashboard_banner_revision`, `setDismissedDashboardBannerRevision()`, `isAuthenticated`, `login()`, `refresh()`, `logout()`, `isFreemiumTrialActive()`
+- `config` — Persisted?: No; Key state: `maintenanceMode`, `availableLanguages`, `stripeEnabled`, `freemiumTrialEnabled`, `dashboardBanner`, and other public values from `GET /api/config`
 - `freemium` — Persisted?: No; Key state: `status: FreemiumStatus | null`, `fetchStatus()`, `decrement(feature: string)` — tracks trial state and per-feature remaining quotas
 - `language` — Persisted?: Yes (localStorage); Key state: `targetLanguage` (BCP-47), `uiLocale`, language switcher state
 - `loading` — Persisted?: No; Key state: `isLoading`, `startLoading()`, `stopLoading()` — global spinner control
@@ -237,7 +238,7 @@ Seven Zustand stores hold all client-side state. No React Context is used for gl
 - **`conversation-ws.ts`** — WebSocket client for the voice conversation pipeline, handles WAV chunk sending and MP3 reception
 - **`landing-subscription.ts`** — Shared landing-page subscription check used by `LandingNav` and `PricingSection`; deduplicates refresh + `/api/auth/me` so the nav hides `Pricing` whenever the pricing section is hidden for active/trialing subscribers
 - **`locales.ts`** — next-intl locale detection and routing utilities
-- **`mappers.ts`** — Data transformation helpers between API responses and frontend models. `mapUser()` carries subscription metadata including `subscription_status`, `subscription_ends_at`, `trial_used`, `assessment_voice_trial_used`, `freemium_trial_ends_at`, and `freemium_trial_used` into the auth store, with safe fallbacks for partial PATCH responses.
+- **`mappers.ts`** — Data transformation helpers between API responses and frontend models. `mapUser()` carries subscription metadata, freemium state, and `dismissed_dashboard_banner_revision` into the auth store, with safe fallbacks for partial PATCH responses.
 - **`billing-copy.ts`** — Shared billing CTA helpers and `BillingInterval` type; splits yearly CTA copy so the savings label renders on a stable second line instead of orphaning the trailing arrow in long locales.
 - **`target-languages.ts`** — Target language definitions: BCP-47 codes, display names, flag mappings, ISO codes, script/romanisation metadata, word-spacing capability, and language-specific font class helpers. `TARGET_LANGUAGE_CATALOG` and `SUPPORTED_TARGET_LANGUAGES` contain all 10 frontend-known target languages, including Japanese, Korean, and Mainland Chinese. User-visible options are constrained by backend `availableLanguageCodes` when provided.
 - **`utils.ts`** — General-purpose utilities: formatting, date helpers, class name merging

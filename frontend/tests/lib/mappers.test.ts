@@ -24,6 +24,7 @@ describe('mapUser', () => {
     freemium_trial_ends_at: null,
     freemium_trial_used: false,
     cancel_at_period_end: false,
+    dismissed_dashboard_banner_revision: 4,
   }
 
   it('maps snake_case API response to camelCase User', () => {
@@ -51,6 +52,7 @@ describe('mapUser', () => {
       freemium_trial_used: false,
       ui_locale: null,
       cancel_at_period_end: false,
+      dismissed_dashboard_banner_revision: 4,
     })
   })
 
@@ -117,6 +119,7 @@ describe('mapUser', () => {
     expect(user.assessment_voice_trial_used).toBe(false)
     expect(user.freemium_trial_ends_at).toBeNull()
     expect(user.freemium_trial_used).toBe(false)
+    expect(user.dismissed_dashboard_banner_revision).toBeNull()
   })
 
   it('prefers API data over current user when both present', () => {

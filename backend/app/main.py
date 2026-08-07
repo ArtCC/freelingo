@@ -24,12 +24,14 @@ _AVATARS_DIR = "/app/avatars"
 _TTS_PREVIEWS_DIR = "/app/tts_previews"
 from app.routers import (
     admin,
+    admin_dashboard_banner,
     assessment,
     auth,
     chat,
     contact,
     conversation,
     curriculum,
+    dashboard_banner,
     feedback,
     flashcards,
     freemium,
@@ -130,6 +132,7 @@ async def security_headers_middleware(request: Request, call_next) -> Response:
 
 app.include_router(auth.router)
 app.include_router(admin.router)
+app.include_router(admin_dashboard_banner.router)
 app.include_router(assessment.router)
 app.include_router(study_plan.router)
 app.include_router(lessons.router)
@@ -146,6 +149,7 @@ app.include_router(conversation.router)
 app.include_router(config_router.router)
 app.include_router(contact.router)
 app.include_router(curriculum.router)
+app.include_router(dashboard_banner.router)
 app.include_router(feedback.router)
 app.include_router(freemium.router)
 app.include_router(memories.router)

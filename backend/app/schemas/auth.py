@@ -150,6 +150,7 @@ class UserResponse(BaseModel):
     assessment_voice_trial_used: bool = False
     freemium_trial_ends_at: datetime | None = None
     freemium_trial_used: bool = False
+    dismissed_dashboard_banner_revision: int | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

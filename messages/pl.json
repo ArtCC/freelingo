@@ -322,7 +322,7 @@
   "legal": {
     "terms": {
       "pageTitle": "Regulamin",
-      "updated": "Ostatnia aktualizacja: czerwiec 2026",
+      "updated": "Ostatnia aktualizacja: sierpień 2026",
       "s1Title": "1. O FreeLingo",
       "s1Body": "FreeLingo to platforma do nauki języków wspierana przez AI, dostępna w dwóch trybach: (1) samodzielnie hostowana, gdzie uruchamiasz ją na własnej infrastrukturze bezpłatnie, oraz (2) jako usługa hostowana prowadzona przez zespół FreeLingo, z darmowym planem i płatnymi subskrypcjami. Korzystając z tej usługi w dowolnym trybie, wyrażasz zgodę na niniejszy Regulamin.",
       "s2Title": "2. Dopuszczalne użytkowanie",
@@ -338,21 +338,21 @@
       "s5Title": "5. Tryby usługi",
       "s5Body": "Wdrożenia samodzielnie hostowane są bezpłatne, a operator zachowuje pełną kontrolę nad swoimi danymi i infrastrukturą. Usługa hostowana prowadzona przez zespół FreeLingo oferuje darmowy plan z limitami użytkowania oraz płatne subskrypcje na nielimitowany dostęp, dostępne w cyklu miesięcznym lub rocznym. Darmowy plan obejmuje 7-dniowy okres próbny z pełnym dostępem (bez podawania metody płatności), a następnie ograniczone dzienne limity na lekcje i czat AI oraz tygodniowe limity na ćwiczenia ze słuchania, czytania i rozmowy głosowe. Płatne subskrypcje znoszą wszystkie limity użytkowania tych funkcji. W usłudze hostowanej Twoje dane są przechowywane na serwerach zarządzanych przez zespół FreeLingo. Aktualne limity użytkowania Twojego konta są dostępne na pulpicie nawigacyjnym.",
       "s6Title": "6. Subskrypcja i płatności",
-      "s6Body": "Darmowy plan obejmuje ograniczony dostęp do funkcji AI z 7-dniowym okresem próbnym z pełnym dostępem dla nowych użytkowników (bez podawania metody płatności). Płatne subskrypcje są dostępne w miesięcznym lub rocznym cyklu rozliczeniowym i odnawiane automatycznie, chyba że zostaną anulowane przed datą odnowienia. Nowi subskrybenci planu płatnego otrzymują bezpłatny okres próbny (wymagane dane płatnicze; żadna opłata nie jest pobierana do końca okresu próbnego). Możesz anulować subskrypcję w dowolnym momencie z ustawień konta, ze skutkiem na koniec bieżącego okresu rozliczeniowego. Jeśli anulujesz w ciągu 14 dni od pierwszej płatności i nie korzystałeś(-aś) z usługi w znaczący sposób, możesz zażądać pełnego zwrotu środków zgodnie z prawem konsumenckim UE. Za niewykorzystany czas nie są wydawane częściowe zwroty poza tym uprawnieniem. Aktualne ceny subskrypcji są wyświetlane podczas realizacji zakupu.",
+      "s6Body": "Darmowy plan zapewnia ograniczony dostęp do funkcji AI z 7-dniowym pełnym okresem próbnym dla nowych użytkowników. Płatne subskrypcje są miesięczne lub roczne i odnawiają się automatycznie, o ile nie zostaną wcześniej anulowane. Możesz anulować je w Ustawieniach ze skutkiem na koniec bieżącego okresu. Operator może też anulować odnowienia lub subskrypcje, jeśli usługa zostanie zmieniona lub zamknięta. Jeśli usługa zakończy się przed końcem opłaconego okresu, zastosowanie ma zwrot wymagany prawem konsumenckim.",
       "s7Title": "7. Dostępność",
-      "s7Body": "Usługa jest świadczona bez gwarancji czasu działania. Operator może zawiesić lub zakończyć świadczenie usługi z powodu konserwacji, aktualizacji lub z innego powodu, z rozsądnym wyprzedzeniem tam, gdzie jest to możliwe.",
+      "s7Body": "Usługa hostowana jest świadczona bez gwarancji ciągłości lub dostępności. Operator może ją zmienić, zawiesić lub zamknąć w dowolnym momencie z przyczyn technicznych, finansowych lub innych. Planowane zamknięcie zostanie, w miarę rozsądnych możliwości, ogłoszone w aplikacji lub e-mailem. Po wskazanej dacie konta i dane operacyjne mogą zostać usunięte bez możliwości odzyskania. FreeLingo nie zapewnia usługi kopii zapasowych ani automatycznego eksportu.",
       "s8Title": "8. Ograniczenie odpowiedzialności",
       "s8Body": "FreeLingo i jego współpracownicy nie ponoszą odpowiedzialności za żadne bezpośrednie, pośrednie, przypadkowe ani wtórne szkody wynikające z korzystania lub niemożności korzystania z tej usługi. Zgadzasz się zwolnić FreeLingo i jego współpracowników z odpowiedzialności oraz pokryć wszelkie roszczenia, szkody lub koszty osób trzecich wynikające z korzystania z usługi z naruszeniem niniejszych warunków.",
       "s9Title": "9. Prawo właściwe",
       "s9Body": "Niniejszy regulamin podlega prawu Hiszpanii. Wszelkie spory wynikające z niniejszego regulaminu podlegają wyłącznej jurysdykcji sądów Hiszpanii.",
       "s10Title": "10. Zmiany regulaminu",
-      "s10Body": "Niniejszy regulamin może być aktualizowany w dowolnym momencie. O istotnych zmianach będziemy informować użytkowników za pośrednictwem interfejsu usługi. Dalsze korzystanie z usługi po wprowadzeniu zmian oznacza akceptację zaktualizowanego regulaminu.",
+      "s10Body": "Regulamin może być aktualizowany w dowolnym momencie. Istotne zmiany będą przekazywane przez interfejs lub e-mail, gdy będzie to właściwe. Dalsze korzystanie oznacza akceptację zmian.",
       "s11Title": "11. Rozdzielność postanowień",
       "s11Body": "Jeśli którekolwiek postanowienie niniejszego regulaminu zostanie uznane przez właściwy sąd za nieważne lub niewykonalne, postanowienie to zostanie ograniczone lub wyeliminowane w minimalnym niezbędnym zakresie, a pozostałe postanowienia pozostaną w pełnej mocy.",
       "linkPrivacy": "Polityka prywatności",
       "linkBack": "Wróć do rejestracji",
       "linkBackSettings": "Wróć do ustawień",
-      "linkContact": "W sprawach dotyczących niniejszego regulaminu prosimy o kontakt przez formularz kontaktowy na freelingo.app."
+      "linkContact": "W sprawach regulaminu użyj formularza freelingo.app, dopóki jest dostępny, lub kanału kontaktowego opublikowanego w repozytorium FreeLingo na GitHubie."
     },
     "privacy": {
       "pageTitle": "Polityka prywatności",
@@ -385,11 +385,11 @@
       "s5Title": "5. Pliki cookie i tokeny sesji",
       "s5Body": "FreeLingo używa dwóch technicznych plików cookie niezbędnych do działania usługi: refresh_token (httpOnly, ważność 30 dni) używany do uwierzytelniania sesji oraz NEXT_LOCALE (ważność 1 rok) do zapamiętania preferencji językowych. Nie są używane pliki cookie do śledzenia ani reklam. Do anonimowego pomiaru ruchu używamy Umami — samodzielnie hostowanego, otwartoźródłowego narzędzia analitycznego, które nie używa plików cookie, nie zbiera danych osobowych i przechowuje wszystkie dane na naszych serwerach.",
       "s6Title": "6. Twoje prawa (RODO)",
-      "s6Body": "Jeśli jesteś na terenie Europejskiego Obszaru Gospodarczego, masz prawo do: dostępu do danych osobowych, które przechowujemy; żądania poprawienia niedokładnych danych; żądania usunięcia konta i wszystkich powiązanych danych (dostępne bezpośrednio ze strony Ustawień); sprzeciwu wobec przetwarzania; oraz żądania przenośności danych. Aby skorzystać z tych praw, skontaktuj się z nami pod adresem w sekcji 8 lub usuń konto bezpośrednio w ustawieniach. Podstawa prawna przetwarzania (Art. 6 ust. 1 lit. b RODO): przetwarzamy Twoje dane osobowe, ponieważ jest to niezbędne do wykonania umowy między Tobą a nami — świadczenia usługi FreeLingo. Przekazywanie danych poza EOG: korzystając z usługi hostowanej, treść Twoich rozmów i dźwięk mogą być przetwarzane przez OpenAI, Inc. (USA), a dane płatnicze są przetwarzane przez Stripe, Inc. (USA). Przekazania te odbywają się na podstawie Standardowych Klauzul Umownych zatwierdzonych przez Komisję Europejską (Art. 46 RODO), zapewniających odpowiedni poziom ochrony. Prawo do skargi: masz prawo wnieść skargę do Prezesa Urzędu Ochrony Danych Osobowych (UODO — uodo.gov.pl) lub organu nadzorczego w swoim kraju zamieszkania.",
+      "s6Body": "W Europejskim Obszarze Gospodarczym masz prawa RODO do dostępu, sprostowania, usunięcia, sprzeciwu i przenoszenia danych. Konto możesz usunąć w Ustawieniach. Inne wnioski są obsługiwane ręcznie przez kontakt z sekcji 8; FreeLingo nie zapewnia automatycznego eksportu. Dane są przetwarzane w celu świadczenia usługi (Art. 6 ust. 1 lit. b RODO). OpenAI i Stripe mogą przetwarzać dane w USA z zastosowaniem właściwych zabezpieczeń transferów międzynarodowych. Możesz złożyć skargę do właściwego organu nadzorczego.",
       "s7Title": "7. Przechowywanie i usuwanie danych",
-      "s7Body": "Twoje dane są przechowywane przez cały czas istnienia konta. W Ustawieniach możesz usuwać pojedyncze wspomnienia lub wyczyścić je wszystkie. Usunięcie języka usuwa jego dane, ale zachowuje globalne wspomnienia konta. Możesz w dowolnym momencie usunąć konto i wszystkie powiązane dane w Ustawieniach; usunięcie konta jest natychmiastowe i nieodwracalne.",
+      "s7Body": "Dane operacyjne są przechowywane, dopóki istnieje konto i działa usługa hostowana. W Ustawieniach możesz usunąć wspomnienia, języki lub całe konto. Przy zamknięciu usługi operator może po rozsądnym możliwym powiadomieniu usunąć wszystkie konta i dane. Usunięcie jest nieodwracalne. Po usunięciu systemów i kopii kontrolowanych przez operatora FreeLingo nie będzie przechowywać danych osobowych. Stripe może zachować informacje o płatnościach i transakcjach zgodnie z własną polityką i obowiązkami prawnymi.",
       "s8Title": "8. Kontakt",
-      "s8Body": "W sprawach dotyczących prywatności usługi hostowanej skontaktuj się z nami przez formularz kontaktowy na freelingo.app.",
+      "s8Body": "W sprawach prywatności usługi hostowanej użyj formularza freelingo.app, dopóki jest dostępny. Po zamknięciu użyj kanału kontaktowego w repozytorium FreeLingo na GitHubie i nie publikuj danych osobowych w publicznych zgłoszeniach. Przy samodzielnym hostingu skontaktuj się z administratorem instancji.",
       "s9Title": "9. Rozdzielność",
       "s9Body": "Jeśli którekolwiek postanowienie niniejszej polityki zostanie uznane za nieważne lub niewykonalne, zostanie ono ograniczone w minimalnym zakresie, a pozostałe pozostaną w mocy.",
       "linkTerms": "Regulamin",
@@ -448,7 +448,9 @@
     "premiumBannerPastDueDesc": "Zaktualizuj metodę płatności, aby przywrócić dostęp Premium do czatu, rozmów głosowych, reading i listening.",
     "premiumBannerPastDueCta": "Przywróć Premium",
     "freemiumTrialTitle": "{days, plural, one {# dzień bezpłatnego okresu próbnego} other {# dni bezpłatnego okresu próbnego}}",
-    "freemiumTrialDesc": "Ciesz się nieograniczonym dostępem do czatu, głosu, listeningu i readingu. Wypróbuj wszystko Premium za darmo."
+    "freemiumTrialDesc": "Ciesz się nieograniczonym dostępem do czatu, głosu, listeningu i readingu. Wypróbuj wszystko Premium za darmo.",
+    "announcementDismiss": "Zamknij ogłoszenie",
+    "announcementDismissError": "Nie udało się zamknąć ogłoszenia. Spróbuj ponownie."
   },
   "assessment": {
     "title": "Ocena poziomu",
@@ -980,7 +982,41 @@
     "pendingBugs": "Oczekujące błędy",
     "pendingBugsDesc": "Zgłoszenia błędów oczekujące na triage administratora.",
     "pastDueSubscriptions": "Zaległe subskrypcje",
-    "pastDueSubscriptionsDesc": "Konta z problemami płatności, które mogą wymagać przeglądu."
+    "pastDueSubscriptionsDesc": "Konta z problemami płatności, które mogą wymagać przeglądu.",
+    "dashboardBanner": {
+      "title": "Ogłoszenie na pulpicie",
+      "description": "Utwórz, przetłumacz, sprawdź i opublikuj ogłoszenie na pulpicie każdego ucznia.",
+      "loading": "Ładowanie ogłoszenia...",
+      "loadError": "Nie udało się załadować ogłoszenia.",
+      "sourceLocale": "Język źródłowy",
+      "activeLabel": "Opublikuj ogłoszenie",
+      "activeHint": "Nieaktywne ogłoszenia są zapisywane, ale ukryte przed uczniami.",
+      "fieldTitle": "Tytuł",
+      "fieldSubtitle": "Podtytuł",
+      "fieldDescription": "Opis",
+      "translate": "Przetłumacz",
+      "translateSuccess": "Tłumaczenia wygenerowane. Sprawdź je przed zapisaniem.",
+      "translateError": "Tłumaczenie nie powiodło się. Obecna treść została zachowana.",
+      "editTranslation": "Edytuj tłumaczenie",
+      "completion": "Ukończone języki: {complete}/{total}",
+      "save": "Zapisz ogłoszenie",
+      "saveSuccess": "Ogłoszenie zapisane.",
+      "saveError": "Nie udało się zapisać ogłoszenia.",
+      "revision": "Wersja {revision}",
+      "updated": "Zaktualizowano: {date}",
+      "locales": {
+        "en": "Angielski",
+        "es": "Hiszpański",
+        "fr": "Francuski",
+        "pt": "Portugalski",
+        "de": "Niemiecki",
+        "it": "Włoski",
+        "ru": "Rosyjski",
+        "nl": "Niderlandzki",
+        "pl": "Polski",
+        "ro": "Rumuński"
+      }
+    }
   },
   "faq": {
     "title": "FAQ",
@@ -1402,7 +1438,7 @@
   },
   "whatsNew": {
     "title": "Co nowego",
-    "version": "v1.8.30",
+    "version": "v1.8.35",
     "cta": "Rozumiem",
     "entry1": {
       "label": "Wspomnienia, które są zawsze z Tobą",

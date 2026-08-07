@@ -322,7 +322,7 @@
   "legal": {
     "terms": {
       "pageTitle": "Termeni și condiții",
-      "updated": "Ultima actualizare: iunie 2026",
+      "updated": "Ultima actualizare: august 2026",
       "s1Title": "1. Despre FreeLingo",
       "s1Body": "FreeLingo este o platformă de învățare a limbilor bazată pe AI, disponibilă în două moduri: (1) auto-găzduită, pe care o poți rula pe propria infrastructură fără costuri, și (2) ca serviciu găzduit gestionat de echipa FreeLingo, cu un plan gratuit și abonamente plătite.",
       "s2Title": "2. Utilizare permisă",
@@ -338,21 +338,21 @@
       "s5Title": "5. Moduri de serviciu",
       "s5Body": "Implementările auto-găzduite sunt gratuite. Serviciul găzduit de echipa FreeLingo oferă un plan gratuit cu limite de utilizare și abonamente plătite pentru acces nelimitat, disponibile lunar sau anual. Planul gratuit include o perioadă de probă de 7 zile cu acces complet (fără metodă de plată necesară) și ulterior cote zilnice limitate pentru lecții și chat AI, plus cote săptămânale pentru exerciții de ascultare, citire și conversații vocale. Abonamentele plătite elimină toate limitele de utilizare ale acestor funcții. În serviciul găzduit, datele tale sunt stocate pe servere operate de echipa FreeLingo. Limitele actuale de utilizare pentru contul tău sunt disponibile în tabloul de bord.",
       "s6Title": "6. Abonament și facturare",
-      "s6Body": "Planul gratuit include acces limitat la funcțiile AI cu o perioadă de probă de 7 zile cu acces complet pentru utilizatorii noi (fără metodă de plată necesară). Abonamentele plătite sunt disponibile cu ciclu de facturare lunar sau anual şi se reînoiesc automat dacă nu sunt anulate înainte de data de reînoiire. Noii abonaţi la un plan plătit beneficiază de o perioadă de încercare gratuită (detalii de plată necesare; nu se efectuează nicio taxă până la sfârşitul perioadei de încercare). Poţi anula oricand din setarile contului, cu efect la sfârşitul perioadei de facturare curente. Preţurile actuale ale abonamentelor sunt afisate la checkout.",
+      "s6Body": "Planul gratuit oferă acces limitat la funcțiile AI și o perioadă de probă completă de 7 zile pentru utilizatorii noi. Abonamentele plătite sunt lunare sau anuale și se reînnoiesc automat dacă nu sunt anulate în prealabil. Le poți anula din Setări, cu efect la sfârșitul perioadei curente. Operatorul poate anula reînnoirile sau abonamentele dacă serviciul este modificat sau închis. Dacă serviciul se încheie înaintea unei perioade plătite, se aplică rambursarea impusă de legislația consumatorilor.",
       "s7Title": "7. Disponibilitate",
-      "s7Body": "Acest serviciu este oferit fără garanții de uptime. Operatorul poate suspenda sau întrerupe serviciul pentru întreținere sau actualizări.",
+      "s7Body": "Serviciul găzduit este oferit fără garanții de continuitate sau disponibilitate. Operatorul îl poate modifica, suspenda sau închide oricând din motive tehnice, financiare sau de altă natură. Când este rezonabil posibil, închiderile planificate vor fi anunțate în aplicație sau prin e-mail. După data anunțată, conturile și datele operaționale pot fi șterse fără recuperare. FreeLingo nu oferă servicii de backup sau un instrument automat de export.",
       "s8Title": "8. Limitarea răspunderii",
       "s8Body": "FreeLingo și contribuitorii săi nu sunt răspunzători pentru daune directe, indirecte, incidentale sau consequente rezultate din utilizarea sau incapacitatea de a utiliza acest serviciu. Sunteți de acord să despăgubiți și să exonerați de răspundere FreeLingo și colaboratorii săi față de orice reclamații, daune sau cheltuieli ale terților care decurg din utilizarea de către dvs. a serviciului cu încălcarea acestor termeni.",
       "s9Title": "9. Legea aplicabilă",
       "s9Body": "Acești termeni sunt guvernați de legea Spaniei. Orice litigiu este supus jurisdicției exclusive a instanțelor din Spania.",
       "s10Title": "10. Modificări ale acestor termeni",
-      "s10Body": "Acești termeni pot fi actualizați în orice moment. Vom notifica utilizatorii cu privire la modificările materiale prin interfața serviciului.",
+      "s10Body": "Acești termeni pot fi actualizați în orice moment. Modificările importante vor fi comunicate prin interfață sau e-mail atunci când este cazul. Utilizarea în continuare înseamnă acceptarea termenilor revizuiți.",
       "s11Title": "11. Separabilitate",
       "s11Body": "Dacă vreo dispoziție a acestor termeni este considerată nulă sau inaplicabilă de către o instanță competentă, acea dispoziție va fi limitată sau eliminată în măsura minimă necesară, iar celelalte dispoziții vor rămâne în deplină vigoare.",
       "linkPrivacy": "Politică de confidențialitate",
       "linkBack": "Înapoi la înregistrare",
       "linkBackSettings": "Înapoi la setări",
-      "linkContact": "Pentru întrebări referitoare la acești termeni, contactați-ne prin formularul de contact de pe freelingo.app."
+      "linkContact": "Pentru întrebări, folosește formularul freelingo.app cât timp este disponibil sau canalul de contact publicat în depozitul GitHub FreeLingo."
     },
     "privacy": {
       "pageTitle": "Politică de confidențialitate",
@@ -385,11 +385,11 @@
       "s5Title": "5. Cookie-uri și tokenuri de sesiune",
       "s5Body": "FreeLingo folosește două cookie-uri tehnice strict necesare: un refresh_token (httpOnly, expirare 30 de zile) și NEXT_LOCALE (expirare 1 an). Nu se folosesc cookie-uri de urmărire sau publicitate. Pentru măsurarea anonimă a traficului folosim Umami — un instrument de analiză auto-găzduit și open-source care nu utilizează cookie-uri, nu colectează date personale și păstrează toate datele pe serverele noastre.",
       "s6Title": "6. Drepturile tale (GDPR)",
-      "s6Body": "Dacă te afli în Spațiul Economic European, ai dreptul de acces, rectificare, ștergere, opoziție și portabilitate a datelor. Pentru a exercita aceste drepturi, contactează-ne la adresa din secțiunea 8 sau șterge-ți contul din setări. Bază juridică a prelucrării (Art. 6(1)(b) GDPR): prelucrăm datele tale personale deoarece este necesar pentru executarea contractului dintre tine și noi. Transferări internaționale: la utilizarea serviciului găzduit, conținutul conversațiilor și audio pot fi procesate de OpenAI, Inc. (SUA), iar datele de plată sunt procesate de Stripe, Inc. (SUA). Aceste transferări se efectuează în baza Clauzelor Contractuale Standard aprobate de Comisia Europeană (Art. 46 GDPR). Drept de reclamație: ai dreptul de a depune o plângere la Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP — dataprotection.ro) sau la autoritatea de supraveghere din țara ta de reședință.",
+      "s6Body": "În Spațiul Economic European ai drepturile GDPR de acces, rectificare, ștergere, opoziție și portabilitate. Îți poți șterge contul din Setări. Alte cereri sunt gestionate manual prin contactul din secțiunea 8; FreeLingo nu oferă un instrument automat de export. Datele sunt prelucrate pentru furnizarea serviciului (Art. 6(1)(b) GDPR). OpenAI și Stripe pot prelucra date în SUA cu garanțiile aplicabile transferurilor internaționale. Poți depune o plângere la autoritatea de supraveghere competentă.",
       "s7Title": "7. Retenția și ștergerea datelor",
-      "s7Body": "Datele tale sunt păstrate cât timp există contul. Din Setări poți șterge amintiri individuale sau pe toate. Eliminarea unei limbi șterge datele specifice acelei limbi, dar păstrează amintirile globale ale contului. Poți șterge contul și toate datele asociate oricând din Setări; ștergerea contului este imediată și ireversibilă.",
+      "s7Body": "Datele operaționale sunt păstrate cât timp există contul și serviciul găzduit este activ. Poți șterge amintiri, limbi sau întregul cont din Setări. La închiderea serviciului, operatorul poate șterge toate conturile și datele după notificarea rezonabil posibilă. Ștergerea este ireversibilă. După ștergerea sistemelor și copiilor aflate sub controlul operatorului, FreeLingo nu va păstra date personale. Stripe poate păstra informații despre plăți și tranzacții conform propriei politici și obligațiilor legale.",
       "s8Title": "8. Contact",
-      "s8Body": "Pentru întrebări legate de confidențialitate, contactează-ne prin formularul de contact de pe freelingo.app.",
+      "s8Body": "Pentru întrebări de confidențialitate despre serviciul găzduit, folosește formularul freelingo.app cât timp este disponibil. După închidere, folosește canalul de contact din depozitul GitHub FreeLingo și nu publica date personale în issue-uri publice. Pentru auto-găzduire, contactează administratorul instanței.",
       "s9Title": "9. Separabilitate",
       "s9Body": "Dacă vreo dispoziție a acestei politici este considerată nulă sau inaplicabilă, aceasta va fi limitată în măsura minimă necesară, iar celelalte vor rămâne în vigoare.",
       "linkTerms": "Termeni și condiții",
@@ -448,7 +448,9 @@
     "premiumBannerPastDueDesc": "Actualizează metoda de plată pentru a restabili accesul Premium la chat, conversație vocală, reading și listening.",
     "premiumBannerPastDueCta": "Restabilește Premium",
     "freemiumTrialTitle": "{days, plural, one {# zi de test gratuit} other {# zile de test gratuit}}",
-    "freemiumTrialDesc": "Bucură-te de acces nelimitat la chat, voce, listening și reading. Încearcă tot Premium gratuit."
+    "freemiumTrialDesc": "Bucură-te de acces nelimitat la chat, voce, listening și reading. Încearcă tot Premium gratuit.",
+    "announcementDismiss": "Închide anunțul",
+    "announcementDismissError": "Anunțul nu a putut fi închis. Încearcă din nou."
   },
   "assessment": {
     "title": "Evaluare",
@@ -980,7 +982,41 @@
     "pendingBugs": "Erori în așteptare",
     "pendingBugsDesc": "Rapoarte de erori care așteaptă trierea de către administrator.",
     "pastDueSubscriptions": "Abonamente restante",
-    "pastDueSubscriptionsDesc": "Conturi cu probleme de plată care pot necesita revizuire."
+    "pastDueSubscriptionsDesc": "Conturi cu probleme de plată care pot necesita revizuire.",
+    "dashboardBanner": {
+      "title": "Anunț în tabloul de bord",
+      "description": "Creează, traduce, verifică și publică un anunț pentru tabloul de bord al fiecărui cursant.",
+      "loading": "Se încarcă anunțul...",
+      "loadError": "Anunțul nu a putut fi încărcat.",
+      "sourceLocale": "Limba sursă",
+      "activeLabel": "Publică anunțul",
+      "activeHint": "Anunțurile inactive sunt salvate, dar ascunse cursanților.",
+      "fieldTitle": "Titlu",
+      "fieldSubtitle": "Subtitlu",
+      "fieldDescription": "Descriere",
+      "translate": "Tradu",
+      "translateSuccess": "Traduceri generate. Verifică-le înainte de salvare.",
+      "translateError": "Traducerea a eșuat. Conținutul actual a fost păstrat.",
+      "editTranslation": "Traducere de editat",
+      "completion": "{complete}/{total} limbi complete",
+      "save": "Salvează anunțul",
+      "saveSuccess": "Anunțul a fost salvat.",
+      "saveError": "Anunțul nu a putut fi salvat.",
+      "revision": "Revizia {revision}",
+      "updated": "Actualizat: {date}",
+      "locales": {
+        "en": "Engleză",
+        "es": "Spaniolă",
+        "fr": "Franceză",
+        "pt": "Portugheză",
+        "de": "Germană",
+        "it": "Italiană",
+        "ru": "Rusă",
+        "nl": "Neerlandeză",
+        "pl": "Poloneză",
+        "ro": "Română"
+      }
+    }
   },
   "faq": {
     "title": "Întrebări frecvente",
@@ -1402,7 +1438,7 @@
   },
   "whatsNew": {
     "title": "Noutăți",
-    "version": "v1.8.30",
+    "version": "v1.8.35",
     "cta": "Am înțeles",
     "entry1": {
       "label": "Amintiri care te însoțesc",

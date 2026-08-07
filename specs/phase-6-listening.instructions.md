@@ -374,7 +374,7 @@ Six UI states controlled by local `PageState` type:
 - `loading` — Initial fetch of `GET /api/listening/next` in progress
 - `generating` — `POST /api/listening/generate` sent; polls `GET /next` every 3 s until available
 - `idle` — No exercise available and no generation in progress; shows "Generate" button
-- `exercise` — Exercise card + `ExerciseAudioPlayer` + question form; "Submit" activates when all 5 answered
+- `exercise` — Exercise card + `ExerciseAudioPlayer` + question form; selecting one word in a question prompt opens the shared vocabulary-save tooltip with that prompt as context, while answer options remain normal selection controls; "Submit" activates when all 5 answered
 - `results` — Score, XP, per-question feedback, transcript, "Next exercise" / "View history" buttons. After a successful new attempt, the page may open the reusable review prompt, subject to duplicate-review checks and local dismissal cooldown. Replay attempts from history do not trigger the prompt.
 - `history` — Paginated list of past attempts, 10 per page, using the shared Previous/Next controls. Each card shows topic, score, transcript, and a replay action. Page changes send `skip` and `limit` to the history endpoint; controls are hidden for a single page and disabled while loading.
 

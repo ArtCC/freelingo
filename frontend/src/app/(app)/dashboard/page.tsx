@@ -17,6 +17,7 @@ import OnboardingTour from '@/components/tour/OnboardingTour'
 import WhatsNew from '@/components/whats-new/WhatsNew'
 import { PageLoading } from '@/components/ui/page-loading'
 import { SubscriptionPlanButtons } from '@/components/billing/SubscriptionPlanButtons'
+import { DashboardAnnouncement } from '@/components/dashboard/DashboardAnnouncement'
 
 interface TodayLessonItem {
   id: number | null
@@ -265,6 +266,8 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+
+        <DashboardAnnouncement />
 
         {/* Next step */}
         <div className="border-fl-border bg-fl-surface mb-8 border p-5">
