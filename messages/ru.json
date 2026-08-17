@@ -588,6 +588,7 @@
       "vocabulary": "Словарный запас",
       "reading": "Чтение",
       "writing": "Письмо",
+      "listening": "Аудирование",
       "conversation": "Разговор",
       "review": "Повторение",
       "level_test": "Тест уровня"
@@ -1438,7 +1439,7 @@
   },
   "whatsNew": {
     "title": "Что нового",
-    "version": "v1.8.35",
+    "version": "v1.8.40",
     "cta": "Понятно",
     "entry1": {
       "label": "Воспоминания всегда с вами",

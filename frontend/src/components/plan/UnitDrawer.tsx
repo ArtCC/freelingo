@@ -54,6 +54,7 @@ export default function UnitDrawer({
     vocabulary: t('lessonTypes.vocabulary'),
     reading: t('lessonTypes.reading'),
     writing: t('lessonTypes.writing'),
+    listening: t('lessonTypes.listening'),
     conversation: t('lessonTypes.conversation'),
     review: t('lessonTypes.review'),
     level_test: t('lessonTypes.level_test'),

@@ -3,7 +3,7 @@
 ![Next.js](https://img.shields.io/badge/next.js-16-black?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.14-blue?style=flat-square)
 ![Self-hosted](https://img.shields.io/badge/self--hosted-yes-orange?style=flat-square)
-![Version](https://img.shields.io/badge/version-1.8.35-brightgreen?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.8.40-brightgreen?style=flat-square)
 
 <p align="left">
   <img src="assets/logo_large.png" alt="FreeLingo logo" />
@@ -288,9 +288,9 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for instructions on running the project loc
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting bugs and suggesting features. By opening a pull request you accept the [Contributor License Agreement](CONTRIBUTOR_LICENSE_AGREEMENT.md).
+Bug reports, feature suggestions, documentation improvements, and code contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening an issue or pull request.
 
-> **External code contributions (pull requests) are temporarily not being accepted.** Bug reports and feature suggestions via issues are still welcome.
+By opening a pull request you accept the [Contributor License Agreement](CONTRIBUTOR_LICENSE_AGREEMENT.md).
 
 ## License
 

@@ -588,6 +588,7 @@
       "vocabulary": "Vocabulary",
       "reading": "Reading",
       "writing": "Writing",
+      "listening": "Listening",
       "conversation": "Conversation",
       "review": "Review",
       "level_test": "Level Test"
@@ -1438,7 +1439,7 @@
   },
   "whatsNew": {
     "title": "What's New",
-    "version": "v1.8.35",
+    "version": "v1.8.40",
     "cta": "Got it",
     "entry1": {
       "label": "Memories that follow you",

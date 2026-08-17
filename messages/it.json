@@ -588,6 +588,7 @@
       "vocabulary": "Vocabolario",
       "reading": "Lettura",
       "writing": "Scrittura",
+      "listening": "Ascolto",
       "conversation": "Conversazione",
       "review": "Ripasso",
       "level_test": "Test di livello"
@@ -1438,7 +1439,7 @@
   },
   "whatsNew": {
     "title": "Novità",
-    "version": "v1.8.35",
+    "version": "v1.8.40",
     "cta": "Capito",
     "entry1": {
       "label": "Ricordi che ti accompagnano",
