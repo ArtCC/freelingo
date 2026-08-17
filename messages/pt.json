@@ -588,6 +588,7 @@
       "vocabulary": "Vocabulário",
       "reading": "Leitura",
       "writing": "Escrita",
+      "listening": "Audição",
       "conversation": "Conversa",
       "review": "Revisão",
       "level_test": "Teste de nível"
@@ -1438,7 +1439,7 @@
   },
   "whatsNew": {
     "title": "Novidades",
-    "version": "v1.8.35",
+    "version": "v1.8.40",
     "cta": "Entendido",
     "entry1": {
       "label": "Memórias que te acompanham",

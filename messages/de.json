@@ -588,6 +588,7 @@
       "vocabulary": "Vokabular",
       "reading": "Lesen",
       "writing": "Schreiben",
+      "listening": "Hören",
       "conversation": "Gespräch",
       "review": "Wiederholung",
       "level_test": "Stufentest"
@@ -1438,7 +1439,7 @@
   },
   "whatsNew": {
     "title": "Neuigkeiten",
-    "version": "v1.8.35",
+    "version": "v1.8.40",
     "cta": "Verstanden",
     "entry1": {
       "label": "Erinnerungen, die dich begleiten",

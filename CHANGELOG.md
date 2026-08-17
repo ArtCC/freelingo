@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.40] - 2026-08-17
+
+### Fixed
+
+- **Listening lesson labels**: study-plan, dashboard, unit-drawer, and lesson-player views now show the localized listening lesson type instead of the untranslated `plan.lessonTypes.listening` key or raw backend value.
+
 ## [1.8.35] - 2026-08-07
 
 ### Added

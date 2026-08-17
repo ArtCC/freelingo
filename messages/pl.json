@@ -588,6 +588,7 @@
       "vocabulary": "Słownictwo",
       "reading": "Czytanie",
       "writing": "Pisanie",
+      "listening": "Słuchanie",
       "conversation": "Rozmowa",
       "review": "Powtórka",
       "level_test": "Test poziomu"
@@ -1438,7 +1439,7 @@
   },
   "whatsNew": {
     "title": "Co nowego",
-    "version": "v1.8.35",
+    "version": "v1.8.40",
     "cta": "Rozumiem",
     "entry1": {
       "label": "Wspomnienia, które są zawsze z Tobą",

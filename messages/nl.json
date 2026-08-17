@@ -588,6 +588,7 @@
       "vocabulary": "Woordenschat",
       "reading": "Lezen",
       "writing": "Schrijven",
+      "listening": "Luisteren",
       "conversation": "Gesprek",
       "review": "Herhaling",
       "level_test": "Niveautest"
@@ -1438,7 +1439,7 @@
   },
   "whatsNew": {
     "title": "Nieuw",
-    "version": "v1.8.35",
+    "version": "v1.8.40",
     "cta": "Begrepen",
     "entry1": {
       "label": "Herinneringen die met je meegaan",
