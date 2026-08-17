@@ -588,6 +588,7 @@
       "vocabulary": "Vocabular",
       "reading": "Lectură",
       "writing": "Scriere",
+      "listening": "Ascultare",
       "conversation": "Conversație",
       "review": "Recapitulare",
       "level_test": "Test de nivel"
@@ -1438,7 +1439,7 @@
   },
   "whatsNew": {
     "title": "Noutăți",
-    "version": "v1.8.35",
+    "version": "v1.8.40",
     "cta": "Am înțeles",
     "entry1": {
       "label": "Amintiri care te însoțesc",

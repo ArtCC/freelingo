@@ -588,6 +588,7 @@
       "vocabulary": "Vocabulaire",
       "reading": "Lecture",
       "writing": "Écriture",
+      "listening": "Écoute",
       "conversation": "Conversation",
       "review": "Révision",
       "level_test": "Test de niveau"
@@ -1438,7 +1439,7 @@
   },
   "whatsNew": {
     "title": "Nouveautés",
-    "version": "v1.8.35",
+    "version": "v1.8.40",
     "cta": "Compris",
     "entry1": {
       "label": "Des souvenirs qui vous suivent",

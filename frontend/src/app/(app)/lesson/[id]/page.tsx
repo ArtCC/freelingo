@@ -534,6 +534,7 @@ export default function LessonPage() {
                         vocabulary: tPlan('lessonTypes.vocabulary'),
                         reading: tPlan('lessonTypes.reading'),
                         writing: tPlan('lessonTypes.writing'),
+                        listening: tPlan('lessonTypes.listening'),
                         review: tPlan('lessonTypes.review'),
                         level_test: tPlan('lessonTypes.level_test'),
                       } as Record<string, string>
