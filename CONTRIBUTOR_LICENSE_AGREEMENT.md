@@ -1,5 +1,9 @@
 # FreeLingo Contributor License Agreement
 
-I give Arturo Carretero Calvo permission to license my contributions on any terms they like. I am giving them this license in order to make it possible for them to accept my contributions into their project.
+By submitting a contribution to FreeLingo, you confirm that you have the right to contribute it.
 
-As far as the law allows, my contributions come as is, without any warranty or condition, and I will not be liable to anyone for any damages related to this software or this license, under any kind of legal claim.
+You retain any rights you hold in your contribution, but you grant the repository owner a permanent, irrevocable, and royalty-free license to use, modify, distribute, and relicense it, including for commercial purposes.
+
+Contributing to FreeLingo does not grant you any ownership or co-ownership rights in the project, repository, name, trademarks, or existing materials. It also does not grant you any administrative, governance, control, or decision-making rights over the project.
+
+The repository owner may accept, modify, reject, or remove any contribution. Contributions are voluntary, do not create any right to compensation, and are provided without warranties.

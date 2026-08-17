@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.8.40] - 2026-08-17
 
+### Changed
+
+- **Contribution guidelines**: external issues, documentation improvements, and pull requests are now welcome; the README and contribution guide link to the development setup, provide root-safe validation commands, and leave issue classification to the repository owner.
+- **Community and contributor terms**: the Code of Conduct now uses Contributor Covenant 2.1 with private reporting and moderation by the repository owner, while the simplified Contributor License Agreement clarifies contribution licensing and that contributing grants no ownership, control, or decision-making rights over FreeLingo.
+
 ### Fixed
 
 - **Listening lesson labels**: study-plan, dashboard, unit-drawer, and lesson-player views now show the localized listening lesson type instead of the untranslated `plan.lessonTypes.listening` key or raw backend value.

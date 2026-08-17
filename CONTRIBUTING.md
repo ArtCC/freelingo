@@ -1,12 +1,14 @@
 # Contributing to FreeLingo
 
-Thank you for your interest in contributing. Please read these guidelines before opening issues or pull requests.
-
-> **Note:** **External code contributions (pull requests) are temporarily not being accepted.** Bug reports and feature suggestions via issues are still welcome. This is a temporary measure — check back later for updates.
+Thank you for your interest in contributing. Bug reports, feature suggestions, documentation improvements, and pull requests are welcome. Please read these guidelines before contributing.
 
 ## Code of Conduct
 
-This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating you agree to abide by its terms. Report unacceptable behavior by opening an issue on the project's GitHub repository.
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating you agree to abide by its terms. Report unacceptable behavior privately to the repository owner using one of the contact methods available on their [GitHub profile](https://github.com/artcc). Do not report Code of Conduct violations through public issues.
+
+## Development setup
+
+Follow [DEVELOPMENT.md](DEVELOPMENT.md) to prepare and run the local development environment before making code changes. Run the validation commands below from the repository root.
 
 ## How to contribute
 
@@ -20,7 +22,7 @@ Open an issue with:
 
 ### Suggesting features
 
-Open an issue with the `enhancement` label. Describe the use case, not just the feature. Check the [roadmap](specs/roadmap.instructions.md) first — the feature may already be planned.
+Open an issue describing the use case, not just the feature. The repository owner will review and label it. Check the [roadmap](specs/roadmap.instructions.md) first — the feature may already be planned.
 
 ### Branch workflow
 
@@ -43,10 +45,10 @@ Do not open PRs directly against `main`.
    ./scripts/format.sh
 
    # Backend tests
-   source .venv/bin/activate && cd backend && pytest -v
+   (source .venv/bin/activate && cd backend && pytest -v)
 
    # Frontend lint, typecheck, and tests
-   cd frontend && npm run lint && npx tsc --noEmit && npm run test:run
+   (cd frontend && npm run lint && npx tsc --noEmit && npm run test:run)
    ```
 5. Open a pull request against `develop`. CI will run backend tests and frontend lint/typecheck/tests automatically.
 
@@ -67,16 +69,16 @@ The backend test suite uses SQLite in-memory and mocked Redis — no Docker serv
 
 ```bash
 # Backend
-source .venv/bin/activate && cd backend && pytest -v
+(source .venv/bin/activate && cd backend && pytest -v)
 
 # Run a single backend test file
-source .venv/bin/activate && cd backend && pytest tests/test_auth.py -v
+(source .venv/bin/activate && cd backend && pytest tests/test_auth.py -v)
 ```
 
 Frontend tests run locally and in CI:
 
 ```bash
-cd frontend && npm run lint && npx tsc --noEmit && npm run test:run
+(cd frontend && npm run lint && npx tsc --noEmit && npm run test:run)
 ```
 
 > **Note:** `package-lock.json` must be generated with **npm 11**. If you update frontend dependencies, make sure you are using npm 11 locally before committing the lockfile.
@@ -92,4 +94,4 @@ docker compose exec backend alembic upgrade head
 
 ## Contributor License Agreement
 
-By opening a pull request you accept the [Contributor License Agreement](CONTRIBUTOR_LICENSE_AGREEMENT.md). In essence, you grant Arturo Carretero Calvo permission to license your contributions under any terms deemed appropriate, which preserves the option to offer the project under commercial licences in addition to AGPL-3.0.
+By opening a pull request you accept the [Contributor License Agreement](CONTRIBUTOR_LICENSE_AGREEMENT.md). You retain any rights you hold in your contribution while granting the repository owner permission to use, modify, distribute, and relicense it. Contributing does not grant ownership, control, or decision-making rights over FreeLingo.
