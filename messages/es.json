@@ -513,6 +513,7 @@
     "suggestedLevel": "Sugerido {aiLevel}; el plan usará {selectedLevel}",
     "step1": "Paso 1 / 3: tu nivel",
     "step2": "Paso 2 / 3: pregunta {questionNumber} / {totalQuestions}",
+    "dontKnow": "No lo sé",
     "step3": "Paso 3 / 3: tu programa",
     "studiedBefore": "¿Has estudiado {language} antes?",
     "studiedBeforeHint": "Esto nos ayuda a empezar el cuestionario en el nivel adecuado.",

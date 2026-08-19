@@ -686,6 +686,94 @@ async def test_evaluate_invalid_body_422(client: AsyncClient, test_user):
     assert response.status_code == 422
 
 
+def _answer(question_id: str, skill: str, difficulty: str, **overrides):
+    answer = {
+        "question_id": question_id,
+        "skill": skill,
+        "difficulty": difficulty,
+        "correct": False,
+    }
+    answer.update(overrides)
+    return answer
+
+
+async def test_evaluate_accepts_answers_without_dont_know(client: AsyncClient, test_user):
+    """Clients that do not send dont_know keep working unchanged."""
+    _user, headers = test_user
+    response = await client.post(
+        "/api/assessment/evaluate",
+        headers=headers,
+        json={
+            "answers": [
+                _answer("q1", "grammar", "A2", correct=True),
+                _answer("q2", "grammar", "A2", correct=True),
+            ]
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["cefr_level"] == "A2"
+
+
+async def test_evaluate_declared_gap_is_never_correct(client: AsyncClient, test_user):
+    """A declared gap does not pass a level, even when the client also marks it correct."""
+    _user, headers = test_user
+    response = await client.post(
+        "/api/assessment/evaluate",
+        headers=headers,
+        json={
+            "answers": [
+                _answer("q1", "grammar", "B2", correct=True, dont_know=True),
+                _answer("q2", "grammar", "B2", correct=True, dont_know=True),
+            ]
+        },
+    )
+    assert response.status_code == 200
+    result = response.json()
+    assert result["cefr_level"] == "A1"
+    assert result["skill_profile"]["grammar"] == 0.0
+
+
+async def test_evaluate_declared_gaps_make_a_skill_a_weakness(client: AsyncClient, test_user):
+    """Half the questions declared as gaps mark the skill weak despite the other answers."""
+    _user, headers = test_user
+    response = await client.post(
+        "/api/assessment/evaluate",
+        headers=headers,
+        json={
+            "answers": [
+                _answer("q1", "grammar", "A2", correct=True),
+                _answer("q2", "grammar", "A2", dont_know=True),
+                _answer("q3", "vocabulary", "A2", correct=True),
+                _answer("q4", "vocabulary", "A2", correct=False),
+            ]
+        },
+    )
+    assert response.status_code == 200
+    result = response.json()
+    # Both skills score 0.5, but only grammar carries a declared gap.
+    assert result["skill_profile"]["grammar"] == 0.5
+    assert result["skill_profile"]["vocabulary"] == 0.5
+    assert "grammar" in result["weaknesses"]
+    assert "vocabulary" not in result["weaknesses"]
+
+
+async def test_evaluate_weaknesses_are_not_duplicated(client: AsyncClient, test_user):
+    """A skill that is already weak by score is listed once, not twice."""
+    _user, headers = test_user
+    response = await client.post(
+        "/api/assessment/evaluate",
+        headers=headers,
+        json={
+            "answers": [
+                _answer("q1", "grammar", "A2", dont_know=True),
+                _answer("q2", "grammar", "A2", dont_know=True),
+            ]
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["weaknesses"].count("grammar") == 1
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # POST /api/assessment/free-write — LLM evaluation of free-write
 # ═══════════════════════════════════════════════════════════════════════════════

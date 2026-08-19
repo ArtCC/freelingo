@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import type { AssessmentQuestion } from '@/data/types'
 import { TargetLanguageText } from '@/components/TargetLanguageText'
+import { DONT_KNOW_ANSWER } from '@/lib/assessment-answers'
 
 interface Props {
   question: AssessmentQuestion
@@ -87,6 +88,14 @@ export default function AdaptiveQuizCard({
               )
             })}
           </div>
+
+          {/* Declared gap — kept apart from A-D so it does not read as a fifth option */}
+          <button
+            onClick={() => onAnswer(DONT_KNOW_ANSWER)}
+            className="text-fl-label text-fl-muted-4 hover:text-fl-muted-2 w-full font-mono tracking-widest uppercase transition-colors"
+          >
+            {t('dontKnow')}
+          </button>
         </div>
       </div>
     </div>

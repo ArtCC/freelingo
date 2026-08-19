@@ -513,6 +513,7 @@
     "suggestedLevel": "Sugerat {aiLevel}; planul folosește {selectedLevel}",
     "step1": "Pasul 1 / 3: nivelul tău",
     "step2": "Pasul 2 / 3: întrebarea {questionNumber} / {totalQuestions}",
+    "dontKnow": "Nu știu",
     "step3": "Pasul 3 / 3: programul tău",
     "studiedBefore": "Ai studiat {language} înainte?",
     "studiedBeforeHint": "Aceasta ne ajută să pornim quiz-ul la nivelul potrivit.",

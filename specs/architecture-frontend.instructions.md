@@ -100,6 +100,7 @@ frontend/
 │   │
 │   ├── lib/                     # Utility modules (11)
 │   │   ├── api.ts               # apiFetch: auth interceptor, 401 → silent refresh → retry
+│   │   ├── assessment-answers.ts # Placement answer records, including the declared "I don't know" gap
 │   │   ├── audio.ts             # Audio player, audio queue, gapless playback helpers
 │   │   ├── billing-copy.ts      # Billing CTA copy helpers and shared BillingInterval type
 │   │   ├── conversation-ws.ts   # WebSocket client for voice conversation

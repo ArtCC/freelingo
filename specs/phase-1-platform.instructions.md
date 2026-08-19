@@ -178,6 +178,13 @@ The LLM is **not** used to evaluate quiz answers. A deterministic algorithm (`ev
 
 The algorithm also computes per-skill scores (grammar, vocabulary, reading) and identifies strengths (>= 0.65) and weaknesses (< 0.45) for the skill profile.
 
+Each question also offers an explicit "I don't know" answer next to the four options, so a learner
+who does not know an item declares the gap instead of guessing — with four options, guessing is right
+about a quarter of the time and pushes the placement level up. Such an answer is submitted as
+`dont_know: true`, never counts as correct whatever else the client sends, steers the adaptive
+question selection like a wrong answer, and marks its skill as a weakness when the learner declared a
+gap on at least half of that skill's questions.
+
 ### Free-write evaluation (LLM)
 
 An optional free-write question at the end of the quiz is evaluated by the LLM. The prompt asks the model to assess vocabulary range, grammar accuracy, and coherence, and may adjust the preliminary CEFR level by ±1 step. Returns a JSON with adjusted_level, writing_score, analysis, strengths, and weaknesses.

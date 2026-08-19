@@ -14,18 +14,12 @@ import DurationSelector, {
   type DurationOption,
 } from '@/components/assessment/DurationSelector'
 import { type AssessmentQuestion, type CEFRLevel } from '@/data/types'
+import { buildAnswerRecord, type AnswerRecord } from '@/lib/assessment-answers'
 import { CEFR_LEVELS } from '@/data/curriculum'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { PageLoading } from '@/components/ui/page-loading'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-
-interface AnswerRecord {
-  question_id: string
-  skill: string
-  difficulty: string
-  correct: boolean
-}
 
 interface AssessmentResult {
   cefr_level: string
@@ -206,13 +200,10 @@ export default function AssessmentPage() {
   function handleAnswer(chosen: string) {
     if (!currentQuestion) return
 
-    const isCorrect = chosen === currentQuestion.correct
-    const record: AnswerRecord = {
-      question_id: currentQuestion.id,
-      skill: currentQuestion.skill,
-      difficulty: currentQuestion.difficulty,
-      correct: isCorrect,
-    }
+    const record = buildAnswerRecord(currentQuestion, chosen)
+    // A declared gap steers the quiz like a wrong answer — it removes the guess,
+    // it does not add a penalty on top of it.
+    const isCorrect = record.correct
     const newAnswers = [...answers, record]
     setAnswers(newAnswers)
 

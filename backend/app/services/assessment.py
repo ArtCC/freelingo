@@ -34,6 +34,9 @@ def evaluate_adaptive_quiz(answers: list[AnswerRecord]) -> AssessmentResult:
     - Group answers by CEFR difficulty level.
     - Determine highest level where score >= 0.6 with at least 2 questions.
     - Build per-skill profile (grammar, vocabulary, reading).
+    - An answer marked dont_know is a declared knowledge gap: it never counts as correct, and a
+      skill where the learner declared a gap on at least half of the questions is a weakness even
+      when the remaining answers keep its score above the usual threshold.
     """
     level_scores: dict[str, dict] = {level: {"correct": 0, "total": 0} for level in CEFR_LEVELS}
     skill_scores: dict[str, list[int]] = {
@@ -41,17 +44,23 @@ def evaluate_adaptive_quiz(answers: list[AnswerRecord]) -> AssessmentResult:
         "vocabulary": [],
         "reading": [],
     }
+    skill_gaps: dict[str, int] = {skill: 0 for skill in skill_scores}
 
     for a in answers:
+        # A declared gap is never knowledge, whatever the client sent alongside it.
+        correct = a.correct and not a.dont_know
+
         level = a.difficulty.upper()
         if level in level_scores:
             level_scores[level]["total"] += 1
-            if a.correct:
+            if correct:
                 level_scores[level]["correct"] += 1
 
         skill = a.skill.lower()
         if skill in skill_scores:
-            skill_scores[skill].append(1 if a.correct else 0)
+            skill_scores[skill].append(1 if correct else 0)
+            if a.dont_know:
+                skill_gaps[skill] += 1
 
     # Determine CEFR: highest level with >= 2 questions and >= 60% correct
     cefr_level = "A1"
@@ -66,7 +75,11 @@ def evaluate_adaptive_quiz(answers: list[AnswerRecord]) -> AssessmentResult:
     }
     overall_score = round(sum(skill_profile.values()) / len(skill_profile), 2)
     strengths = [s for s, v in skill_profile.items() if v >= 0.65]
-    weaknesses = [s for s, v in skill_profile.items() if v < 0.45]
+    weaknesses = [
+        s
+        for s, v in skill_profile.items()
+        if v < 0.45 or (skill_scores[s] and skill_gaps[s] / len(skill_scores[s]) >= 0.5)
+    ]
 
     return AssessmentResult(
         cefr_level=cefr_level,

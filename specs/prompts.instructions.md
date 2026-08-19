@@ -112,7 +112,7 @@ ISO alias support (`ja`, `ko`, `zh`).
 - Free-write assessment — Template: `FREE_WRITE_ASSESSMENT_PROMPT`; Current behavior: Evaluates placement writing with adjusted level, writing score, analysis, strengths, weaknesses, and language-specific overlay guidance. Student prompt/answer fields are delimited as data only.
 - End-of-level test — Template: `END_OF_LEVEL_TEST_PROMPT`; Current behavior: Generates a 20-question test covering studied grammar and vocabulary for the current CEFR level with language-specific overlay guidance.
 - Legacy assessment quiz — Template: `LEGACY_ASSESSMENT_QUIZ_PROMPT`; Current behavior: Generates an adaptive CEFR quiz for legacy assessment flow with language-specific overlay guidance.
-- Legacy assessment evaluation — Template: `LEGACY_ASSESSMENT_EVAL_PROMPT` and `LEGACY_ASSESSMENT_EVAL_USER_PROMPT`; Current behavior: Evaluates legacy assessment answers with an explicit JSON quiz/answers payload, a fixed JSON response schema, and an additional language-specific system overlay when available.
+- Legacy assessment evaluation — Template: `LEGACY_ASSESSMENT_EVAL_PROMPT` and `LEGACY_ASSESSMENT_EVAL_USER_PROMPT`; Current behavior: Evaluates legacy assessment answers with an explicit JSON quiz/answers payload, a fixed JSON response schema, and an additional language-specific system overlay when available. Answers the learner marked as "I don't know" are described as declared knowledge gaps that must never be scored as correct, in contrast with incorrect answers, which can still show partial knowledge.
 
 ## Dynamic Variables
 
