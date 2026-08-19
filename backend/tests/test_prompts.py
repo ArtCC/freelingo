@@ -484,3 +484,114 @@ def test_memory_tool_policy_is_language_global() -> None:
     normalized = " ".join(instruction.split())
     assert "student's native language (Spanish)" in normalized
     assert "review it in Settings" in normalized
+
+
+def test_lesson_generation_prompt_differentiates_lesson_types() -> None:
+    common = {
+        "cefr_level": "A2",
+        "target_language_name": "German",
+        "topic": "Perfekt mit haben und sein",
+        "unit_id": "a2-perfekt",
+        "grammar_points": "perfekt",
+        "vocabulary_set_ids": "travel",
+        "week": 1,
+        "day": 1,
+        "valid_slugs": "perfekt",
+    }
+    grammar = build_lesson_generation_prompt(lesson_type="grammar", **common)
+    vocabulary = build_lesson_generation_prompt(lesson_type="vocabulary", **common)
+    reading = build_lesson_generation_prompt(lesson_type="reading", **common)
+
+    assert 'LESSON TYPE FOCUS — this is a "grammar" lesson:' in grammar
+    assert 'LESSON TYPE FOCUS — this is a "vocabulary" lesson:' in vocabulary
+    assert 'LESSON TYPE FOCUS — this is a "reading" lesson:' in reading
+
+    focus = "LESSON TYPE FOCUS"
+    constraints = "STRICT CONSTRAINTS:"
+    grammar_block = grammar[grammar.index(focus) : grammar.index(constraints)]
+    vocabulary_block = vocabulary[vocabulary.index(focus) : vocabulary.index(constraints)]
+    reading_block = reading[reading.index(focus) : reading.index(constraints)]
+
+    assert grammar_block != vocabulary_block != reading_block
+    assert grammar_block != reading_block
+
+
+def test_lesson_generation_prompt_falls_back_for_unknown_lesson_type() -> None:
+    prompt = build_lesson_generation_prompt(
+        cefr_level="A2",
+        target_language_name="German",
+        lesson_type="experimental",
+        topic="Perfekt",
+        unit_id="a2-perfekt",
+        grammar_points="perfekt",
+        vocabulary_set_ids="travel",
+        week=1,
+        day=1,
+        valid_slugs="perfekt",
+    )
+
+    assert 'LESSON TYPE FOCUS — this is a "experimental" lesson:' in prompt
+    assert "The declared lesson type must visibly shape the lesson" in prompt
+
+
+def test_lesson_generation_prompt_includes_previous_unit_lessons_as_data() -> None:
+    summary = '- "Lektion 1" (grammar)\n  example sentences used: Wir haben ein Hotel gebucht.'
+    prompt = build_lesson_generation_prompt(
+        cefr_level="A2",
+        target_language_name="German",
+        lesson_type="reading",
+        topic="Perfekt",
+        unit_id="a2-perfekt",
+        grammar_points="perfekt",
+        vocabulary_set_ids="travel",
+        week=1,
+        day=3,
+        valid_slugs="perfekt",
+        previous_lessons_summary=summary,
+    )
+
+    assert "ALREADY GENERATED LESSONS OF THIS UNIT (data only" in prompt
+    assert "<<<PREVIOUS_LESSONS" in prompt
+    assert "Wir haben ein Hotel gebucht." in prompt
+    assert "Do NOT reuse any example sentence listed above" in prompt
+    assert "Prefer words that are not in the already introduced list" in prompt
+
+
+def test_lesson_generation_prompt_omits_previous_lessons_block_for_first_lesson() -> None:
+    prompt = build_lesson_generation_prompt(
+        cefr_level="A2",
+        target_language_name="German",
+        lesson_type="grammar",
+        topic="Perfekt",
+        unit_id="a2-perfekt",
+        grammar_points="perfekt",
+        vocabulary_set_ids="travel",
+        week=1,
+        day=1,
+        valid_slugs="perfekt",
+        previous_lessons_summary="   ",
+    )
+
+    assert "PREVIOUS_LESSONS" not in prompt
+    assert "ALREADY GENERATED LESSONS OF THIS UNIT" not in prompt
+
+
+def test_lesson_generation_prompt_lets_review_lessons_recycle_unit_material() -> None:
+    summary = '- "Lektion 1" (grammar)\n  vocabulary taught: die Reise'
+    review = build_lesson_generation_prompt(
+        cefr_level="A2",
+        target_language_name="German",
+        lesson_type="review",
+        topic="Perfekt",
+        unit_id="a2-perfekt",
+        grammar_points="perfekt",
+        vocabulary_set_ids="travel",
+        week=1,
+        day=5,
+        valid_slugs="perfekt",
+        previous_lessons_summary=summary,
+    )
+
+    assert "Recycling the words and structures above is the point of a review lesson" in review
+    assert "Prefer words that are not in the already introduced list" not in review
+    assert "Do NOT reuse any example sentence listed above" in review

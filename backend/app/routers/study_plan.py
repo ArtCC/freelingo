@@ -225,6 +225,13 @@ async def get_today_lessons(
         for row in lessons_by_wday.get((current_week, current_day), [])
     }
 
+    # Sibling lessons already generated for each unit, ordered as the student worked through them.
+    # Passed to the generator so a new lesson does not repeat what the unit already covered.
+    lessons_by_unit: dict[str, list] = defaultdict(list)
+    for lsn in sorted(all_lessons, key=lambda item: (item.week_number, item.day_number, item.id)):
+        if lsn.unit_id:
+            lessons_by_unit[lsn.unit_id].append(lsn)
+
     today_lessons = []
     for d in days:
         d_day = d["day"] if isinstance(d, dict) else d.day
@@ -255,6 +262,15 @@ async def get_today_lessons(
         # Auto-generate the lesson if it doesn't exist yet
         plan_id = plan.id  # cache before any rollback that would expire the ORM object
         if lesson_id is None:
+            previous_lessons = [
+                {
+                    "title": sibling.title,
+                    "lesson_type": sibling.lesson_type,
+                    "content": sibling.content,
+                }
+                for sibling in lessons_by_unit.get(d_unit_id, [])
+                if sibling.title != d_title
+            ]
             try:
                 content = await generate_lesson(
                     cefr_level=plan.cefr_level,
@@ -267,6 +283,7 @@ async def get_today_lessons(
                     vocabulary_set_ids=vocabulary_set_ids,
                     target_language=plan.target_language,
                     native_language=current_user.native_language,
+                    previous_lessons=previous_lessons,
                 )
                 content_dict = content.model_dump() if hasattr(content, "model_dump") else content
 
@@ -302,6 +319,8 @@ async def get_today_lessons(
                 await db.commit()
                 await db.refresh(lesson)
                 lesson_id = lesson.id
+                if d_unit_id:
+                    lessons_by_unit[d_unit_id].append(lesson)
             except IntegrityError:
                 await db.rollback()
                 dup = await db.execute(

@@ -164,6 +164,7 @@ The `generate_lesson()` function receives:
 - `grammar_points`, `vocabulary_set_ids` (from curriculum context)
 - `target_language` (user's target language BCP-47)
 - `native_language` for every lesson level, so lessons can include a native-language explanation alongside the target-language explanation.
+- `previous_lessons` — the already generated lessons of the same `unit_id`, in the order the student worked through them. The router builds this list from the lessons it already loaded for the plan, so no extra query is needed, and appends lessons generated earlier in the same request.
 
 It returns a structured JSON with:
 
@@ -171,6 +172,13 @@ It returns a structured JSON with:
 - `native_explanation` — optional translated explanation using the user's native language, generated automatically for new lessons at any CEFR level or later via `POST /api/lessons/{id}/native-explanation` for existing lessons. It contains translated explanation text, key points, examples with target-language sentences, plus native-language `common_traps` and `mini_glossary` study support. The lesson UI opens it by default for A1/A2 and keeps it collapsed by default for B1+.
 - `exercises` — list of exercise objects (`type`, `question`, `options`, `correct`, `explanation`, optional `native_explanation`, optional `native_hint`). New generated exercises keep the exercise itself and target-language explanation in the target language, then add a concise native-language clarification shown below the target-language explanation in the lesson UI and a concise pre-answer native-language hint that helps without revealing the answer. The persisted `exercises` table remains unchanged; `GET /api/lessons/{id}` reads optional native text from `lesson.content.exercises[*].native_explanation` and `lesson.content.exercises[*].native_hint` and includes it in each exercise response when available. If an existing exercise has `explanation` but no `native_explanation`, the UI shows a native-language button that calls `POST /api/lessons/exercises/{id}/native-explanation`; the backend generates the clarification from the exercise fields, caches it back into `lesson.content.exercises[*].native_explanation`, and returns it to update local UI state. If an exercise lacks `native_hint`, the lesson UI can call `POST /api/lessons/exercises/{id}/native-hint`; the backend generates a short non-answer-revealing hint, caches it in `lesson.content.exercises[*].native_hint`, and returns it. If an unanswered exercise has a technical validation problem (for example a multiple-choice exercise without usable options), the lesson UI can call `POST /api/lessons/exercises/{id}/regenerate`; the backend regenerates that one exercise with the same type, updates the existing exercise row, and replaces the matching `lesson.content.exercises[*]` entry while preserving the rest of the lesson.
 - `vocabulary` — list of lesson vocabulary items. New generated lessons use structured items with target-language `word`, `definition`, and `example`, plus optional native-language `translation`, `example_translation`, and `note`, and optional `reading` when a pronunciation guide, reading, or transliteration helps the learner. Older lessons with only `word`, `definition`, and `example` remain valid and render normally.
+
+### Variety within a unit
+
+All lessons of a unit share the same `grammar_points` and `vocabulary_set_ids`, so the prompt needs two extra signals to keep them from converging on the same content:
+
+- **Sibling-lesson context.** `build_previous_lessons_summary()` condenses the siblings into a capped summary (at most the 6 most recent lessons, each with its title, type, a truncated explanation excerpt, up to 3 example sentences, up to 6 vocabulary words, and up to 2 common traps, followed by the vocabulary already introduced in the unit). The summary is injected as delimited data the model must not reuse. Lessons with no siblings yet get no block at all.
+- **Per-type behaviour.** The declared `lesson_type` (`grammar`, `vocabulary`, `reading`, `writing`, `listening`, `review`) selects an instruction block describing what the explanation, the exercise mix, and the vocabulary of that type must emphasise. Unknown types fall back to a generic block. `review` keeps recycling the unit's material by design, but still has to do it with new sentences and contexts.
 
 If the LLM call fails or returns an empty exercises list, the lesson is discarded (rolled back) and that slot returns `id: null` in the today response. The user can retry by refreshing.
 
@@ -206,7 +214,7 @@ This is the central endpoint of the learning loop. On every call it:
 8. **Looks up the current week/day** in `generated_plan.weekly_plan`.
 9. For each lesson slot in the current day:
    - If a `Lesson` row with the same title already exists → uses its `id`.
-   - If not → calls `generate_lesson()` (LLM) → persists Lesson + Exercises → stores `lesson_id`.
+   - If not → calls `generate_lesson()` (LLM), passing the lessons already generated for the same unit as context → persists Lesson + Exercises → stores `lesson_id`.
    - On `IntegrityError` (race condition) → rolls back → fetches the already-created row.
    - On any other exception → logs it → excludes the slot from today's response.
 10. **Returns `TodayResponse`**:

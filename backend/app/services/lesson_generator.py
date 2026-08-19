@@ -28,6 +28,86 @@ FREE_WRITE_EVAL_PROMPT = lesson_prompts.FREE_WRITE_EVAL_PROMPT
 PRONUNCIATION_EVAL_PROMPT = lesson_prompts.PRONUNCIATION_EVAL_PROMPT
 
 
+PREVIOUS_LESSONS_LIMIT = 6
+PREVIOUS_LESSON_SENTENCES = 3
+PREVIOUS_LESSON_WORDS = 6
+PREVIOUS_LESSON_TRAPS = 2
+PREVIOUS_LESSON_FOCUS_CHARS = 140
+PREVIOUS_LESSON_TEXT_CHARS = 120
+UNIT_VOCABULARY_LIMIT = 40
+
+
+def _compact(value: Any, limit: int) -> str:
+    text = " ".join(str(value or "").split())
+    return f"{text[: limit - 1].rstrip()}…" if len(text) > limit else text
+
+
+def build_previous_lessons_summary(previous_lessons: list[dict[str, Any]]) -> str:
+    """Summarize the already generated lessons of a unit.
+
+    The summary is injected into the generation prompt so a new lesson can avoid repeating the
+    explanations, example sentences, vocabulary, and common traps its siblings already used.
+    """
+    entries: list[str] = []
+    unit_words: list[str] = []
+    seen_words: set[str] = set()
+
+    for previous in previous_lessons[-PREVIOUS_LESSONS_LIMIT:]:
+        content = previous.get("content")
+        content = content if isinstance(content, dict) else {}
+        explanation = content.get("explanation")
+        explanation = explanation if isinstance(explanation, dict) else {}
+        native_explanation = content.get("native_explanation")
+        native_explanation = native_explanation if isinstance(native_explanation, dict) else {}
+
+        title = _compact(previous.get("title"), 80) or "untitled"
+        lesson_type = _compact(previous.get("lesson_type"), 20) or "unknown"
+        lines = [f'- "{title}" ({lesson_type})']
+
+        focus = _compact(explanation.get("text"), PREVIOUS_LESSON_FOCUS_CHARS)
+        if focus:
+            lines.append(f"  explained: {focus}")
+
+        sentences = [
+            _compact(example.get("sentence"), PREVIOUS_LESSON_TEXT_CHARS)
+            for example in (explanation.get("examples") or [])
+            if isinstance(example, dict) and example.get("sentence")
+        ][:PREVIOUS_LESSON_SENTENCES]
+        if sentences:
+            lines.append(f"  example sentences used: {' | '.join(sentences)}")
+
+        words = [
+            _compact(item.get("word"), 40)
+            for item in (content.get("vocabulary") or [])
+            if isinstance(item, dict) and item.get("word")
+        ]
+        if words:
+            lines.append(f"  vocabulary taught: {', '.join(words[:PREVIOUS_LESSON_WORDS])}")
+        for word in words:
+            key = word.casefold()
+            if key not in seen_words:
+                seen_words.add(key)
+                unit_words.append(word)
+
+        traps = [
+            _compact(trap.get("mistake"), 90)
+            for trap in (native_explanation.get("common_traps") or [])
+            if isinstance(trap, dict) and trap.get("mistake")
+        ][:PREVIOUS_LESSON_TRAPS]
+        if traps:
+            lines.append(f"  common traps listed: {' | '.join(traps)}")
+
+        entries.append("\n".join(lines))
+
+    if not entries:
+        return ""
+    summary = "\n".join(entries)
+    if unit_words:
+        joined = ", ".join(unit_words[:UNIT_VOCABULARY_LIMIT])
+        summary = f"{summary}\n\nVocabulary already introduced in this unit: {joined}"
+    return summary
+
+
 def hint_reveals_answer(native_hint: str | None, correct_answer: str | None) -> bool:
     if not native_hint or not correct_answer:
         return False
@@ -62,6 +142,7 @@ async def generate_lesson(
     vocabulary_set_ids: list[str] | None = None,
     target_language: str = "en-GB",
     native_language: str | None = None,
+    previous_lessons: list[dict[str, Any]] | None = None,
 ) -> LessonContent:
     gp_str = ", ".join(grammar_points) if grammar_points else "none specified"
     vs_str = ", ".join(vocabulary_set_ids) if vocabulary_set_ids else "general"
@@ -83,6 +164,7 @@ async def generate_lesson(
         day=day,
         valid_slugs=valid_slugs_str,
         language_prompt_overlay=language_prompt_overlay,
+        previous_lessons_summary=build_previous_lessons_summary(previous_lessons or []),
     )
 
     lesson = await llm_adapter.structured_output(

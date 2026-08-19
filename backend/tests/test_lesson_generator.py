@@ -358,3 +358,182 @@ class TestEvaluateFillBlank:
 
         assert result.is_correct is False
         assert result.score == 0.0
+
+
+class TestBuildPreviousLessonsSummary:
+    def test_returns_empty_string_without_previous_lessons(self):
+        from app.services.lesson_generator import build_previous_lessons_summary
+
+        assert build_previous_lessons_summary([]) == ""
+
+    def test_summarizes_explanation_examples_vocabulary_and_traps(self):
+        from app.services.lesson_generator import build_previous_lessons_summary
+
+        summary = build_previous_lessons_summary(
+            [
+                {
+                    "title": "Perfekt — Lektion 1",
+                    "lesson_type": "grammar",
+                    "content": {
+                        "explanation": {
+                            "text": "Das Perfekt bildet man mit haben oder sein.",
+                            "examples": [
+                                {"sentence": "Wir haben ein Hotel gebucht."},
+                                {"sentence": "Ich bin nach Berlin gefahren."},
+                            ],
+                        },
+                        "native_explanation": {
+                            "common_traps": [{"mistake": "haben instead of sein"}]
+                        },
+                        "vocabulary": [{"word": "die Reise"}, {"word": "buchen"}],
+                    },
+                }
+            ]
+        )
+
+        assert '- "Perfekt — Lektion 1" (grammar)' in summary
+        assert "explained: Das Perfekt bildet man mit haben oder sein." in summary
+        assert "Wir haben ein Hotel gebucht. | Ich bin nach Berlin gefahren." in summary
+        assert "vocabulary taught: die Reise, buchen" in summary
+        assert "common traps listed: haben instead of sein" in summary
+        assert "Vocabulary already introduced in this unit: die Reise, buchen" in summary
+
+    def test_caps_lessons_sentences_and_deduplicates_vocabulary(self):
+        from app.services.lesson_generator import (
+            PREVIOUS_LESSONS_LIMIT,
+            build_previous_lessons_summary,
+        )
+
+        lessons = [
+            {
+                "title": f"Lektion {index}",
+                "lesson_type": "grammar",
+                "content": {
+                    "explanation": {
+                        "examples": [{"sentence": f"Satz {index}-{n}"} for n in range(5)]
+                    },
+                    "vocabulary": [{"word": "buchen"}, {"word": f"Wort {index}"}],
+                },
+            }
+            for index in range(PREVIOUS_LESSONS_LIMIT + 3)
+        ]
+
+        summary = build_previous_lessons_summary(lessons)
+
+        assert "Lektion 0" not in summary
+        assert f"Lektion {PREVIOUS_LESSONS_LIMIT + 2}" in summary
+        assert summary.count('" (grammar)') == PREVIOUS_LESSONS_LIMIT
+        assert "Satz 8-2" in summary
+        assert "Satz 8-3" not in summary
+        unit_words = summary.rsplit("Vocabulary already introduced in this unit: ", 1)[1]
+        assert unit_words.count("buchen") == 1
+
+    def test_truncates_long_text_and_collapses_whitespace(self):
+        from app.services.lesson_generator import (
+            PREVIOUS_LESSON_FOCUS_CHARS,
+            build_previous_lessons_summary,
+        )
+
+        summary = build_previous_lessons_summary(
+            [
+                {
+                    "title": "Lektion 1",
+                    "lesson_type": "reading",
+                    "content": {"explanation": {"text": "sehr\n  lang " * 200}},
+                }
+            ]
+        )
+
+        explained = next(line for line in summary.splitlines() if "explained:" in line)
+        assert "\n" not in explained
+        assert len(explained.strip()) <= PREVIOUS_LESSON_FOCUS_CHARS + len("explained: ")
+        assert explained.endswith("…")
+
+    def test_tolerates_missing_and_malformed_content(self):
+        from app.services.lesson_generator import build_previous_lessons_summary
+
+        summary = build_previous_lessons_summary(
+            [
+                {"title": "Lektion 1", "lesson_type": "grammar", "content": None},
+                {"title": None, "lesson_type": None, "content": {"explanation": []}},
+                {"content": {"vocabulary": ["not-a-dict", {"word": "buchen"}]}},
+            ]
+        )
+
+        assert '- "Lektion 1" (grammar)' in summary
+        assert '- "untitled" (unknown)' in summary
+        assert "vocabulary taught: buchen" in summary
+
+
+class TestGenerateLessonPreviousLessons:
+    @staticmethod
+    def _lesson_content() -> LessonContent:
+        return LessonContent(
+            lesson_type="reading",
+            title="Perfekt — Lektion 3",
+            cefr_level="A2",
+            unit_id="a2_unit_1",
+            explanation={"text": "Text.", "key_points": [], "examples": []},
+            exercises=[
+                ExerciseContent(
+                    type="multiple_choice",
+                    question="Frage?",
+                    options=["a", "b"],
+                    correct="a",
+                    explanation="Weil.",
+                )
+            ],
+            vocabulary=[],
+            grammar_refs=[],
+        )
+
+    @pytest.mark.asyncio
+    async def test_previous_unit_lessons_reach_the_prompt(self):
+        from app.services.lesson_generator import generate_lesson
+
+        mock_llm = AsyncMock(return_value=self._lesson_content())
+        with patch("app.services.lesson_generator.llm_adapter.structured_output", mock_llm):
+            await generate_lesson(
+                cefr_level="A2",
+                lesson_type="reading",
+                topic="Perfekt",
+                week=1,
+                day=3,
+                unit_id="a2_unit_1",
+                target_language="de-DE",
+                previous_lessons=[
+                    {
+                        "title": "Perfekt — Lektion 1",
+                        "lesson_type": "grammar",
+                        "content": {
+                            "explanation": {
+                                "examples": [{"sentence": "Wir haben ein Hotel gebucht."}]
+                            }
+                        },
+                    }
+                ],
+            )
+
+        prompt = mock_llm.await_args.args[0][0]["content"]
+        assert "ALREADY GENERATED LESSONS OF THIS UNIT" in prompt
+        assert "Wir haben ein Hotel gebucht." in prompt
+
+    @pytest.mark.asyncio
+    async def test_first_lesson_of_a_unit_gets_no_previous_lessons_block(self):
+        from app.services.lesson_generator import generate_lesson
+
+        mock_llm = AsyncMock(return_value=self._lesson_content())
+        with patch("app.services.lesson_generator.llm_adapter.structured_output", mock_llm):
+            await generate_lesson(
+                cefr_level="A2",
+                lesson_type="grammar",
+                topic="Perfekt",
+                week=1,
+                day=1,
+                unit_id="a2_unit_1",
+                target_language="de-DE",
+            )
+
+        prompt = mock_llm.await_args.args[0][0]["content"]
+        assert "PREVIOUS_LESSONS" not in prompt
+        assert 'LESSON TYPE FOCUS — this is a "grammar" lesson:' in prompt
