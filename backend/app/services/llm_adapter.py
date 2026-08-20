@@ -849,7 +849,7 @@ class LLMAdapter:
         kwargs: dict = dict(
             model=self.model,
             messages=user_messages,
-            max_tokens=4096,
+            max_tokens=settings.ANTHROPIC_MAX_TOKENS,
             stream=stream,
             timeout=REQUEST_TIMEOUT,
         )
@@ -886,6 +886,11 @@ class LLMAdapter:
         if stream:
             return response
         content = response.content[0].text if response.content else ""
+        if response.stop_reason == "max_tokens":
+            raise LLMResponseError(
+                "Anthropic response was truncated after reaching the configured output token limit",
+                raw_response=content,
+            )
         if not content:
             raise LLMResponseError("Anthropic returned empty response")
         return content
