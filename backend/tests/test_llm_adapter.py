@@ -510,6 +510,7 @@ def _make_anthropic_settings(monkeypatch):
     monkeypatch.setattr("app.core.config.settings.LLM_PROVIDER", "anthropic")
     monkeypatch.setattr("app.core.config.settings.ANTHROPIC_API_KEY", "sk-ant-test")
     monkeypatch.setattr("app.core.config.settings.ANTHROPIC_MODEL", "claude-3-5-haiku-latest")
+    monkeypatch.setattr("app.core.config.settings.ANTHROPIC_MAX_TOKENS", 8192)
 
 
 class TestAnthropicChat:
@@ -649,15 +650,16 @@ class TestAnthropicChat:
             assert "Generate the content" in call_kwargs["messages"][0]["content"]
 
     @pytest.mark.asyncio
-    async def test_passes_max_tokens_and_timeout(self, monkeypatch):
+    async def test_passes_output_limit_and_rejects_truncation(self, monkeypatch):
         _make_anthropic_settings(monkeypatch)
 
-        from app.services.llm_adapter import LLMAdapter
+        from app.services.llm_adapter import LLMAdapter, LLMResponseError
 
         adapter = LLMAdapter()
         resp = MagicMock()
         resp.content = [MagicMock()]
         resp.content[0].text = "ok"
+        resp.stop_reason = "end_turn"
 
         with patch.object(
             adapter._anthropic.messages,
@@ -667,8 +669,14 @@ class TestAnthropicChat:
         ) as mock_create:
             await adapter.chat([{"role": "user", "content": "Hi"}])
             call_kwargs = mock_create.call_args.kwargs
-            assert call_kwargs["max_tokens"] == 4096
+            assert call_kwargs["max_tokens"] == 8192
             assert call_kwargs["timeout"] == 120.0
+
+            resp.content[0].text = '{"answer":'
+            resp.stop_reason = "max_tokens"
+            with pytest.raises(LLMResponseError, match="truncated") as exc_info:
+                await adapter._anthropic_chat([{"role": "user", "content": "Hi"}])
+            assert exc_info.value.raw_response == '{"answer":'
 
 
 # ---------------------------------------------------------------------------
