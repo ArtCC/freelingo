@@ -216,7 +216,7 @@ Testing infrastructure and strategy are documented in [testing.instructions.md](
 - **Framework**: pytest + pytest-asyncio + httpx AsyncClient
 - **Test files**: 44 (plus conftest.py for shared fixtures)
 - **Tests**: 973
-- **Coverage**: 84.79% last measured (target: ≥70%)
+- **Coverage**: 85.03% last measured (target: ≥70%)
 - **Key fixtures**: async database session, test client with auth headers, Redis mock, user_language fixture
 
 ---
@@ -261,6 +261,7 @@ All configuration is environment-driven. Variables are defined in `app/core/conf
 - OPENAI_MODEL — Default: gpt-4o-mini; Purpose: OpenAI chat model
 - ANTHROPIC_API_KEY — Default: ``; Purpose: Anthropic API key
 - ANTHROPIC_MODEL — Default: claude-3-5-haiku-latest; Purpose: Anthropic chat model
+- ANTHROPIC_MAX_TOKENS — Default: 8192; Purpose: Maximum Anthropic output tokens per request; increase or reduce only within the selected model's supported output limit
 - DEEPSEEK_API_KEY — Default: ``; Purpose: DeepSeek API key
 - DEEPSEEK_MODEL — Default: deepseek-chat; Purpose: DeepSeek chat model
 
