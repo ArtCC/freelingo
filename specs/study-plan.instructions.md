@@ -76,7 +76,7 @@ One row per lesson slot per day. Lessons are created lazily the first time the u
 - id — Type: integer; Notes: Primary key
 - study_plan_id — Type: integer; Notes: FK → study_plans
 - title — Type: string; Notes: Lesson title (matches the slot title in `generated_plan`)
-- lesson_type — Type: string; Notes: `grammar` / `vocabulary` / `reading` / `writing` / `listening` / `review`
+- lesson_type — Type: string; Notes: `grammar` / `vocabulary` / `reading` / `writing` / `listening` / `speaking` / `review`
 - cefr_level — Type: string; Notes: —
 - week_number — Type: integer; Notes: Week in the plan (1-based)
 - day_number — Type: integer; Notes: Day in the week (1-based)
@@ -178,7 +178,7 @@ It returns a structured JSON with:
 All lessons of a unit share the same `grammar_points` and `vocabulary_set_ids`, so the prompt needs two extra signals to keep them from converging on the same content:
 
 - **Sibling-lesson context.** `build_previous_lessons_summary()` condenses the siblings into a capped summary (at most the 6 most recent lessons, each with its title, type, a truncated explanation excerpt, up to 3 example sentences, up to 6 vocabulary words, and up to 2 common traps). The vocabulary list that closes the summary is collected from every sibling, not only from the 6 described in detail, and is capped at 40 words. The summary is injected as delimited data the model must not reuse. Siblings are every lesson of the unit that already has generated content, whether or not the student has completed it, so the block is worded as material the unit already covers rather than as material the student knows. Lessons with no siblings yet get no block at all.
-- **Per-type behaviour.** The declared `lesson_type` (`grammar`, `vocabulary`, `reading`, `writing`, `listening`, `review`) selects an instruction block describing what the explanation, the exercise mix, and the vocabulary of that type must emphasise. Unknown types fall back to a generic block. `review` keeps recycling the unit's material by design, but still has to do it with new sentences and contexts. The same `lesson_type` also scopes the minimum share of exercises that must target the unit grammar points: 70% for `grammar`, `review`, and unknown types, 30% for the types whose focus block asks for lexical, comprehension, or production exercises.
+- **Per-type behaviour.** The declared `lesson_type` (`grammar`, `vocabulary`, `reading`, `writing`, `listening`, `speaking`, `review`) selects an instruction block describing what the explanation, the exercise mix, and the vocabulary of that type must emphasise. Speaking focuses on oral production with model exchanges, response frames, turn-taking phrases, pronunciation, and natural spoken replies. Unknown types fall back to a generic block. `review` keeps recycling the unit's material by design, but still has to do it with new sentences and contexts. The same `lesson_type` also scopes the minimum share of exercises that must target the unit grammar points: 70% for `grammar`, `review`, and unknown types, 30% for the types whose focus block asks for lexical, comprehension, or production exercises, including `speaking`.
 
 If the LLM call fails or returns an empty exercises list, the lesson is discarded (rolled back) and that slot returns `id: null` in the today response. The user can retry by refreshing.
 

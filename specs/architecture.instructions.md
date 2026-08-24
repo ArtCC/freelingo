@@ -27,7 +27,7 @@ freelingo/
 │   │       └── pt/              # Portuguese curriculum (A1–C2)
 │   ├── alembic/
 │   │   └── versions/            # DB migrations (50)
-│   └── tests/                   # pytest suite (44 test files, 973 tests)
+│   └── tests/                   # pytest suite (44 test files, 995 tests)
 │
 ├── frontend/                    # Next.js 16 App Router
 │   ├── src/
@@ -63,7 +63,7 @@ freelingo/
 │   │   ├── lib/                 # Shared API, media, locale, mapping, review, billing, and language utilities (11)
 │   │   ├── i18n/                # next-intl locale resolver
 │   │   └── middleware.ts        # Auth guard + locale detection
-│   ├── tests/                   # Vitest suite (41 test files, 446 tests)
+│   ├── tests/                   # Vitest suite (43 test files, 460 tests)
 │   ├── public/                  # Static assets (flags/, vad/ WASM models)
 │   └── scripts/                 # Postinstall helpers (copy-vad-models.js)
 │
@@ -179,6 +179,6 @@ Testing infrastructure and strategy are documented in [testing.instructions.md](
 
 **Summary:**
 
-- **Backend**: pytest + pytest-asyncio, 44 test files, 973 tests, 85.03% last measured coverage (target: 70%)
-- **Frontend**: Vitest, 41 test files, 446 tests covering stores, components, hooks, lib, i18n, app pages, dashboard announcements, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, chat stream resets, and middleware; coverage is not configured/reported
+- **Backend**: pytest + pytest-asyncio, 44 test files, 995 tests, 85.17% last measured coverage (target: 70%)
+- **Frontend**: Vitest, 43 test files, 460 tests covering stores, components, hooks, lib, i18n, app pages, dashboard announcements, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, chat stream resets, and middleware; coverage is not configured/reported
 - **E2E**: Playwright (planned, not yet implemented)

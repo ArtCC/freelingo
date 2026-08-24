@@ -44,6 +44,16 @@ LESSON_TYPE_GUIDANCE: dict[str, str] = {
         "  comprehension questions about what was said.\n"
         "- Vocabulary: spoken expressions and reactions from the transcript."
     ),
+    "speaking": (
+        "- Teach oral production: the student must end the lesson able to respond aloud in a\n"
+        "  concrete situation.\n"
+        "- Explanation must give a short model exchange, reusable response frames, turn-taking\n"
+        "  phrases, and register or pronunciation notes that make the response sound natural.\n"
+        "- Exercises: at least one pronunciation exercise, plus response-selection or fill_blank\n"
+        "  exercises that build a natural spoken reply rather than test reading comprehension.\n"
+        "- Vocabulary: conversational phrases, reactions, and repair expressions the student can\n"
+        "  use while speaking."
+    ),
     "review": (
         "- Consolidate what the unit already covered. Introduce no new grammar and few new words.\n"
         "- Explanation must be a compact recap that organizes the material (when to use which\n"
@@ -63,6 +73,7 @@ GRAMMAR_EXERCISE_RATIO: dict[str, int] = {
     "reading": 30,
     "writing": 30,
     "listening": 30,
+    "speaking": 30,
     "review": 70,
 }
 
