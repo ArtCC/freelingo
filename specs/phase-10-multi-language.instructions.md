@@ -25,6 +25,7 @@ FreeLingo moves from "one user = one language = one study plan" to an architectu
 8. **Language-specific curriculum**: curriculum for each language is different and adapted to that language.
 9. **Adapted prompts**: system prompts use the target language name and never hardcode "English".
 10. **Supported languages**: Spanish, Italian, Portuguese, French, German, Japanese, Korean, and Mainland Chinese have backend learning data in addition to the existing English variants.
+11. **Flashcard and spoken-practice isolation**: flashcard generation derives its target language from the active persisted plan. Pronunciation lessons and flashcard speaking mode capture and submit the resource's `study_plan_id`; the backend verifies ownership and derives the STT ISO language from that persisted plan instead of client active-language state.
 
 ### Current backend learning-data languages
 

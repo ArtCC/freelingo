@@ -6,6 +6,8 @@
 
 ## Architecture at a glance
 
+Pronunciation exercises and flashcard speaking mode capture their resource-owned `study_plan_id` when recording starts and include it in every STT upload. The frontend stops late microphone streams, propagates request cancellation through its STT proxy, and serializes flashcard reviews while voice-result handling is pending. The backend verifies plan ownership, derives the target language from that plan, converts it to the provider's ISO code, and requires every STT service call to declare a language explicitly; there is no implicit English fallback. Generated flashcards likewise derive their target language from the active persisted plan rather than client state, and reviews credit progress to the persisted card plan rather than whichever language is currently active.
+
 Active Reading and Listening exercises let users select and save one word from question prompts through the shared flashcard lookup flow; answer options are not selectable vocabulary surfaces.
 
 My Plan unit drawers offer Start for the current lesson, Resume for skipped pending lessons, and read-only Review for completed lessons without awarding progress again. Drawer actions share the solid primary button treatment used by the plan overview.
@@ -29,7 +31,7 @@ Monorepo: `backend/` (Python 3.14 FastAPI) + `frontend/` (Next.js 16 App Router)
 - **First registered user becomes admin automatically** when `FIRST_USER_IS_ADMIN=true` (default).
 - **Registration gating**: `ALLOW_REGISTRATION=false` blocks public signups; admin creates users or generates single-use invite links (48h expiry in Redis).
 - **Ollama should run on the host for GPU access**, accessed via `host.docker.internal:11434`. On Linux, the backend service needs `extra_hosts: ["host.docker.internal:host-gateway"]`.
-- **Default target language is `en-GB`** — all fallback defaults across backend (service params, Query params, model column defaults, chat context, onboarding form) and frontend (`DEFAULT_TARGET_LANGUAGE` in `target-languages.ts`) use `en-GB`. `en-US` remains a supported language but is never used as a fallback default.
+- **Default target language is `en-GB`** — all valid target-language fallbacks across backend (service params, Query params, model column defaults, chat context, onboarding form) and frontend (`DEFAULT_TARGET_LANGUAGE` in `target-languages.ts`) use `en-GB`. `en-US` remains a supported language but is never used as a fallback default. Resource-owned STT calls are intentionally stricter: they require a user-owned study plan and never fall back to any language.
 
 ## Documentation maintenance (MANDATORY)
 

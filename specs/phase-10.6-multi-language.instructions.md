@@ -187,38 +187,23 @@ The English values above are the reference. Add the equivalent translations in a
 
 ---
 
-## Cosmetic cleanup deferred from Phase 10.2
+## Cosmetic cleanup completed from Phase 10.2
 
-Two prompt strings still contain the word "English" as a **JSON schema example value** rather than as a hard-coded language constraint. They do not affect LLM behaviour (the surrounding prompt already uses `{target_language_name}`), but they are misleading for non-English languages. Fix them here alongside the rest of the language data work.
+The prompt cleanup is complete: target-language words and examples stay in the learning language, while definitions and translations use the learner's native language.
 
 ### `backend/app/services/flashcard_sm2.py`
 
-In `FLASHCARD_GEN_PROMPT` and `WORD_LOOKUP_PROMPT`, the example field values inside the JSON schema snippet use "English" literally:
+`FLASHCARD_GEN_PROMPT` and `WORD_LOOKUP_PROMPT` use these native-language definition fields:
 
 ```
-"definition": "Simple definition in English"
-"definition": "Simple English definition (max 20 words)"
-```
-
-Replace both with language-agnostic phrasing, e.g.:
-
-```
-"definition": "Simple definition in the target language"
-"definition": "Simple definition in {target_language_name} (max 20 words)"
+"definition": "Simple definition in {native_language}"
+"definition": "Simple definition in {native_language} (max 20 words)"
 ```
 
 ### `backend/app/services/lesson_generator.py`
 
-In the pronunciation exercise JSON schema example inside `LESSON_GENERATION_PROMPT`:
-
-```
-"correct": "The exact English phrase the student must pronounce."
-```
-
-Replace with:
+The pronunciation exercise JSON schema inside `LESSON_GENERATION_PROMPT` uses the current target-language form:
 
 ```
 "correct": "The exact {target_language_name} phrase the student must pronounce."
 ```
-
-Note: `target_language_name` is already available in the format call for `LESSON_GENERATION_PROMPT`, so this is a one-line change.

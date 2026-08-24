@@ -156,7 +156,7 @@ For forward-compatibility: if `_get_english_variant` returns an empty string (no
 
 Same pattern: pass `_get_english_variant(current_user.target_language)` to the existing `{english_variant}` slot in `FLASHCARD_GEN_PROMPT`. The `native_language` source is unchanged (still from `current_user.native_language` via the router, not from the request body).
 
-> **Bug fix included**: `native_language` in flashcard generation is now always sourced from `current_user.native_language` (authoritative). The `FlashcardGenerateRequest.native_language` field is removed — the backend ignores any client-supplied value and uses the authenticated user's profile instead.
+> **Bug fixes included**: `native_language` in flashcard generation is always sourced from `current_user.native_language`, while `target_language` is always sourced from the active persisted study plan. Both fields are removed from `FlashcardGenerateRequest`; the backend ignores client-supplied values for these authoritative contexts.
 
 ### 2.3 `app/routers/chat.py`
 
@@ -185,7 +185,7 @@ params={"output": "json", "language": "en", "task": "transcribe"}
 params={"output": "json", "language": _get_iso639(target_language), "task": "transcribe"}
 ```
 
-The `transcribe` method gains a `target_language: str = "en-US"` parameter. All callers pass `current_user.target_language` (chat STT in `stt.py`, conversation pipeline).
+The current `transcribe` contract requires a keyword-only ISO `language` with no default. Conversation derives it from the session's selected `target_language`. Generic pronunciation and flashcard STT uploads carry their resource-owned `study_plan_id`; `stt.py` verifies plan ownership and derives the language from `StudyPlan.target_language`, avoiding both the obsolete global user field and stale frontend active-language state.
 
 ### 2.6 `app/routers/assessment.py`
 
@@ -470,7 +470,7 @@ Returning users (second login) and admin-created users are unaffected — their 
 
 ### `POST /api/flashcards/generate`
 
-- Request body — Before: `native_language: str` (client-supplied); After: `native_language` field removed — sourced from user profile
+- Request body — Before: `native_language` and optional `target_language` could be client-supplied; After: both fields removed — native language comes from the user profile and target language from the active study plan
 
 ---
 
@@ -495,7 +495,7 @@ Returning users (second login) and admin-created users are unaffected — their 
 - [x] `/settings` no longer shows the English variant selector
 - [x] LLM-generated lessons and flashcards use the correct English variant derived from `target_language`
 - [x] Voice conversation pipeline builds the system prompt with the correct `native_language` and `english_variant` (previously missing)
-- [x] STT transcription uses the language code derived from `target_language` (`en` for both English variants)
-- [x] `FlashcardGenerateRequest` no longer accepts a `native_language` field — translation language is always sourced from the user profile
+- [x] STT transcription requires the ISO language code derived from the selected or resource-owning study plan's `target_language` (`en` for both English variants, `it` for Italian, and equivalent mappings for every supported language)
+- [x] `FlashcardGenerateRequest` accepts neither native nor target language fields — translation language comes from the user profile and learning language from the active persisted plan
 - [x] All backend tests pass with `target_language` replacing `english_variant`
 - [x] No regressions in Phases 1, 2, and 3

@@ -1,5 +1,5 @@
 ---
-description: "Testing strategy for FreeLingo: backend pytest suite (44 test files, 995 tests, 85.17% last measured coverage, with SQLite in-memory DB and Redis mocking), frontend Vitest suite (43 test files, 460 tests, no configured coverage, covering stores, components, lib, hooks, app pages, i18n, dashboard announcements, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, chat stream resets, and middleware), E2E plan (Playwright, pending), CI integration, and coverage requirements."
+description: "Testing strategy for FreeLingo: backend pytest suite (45 test files, 1019 tests, 85.56% last measured coverage, with SQLite in-memory DB and Redis mocking), frontend Vitest suite (47 test files, 474 tests, no configured coverage, covering stores, components, lib, hooks, app pages, i18n, dashboard announcements, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, chat stream resets, and middleware), E2E plan (Playwright, pending), CI integration, and coverage requirements."
 applyTo: "**/*.test.*, **/*.spec.*, **/tests/**, **/__tests__/**"
 ---
 
@@ -7,11 +7,11 @@ applyTo: "**/*.test.*, **/*.spec.*, **/tests/**, **/__tests__/**"
 
 ## Overview
 
-- Backend unit + integration — Framework: pytest + pytest-asyncio; Scope: API endpoints, services, SM-2 algorithm, data integrity; Coverage: 85.17% last measured (target: 70%); Status: Implemented
+- Backend unit + integration — Framework: pytest + pytest-asyncio; Scope: API endpoints, services, SM-2 algorithm, data integrity; Coverage: 85.56% last measured (target: 70%); Status: Implemented
 - Frontend unit — Framework: Vitest; Scope: Stores, components, hooks, lib, middleware; Coverage: Not configured; Status: Implemented
 - E2E — Framework: Playwright; Scope: Critical user flows; Coverage: Smoke; Status: Pending
 
-All tests pass on every push. Backend coverage threshold configured at 70%, last measured at 85.17%. Frontend tests cover stores, critical components (VoiceRecorder, AudioPlayer, ProfileSection, UnitCard/UnitDrawer, LanguageSwitcher, TargetLanguageSelector, DashboardAnnouncement, review UI, LanguageBubbles, billing paywall UI, memory toast), the admin announcement editor, billing success verification, app pages, hooks, lib modules, SSE framing and reset handling, i18n, and middleware. Frontend coverage is not currently reported because Vitest coverage is not configured and `@vitest/coverage-v8` is not installed.
+All tests pass on every push. Backend coverage threshold configured at 70%, last measured at 85.56%. Frontend tests cover stores, critical components (VoiceRecorder, AudioPlayer, ProfileSection, UnitCard/UnitDrawer, LanguageSwitcher, TargetLanguageSelector, DashboardAnnouncement, review UI, LanguageBubbles, billing paywall UI, memory toast), the admin announcement editor, billing success verification, app pages, hooks, lib modules, SSE framing and reset handling, i18n, and middleware. Frontend coverage is not currently reported because Vitest coverage is not configured and `@vitest/coverage-v8` is not installed.
 
 ---
 
@@ -40,7 +40,7 @@ All tests pass on every push. Backend coverage threshold configured at 70%, last
 - **`test_lessons.py`** — Lines: 400+. What it covers: Lesson CRUD, exercise answering (multiple_choice, free_write, pronunciation), invalid exercise regeneration, completion flow, progress update on complete
 - **`test_lessons_extra.py`** — Lines: 106. What it covers: Additional lesson scenarios and edge cases
 - **`test_lessons_router.py`** — Lines: —. What it covers: Lesson router: get lesson with exercises, atomic/idempotent completion including rollback and quota-bypass retries, native-language explanation generation/caching, answer exercises (all 4 types), lifecycle, fill-blank sanitization (41 tests, 58%→99% coverage)
-- **`test_flashcards.py`** — Lines: 136. What it covers: SM-2 algorithm (all quality levels 0–5, interval and ease_factor transitions, edge cases), card CRUD
+- **`test_flashcards.py`** — Lines: 360. What it covers: SM-2 algorithm (all quality levels 0–5, interval and ease-factor transitions), card CRUD, plan-scoped responses, and review-progress attribution to the card's owning plan after a language switch
 - **`test_flashcards_extra.py`** — Lines: 201. What it covers: Additional flashcard scenarios and SM-2 edge cases
 - **`test_chat.py`** — Lines: 54. What it covers: SSE streaming chunks, conversation creation and messaging
 - **`test_chat_conversations.py`** — Lines: 254. What it covers: Persistent conversations, message history, conversation management
@@ -50,6 +50,7 @@ All tests pass on every push. Backend coverage threshold configured at 70%, last
 - **`test_progress_extra.py`** — Lines: 83. What it covers: Additional progress tracking scenarios
 - **`test_conversation.py`** — Lines: 555+. What it covers: WebSocket authentication, TTS/STT disabled rejection, conversation warmup, post-assessment voice trial token acceptance/rejection, pipeline lifecycle, session management
 - **`test_conversation_pipeline_service.py`** — Lines: —. What it covers: Conversation pipeline service: system prompt, native-language name injection, sentence cleaning, TTS queue, greet, audio processing, barge-in, usage tracking, inactivity watcher, max-duration watcher, full lifecycle
+- **`test_stt.py`** — Lines: 226. What it covers: owned-plan authorization, required and bounded multipart plan context, all ten supported target-language mappings, required keyword-only provider language forwarding, and local/OpenAI adapter payloads
 - **`test_email_service.py`** — Lines: —. What it covers: Email template rendering escapes user-controlled values by default while preserving explicitly trusted internal HTML, including contact/review templates (3 tests)
 - **`test_frontend_data_integrity.py`** — Lines: 168+. What it covers: Cross-reference validation for grammar, vocabulary, related grammar slugs, and vocabulary IDs across backend language data, including Japanese, Korean, and Mainland Chinese.
 - **`test_grammar.py`** — Lines: 290+. What it covers: Grammar API: list topics, topic detail, language switching, auth, error cases, Japanese/Korean/Mainland Chinese data resolution, and native-help generation/cache refresh.
@@ -79,11 +80,11 @@ All tests pass on every push. Backend coverage threshold configured at 70%, last
 - **`test_lesson_generator.py`** — Lines: —. What it covers: Lesson generator service: `get_valid_grammar_slugs`, `generate_lesson`, exercise schema validation, fill-blank sanitization, grammar refs filtering, `evaluate_free_write`, `evaluate_pronunciation`, `evaluate_fill_blank` (16 tests, 51%→100% coverage)
 - **`test_listening_service.py`** — Lines: —. What it covers: Listening service DB layer and generation: `structured_output()` generation persistence, language-aware CJK length guidance, `get_available_exercise`, `submit_attempt` (correct/partial/duplicate/replay/not-found), `get_user_history` (empty/attempts/limit/language filter)
 
-**Total: 44 test files, 995 tests.**
+**Total: 45 test files, 1019 tests.**
 
 ### Coverage
 
-- **Current coverage**: 85.17% last measured (above 70% target)
+- **Current coverage**: 85.56% last measured (above 70% target)
 - **Configured threshold**: 70% (enforced via `pytest --cov-fail-under=70`)
 
 ### Test patterns
@@ -130,7 +131,7 @@ All tests pass on every push. Backend coverage threshold configured at 70%, last
 **WebSocket conversation**:
 
 - Connection with valid JWT succeeds
-- Connection rejected with 4001 close code when TTS_ENABLED=false or STT_ENABLED=false
+- Connection rejected with 4001 close code when either configured speech service is unavailable
 - Pipeline lifecycle: connect → auth → audio receive → STT → LLM → TTS → send → disconnect
 
 **Data integrity**:
@@ -190,7 +191,7 @@ pytest --cov-report=html
 - **`tests/components/LanguageSwitcher.test.tsx`** — Tests: 10. What it covers: LanguageSwitcher: rendering, dropdown open/close, CEFR badges, active checkmark, language switch, toast, router refresh
 - **`tests/components/LanguageBubbles.test.tsx`** — Tests: 2. What it covers: LanguageBubbles renders one bubble per supported target language and positions bubbles from the supported-language count
 - **`tests/components/TargetLanguageSelector.test.tsx`** — Tests: 10. What it covers: TargetLanguageSelector: grid rendering, catalog filtering by `availableCodes`, active/inactive states, onChange callback, flag images
-- **`tests/components/VoiceRecorder.test.tsx`** — Tests: 24. What it covers: VoiceRecorder: idle/recording/transcribing/error states, getUserMedia mock, AudioContext lifecycle, STT API call, auto-stop, mic denied error, resampling
+- **`tests/components/VoiceRecorder.test.tsx`** — Tests: 28. What it covers: VoiceRecorder idle/recording/transcribing/error states, getUserMedia and AudioContext lifecycle, multipart audio and study-plan context, immutable recording context across prop changes, awaited asynchronous result handling, late permission cancellation/unmount cleanup, auto-stop, microphone denial, and resampling
 - **`tests/components/AudioPlayer.test.tsx`** — Tests: 36. What it covers: AudioPlayer: idle/loading/playing/error states, TTS API call, play/pause/stop, voice resolution (prop > localStorage > default), audio queue, unmount safety
 - **`tests/components/ProfileSection.test.tsx`** — Tests: 48. What it covers: ProfileSection: form fields, save flow, avatar upload/remove (File/FileReader mock), password change (validation, mismatch), locale change with reload, API error states
 - **`tests/components/BillingPaywall.test.tsx`** — Tests: 11. What it covers: Billing UI: Settings payment-recovery states via Customer Portal, canceled/incomplete/unsubscribed plan buttons, dashboard recovery banner, gated-page paywall recovery copy, and logged-in landing pricing direct Checkout
@@ -206,10 +207,12 @@ pytest --cov-report=html
 - **`tests/app/admin-reviews.test.tsx`** — Tests: 3. What it covers: Admin review moderation list, approval action, delete confirmation
 - **`tests/app/admin-system-banner.test.tsx`** — Tests: 2. What it covers: admin source composition, ten-locale translation preview, editable translation save, and source preservation after translation failure
 - **`tests/app/chat-memory-stream.test.tsx`** — Tests: 4. What it covers: visible partial-response reset and replacement, confirmed-memory toast timing and survival after later errors, and word-selection disabling during active streaming
+- **`tests/app/api-stt-route.test.ts`** — Tests: 1. What it covers: multipart STT proxy forwarding of authorization, cookies, audio/plan form data, and request cancellation
+- **`tests/app/flashcards-review.test.tsx`** — Tests: 1. What it covers: serialization of delayed SM-2 updates so repeated review actions cannot submit the same card concurrently
 - **`tests/components/DashboardAnnouncement.test.tsx`** — Tests: 3. What it covers: current-locale rendering, successful account-persistent dismissal, compact dismissal error, and suppression of an already-dismissed revision
 - **`tests/i18n/admin-messages.test.ts`** — Tests: 1. What it covers: Admin message bundle integrity
 
-**Total: 460 tests across 43 files. Frontend coverage is not configured/reported.**
+**Total: 474 tests across 47 files. Frontend coverage is not configured/reported.**
 
 ### Running tests
 
@@ -264,7 +267,7 @@ CI runs on GitHub Actions, triggered on pushes and pull requests. The project is
 - Backend tests — Steps: `pytest -v`; Threshold: >= 70% coverage
 - Frontend lint — Steps: `npm run lint`; Threshold: Zero errors
 - Frontend typecheck — Steps: `npx tsc --noEmit`; Threshold: Clean output
-- Frontend tests — Steps: `npm run test:run`; Threshold: All 460 tests pass
+- Frontend tests — Steps: `npm run test:run`; Threshold: All 474 tests pass
 
 **Note**: The backend test job uses SQLite (same as local tests), not PostgreSQL. No Docker services are required for the backend test job.
 

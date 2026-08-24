@@ -23,7 +23,7 @@ and review.
 The platform combines structure and adaptation: lessons are generated within
 curriculum boundaries with native-language support for lesson and exercise explanations,
 flashcards use SM-2 spaced repetition, and the AI tutor provides contextual streaming
-feedback in English (with optional brief support in the learner's native language).
+feedback in the selected learning language with support in the learner's native language.
 Lingu's durable memories are global across learning languages: the tutor can save useful facts through native tool calling, while every authenticated user can manually add, review, delete, or clear memories from Settings. Removing a learning language preserves those account memories.
 Listening exercises are generated on demand by the
 LLM, synthesised to MP3 via TTS, and cached per CEFR level — the user listens,
@@ -165,6 +165,7 @@ The first registered user becomes admin automatically.
 - The `LLM_PROVIDER` field controls the LLM provider: `ollama` (local, recommended), `openai`, `anthropic`, or `deepseek`.
 - Anthropic's output budget is configurable with `ANTHROPIC_MAX_TOKENS` (default: `8192`) and must stay within the selected model's supported output limit.
 - `TTS_PROVIDER` and `STT_PROVIDER` are independent: `local` (Kokoro / faster-whisper) or `openai` (OpenAI API).
+- Pronunciation and flashcard recordings carry their owning study plan. The backend validates ownership and derives the STT language from that persisted plan, while flashcard generation also ignores transient client-language state.
 - New-user and subscription quota defaults are configurable in `.env` with `DEFAULT_CONVERSATION_*`, `DEFAULT_MONTHLY_TOKENS_LIMIT`, and `ASSESSMENT_VOICE_TRIAL_DURATION_SECONDS`. Quota values of `0` mean unlimited. Conversation duration defaults must use the same supported options as the settings UI: `900` or `1800` seconds for max duration, and `60`, `180`, or `300` seconds for inactivity timeout.
 - Freemium quotas for the hosted free plan are configurable via `FREEMIUM_CHAT_DAILY_MESSAGES`, `FREEMIUM_LESSONS_DAILY`, `FREEMIUM_LISTENING_WEEKLY`, `FREEMIUM_READING_WEEKLY`, and `FREEMIUM_VOICE_WEEKLY_MINUTES`. A quota value of `0` blocks the feature entirely for free users. New users receive a `FREEMIUM_TRIAL_DAYS`-day full-access trial when `FREEMIUM_TRIAL_ENABLED=true`. Self-hosted deployments ignore all freemium settings (everything is free).
 - Supported study languages include English (`en-GB`, `en-US`), Spanish (`es-ES`), Italian (`it-IT`), Portuguese (`pt-PT`), German (`de-DE`), French (`fr-FR`), Japanese (`ja-JP`), Korean (`ko-KR`), and Mainland Chinese (`zh-CN`). The study language is chosen on `/onboarding` and can be expanded later from Settings → My Languages. The user's native language is asked during registration and is used for flashcard translations, tutor feedback, lesson native explanations, and cached native-language help in static grammar, phrasebook, and vocabulary resources.

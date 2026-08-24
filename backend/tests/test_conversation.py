@@ -139,6 +139,20 @@ async def test_warmup_tts_falls_back_to_synthesis_for_local_service() -> None:
 
 
 @pytest.mark.asyncio
+async def test_warmup_stt_passes_explicit_language() -> None:
+    stt_service = type("STTMock", (object,), {})()
+    stt_service.transcribe = AsyncMock()
+
+    await conversation_router._warmup_stt(stt_service)
+
+    stt_service.transcribe.assert_awaited_once()
+    args = stt_service.transcribe.await_args.args
+    assert args[0].startswith(b"RIFF")
+    assert args[1:] == ("warmup.wav", "audio/wav")
+    assert stt_service.transcribe.await_args.kwargs == {"language": "en"}
+
+
+@pytest.mark.asyncio
 async def test_warmup_allows_valid_assessment_voice_trial(client, test_user, db_session) -> None:
     """Warmup accepts a valid post-assessment voice trial token without subscription."""
     user, headers = test_user

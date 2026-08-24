@@ -177,8 +177,8 @@ Lesson viewing and exercise answering use `get_current_user` (always free). Only
 - **GET `/all`** — Rate limit: 60/min. All user's flashcards
 - **POST `/`** — Rate limit: 60/min. Creates flashcard manually
 - **POST `/bulk`** — Rate limit: 60/min. Creates multiple flashcards at once; skips duplicates (by word) for the user
-- **POST `/{card_id}/review`** — Rate limit: 60/min. Records SM-2 review (quality 0–5)
-- **POST `/generate`** — Rate limit: 20/min. Generates N flashcards via LLM with native-language translations
+- **POST `/{card_id}/review`** — Rate limit: 60/min. Records an SM-2 review (quality 0–5) and credits vocabulary progress to the card's persisted `study_plan_id`, not transient active-language state
+- **POST `/generate`** — Rate limit: 20/min. Generates N flashcards via LLM with native-language translations. The backend derives the target language from the authenticated user's active study plan; the request body has no client-supplied `target_language`. Persisted cards and `FlashcardResponse` include that plan's `study_plan_id`.
 - **POST `/from-word`** — Rate limit: 30/min. Saves a single word as a flashcard: body `{word, context, cefr_level}`; AI generates definition/example/translation; sets `source="from_text"`; returns `FlashcardResponse`
 - **GET `/vocabulary`** — Rate limit: 60/min. Returns user's saved-from-text flashcards (`source="from_text"`), ordered by `created_at` desc
 - **DELETE `/{card_id}`** — Rate limit: 60/min. Permanently deletes a flashcard owned by the user; 204 No Content
@@ -227,7 +227,7 @@ All endpoints require `require_subscription_or_freemium("chat")`. Memory managem
 
 ## STT — `/api/stt`
 
-- POST — Path: ``; Rate limit: 20/min; Description: Audio → transcribed text. Uses faster-whisper (local) or OpenAI Whisper, controlled by `STT_PROVIDER`.
+- **POST `/api/stt`** — Rate limit: 20/min. Authenticated multipart request with required `audio` and PostgreSQL-range positive integer `study_plan_id` fields. The backend verifies that the study plan belongs to the authenticated user, derives its BCP-47 `target_language`, converts it to an ISO 639-1 code, and passes that code explicitly to faster-whisper or OpenAI STT according to `STT_PROVIDER`. Returns `{ "text": string }`; returns 404 for a missing or foreign plan, 413 when audio exceeds 50 MiB, 422 for missing/invalid multipart fields, and 503 when STT is unavailable. Pronunciation lessons use the lesson's plan ID and flashcard speaking mode captures the current card's plan ID when recording starts, so stale active-language UI state cannot change the transcription language.
 
 ---
 
