@@ -126,7 +126,7 @@ One lesson per day slot in the study plan.
 - `id` — integer primary key.
 - `study_plan_id` — integer FK to `study_plans`.
 - `title` — lesson title.
-- `lesson_type` — string: `grammar`, `vocabulary`, `reading`, `writing`, `listening`, or `review`.
+- `lesson_type` — string: `grammar`, `vocabulary`, `reading`, `writing`, `listening`, `speaking`, or `review`.
 - `cefr_level` — CEFR level string.
 - `week_number` — integer week in the plan.
 - `day_number` — integer day in the week.
