@@ -14,13 +14,13 @@ Singleton providing provider-agnostic LLM access. Supports four providers select
 - ollama — Client: AsyncOpenAI (openai SDK); Max tokens: 8192; Notes: Local, openai-compatible endpoint
 - openai — Client: AsyncOpenAI; Max tokens: 128K; Notes: —
 - deepseek — Client: AsyncOpenAI; Max tokens: 128K; Notes: openai-compatible endpoint
-- anthropic — Client: AsyncAnthropic (anthropic SDK); Max tokens: 200K; Notes: Separate code path; system message extracted
+- anthropic — Client: AsyncAnthropic (anthropic SDK); Context window: 200K; Output limit: configurable with `ANTHROPIC_MAX_TOKENS` (default 8192); Notes: Separate code path; system message extracted
 
 **Key capabilities:**
 
 - `chat(messages, stream=False, tools=None, tool_executor=None, fallback_messages=None)` — returns a string or normalized async stream; native tools require streaming and an executor, while optional fallback messages provide a prompt that does not advertise unavailable tools
 - Native tool streaming supports OpenAI-compatible and Anthropic event formats, forwards visible text progressively while keeping tool metadata internal, executes at most the first tool call, then performs one provider-native continuation without re-offering tools. OpenAI GPT-5.6 Chat Completions use `reasoning_effort="none"` only for that tool round; Anthropic, DeepSeek, Ollama, older OpenAI families, and ordinary no-tool requests receive no such parameter. Tool-enabled request or stream failures before visible output fall back once without tools across every provider. Explicit incompatibilities are detected through wrapped provider exceptions and become session-local unavailable capability for voice; generic transient failures do not. Known incompatibility or continuation failure after visible output emits `LLMStreamReset` before a complete no-tools retry, and an empty fallback raises `LLMResponseError`. Successful tool execution emits `LLMToolResultEvent` immediately so committed saves can be reported even if continuation later fails. The returned stream also exposes accumulated `tool_results`, combined token usage, and explicit incompatibility state.
-- `structured_output(messages, schema)` — returns validated Pydantic model (JSON mode + retry on parse failure)
+- `structured_output(messages, schema)` — returns a validated Pydantic model (JSON mode + retry on parse failure); Anthropic responses stopped by the configured output limit raise `LLMResponseError` with the partial response instead of surfacing a misleading JSON parse failure
 - `parse_llm_json(raw)` — module-level utility; strips optional code fences and parses JSON from LLM output. Kept for lower-level parsing tests and any legacy callers; reading/listening generation now uses `structured_output()`.
 - 2 automatic retries with exponential backoff, 120 s timeout
 - Custom exception hierarchy: `LLMError`, `LLMTimeoutError`, `LLMUnavailableError`, `LLMResponseError`, `LLMContextOverflowError`
