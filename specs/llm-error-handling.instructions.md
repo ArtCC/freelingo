@@ -55,14 +55,14 @@ Attempt 3 ──→ fails → raise appropriate LLM*Error
 
 ## Structured output recovery
 
-For providers that don't support native structured output (Ollama, DeepSeek), structured JSON is obtained via a two-step process:
+Structured JSON uses the same provider-independent recovery process for Ollama, OpenAI, Anthropic, and DeepSeek:
 
 1. **First attempt**: Send the prompt with an appended instruction to return ONLY valid JSON (no markdown fences, no extra text). Parse the response.
 2. **On parse failure**: Strip markdown code fences if present (`json ... `). Attempt JSON decode and Pydantic validation.
 3. **Retry with correction**: If step 2 fails, send a follow-up message telling the LLM exactly what was wrong ("That response was not valid JSON. Error: ...") and request pure JSON again.
 4. **If retry also fails**: Raise `LLMResponseError` with the raw response for debugging.
 
-For providers with native structured output (OpenAI, Anthropic via `beta.chat.completions.parse`), the API handles schema enforcement natively.
+Anthropic responses with `stop_reason=max_tokens` are rejected before JSON parsing. The resulting `LLMResponseError` identifies output truncation and retains the partial response for diagnostics.
 
 ## Native tool recovery
 
@@ -103,6 +103,7 @@ This is a proactive strategy — `LLMContextOverflowError` is declared in the ex
 Each LLM error type maps to a specific HTTP status and user-facing message:
 
 - Malformed JSON after retry — HTTP Status: 502 Bad Gateway; User Message: "The AI returned an invalid response. Please try again."
+- Anthropic output truncation — HTTP Status: 502 Bad Gateway; User Message: "The AI returned an invalid response. Please try again."
 - Timeout (> 120 s, all retries exhausted) — HTTP Status: 504 Gateway Timeout; User Message: "The AI took too long. Check that Ollama is running or try a smaller model."
 - Service unreachable — HTTP Status: 503 Service Unavailable; User Message: "AI service is not reachable. Make sure Ollama is running."
 - Provider rate limited — HTTP Status: 429 Too Many Requests; User Message: "Too many requests to the AI provider. Please wait a moment."
@@ -128,8 +129,9 @@ All errors are logged at the service layer with the raw response attached (for `
 Anthropic's SDK (`AsyncAnthropic`) has a different API shape than the OpenAI-compatible clients:
 
 - `system` message is extracted from the message list and passed as a separate parameter (Anthropic API convention)
-- Maximum tokens parameter: always 4096 (controllable, hardcoded default)
+- Maximum output tokens parameter: `ANTHROPIC_MAX_TOKENS`, configurable per deployment and defaulting to 8192
 - Response format: `response.content[0].text` (not `response.choices[0].message.content` as in OpenAI)
+- Non-streaming responses stopped by `max_tokens` raise `LLMResponseError` with the partial content before downstream JSON parsing
 - Streaming: same async generator pattern, but chunk structure differs internally
 
 These differences are abstracted inside the adapter — the rest of the application is unaware of which provider is active.

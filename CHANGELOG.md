@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.45] - 2026-08-20
+
+### Added
+
+- **Configurable Anthropic output budget**: `ANTHROPIC_MAX_TOKENS` controls the maximum output tokens per request and defaults to 8192, including in production and development Compose deployments.
+
+### Fixed
+
+- **Anthropic lesson generation truncation**: Anthropic no longer uses the previous 4096-token output ceiling that could cut bilingual lesson JSON mid-response, and `stop_reason=max_tokens` now produces an explicit `LLMResponseError` retaining the partial output instead of a misleading JSON decode failure.
+
 ## [1.8.40] - 2026-08-17
 
 ### Changed

@@ -20,22 +20,29 @@ Open an issue with:
 - Expected vs actual behaviour
 - FreeLingo version / commit hash
 
+When permissions allow, apply the most appropriate label when opening or triaging an issue. If work on the issue has an associated branch, link that branch in the issue's GitHub Development section so the implementation can be tracked from the issue.
+
 ### Suggesting features
 
 Open an issue describing the use case, not just the feature. The repository owner will review and label it. Check the [roadmap](specs/roadmap.instructions.md) first — the feature may already be planned.
 
 ### Branch workflow
 
+FreeLingo follows the Git Flow branching model:
+
 - **`develop`** — integration branch. All PRs target this branch. CI runs tests and lint on every PR.
 - **`main`** — production branch. Merges from `develop` trigger Docker image publishing and releases.
+- **`feature/<short-description>`** — feature, bug-fix, and documentation branches created from `develop` and merged back through a PR.
+- **`release/<version>`** — maintainer-managed release preparation branches created from `develop` and merged into both `main` and `develop`.
+- **`hotfix/<short-description>`** — maintainer-managed urgent production fixes created from `main` and merged into both `main` and `develop`.
 
-Do not open PRs directly against `main`.
+Contributors must not open PRs directly against `main`; create branches from `develop` and target `develop` instead.
 
 ### Submitting a pull request
 
 1. Fork the repository and create a branch from `develop`:
    ```bash
-   git checkout -b feat/short-description
+   git checkout -b feature/short-description
    ```
 2. Follow the coding standards below.
 3. Add or update tests. Coverage must remain ≥ 70 %.
