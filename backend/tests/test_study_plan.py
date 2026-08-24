@@ -536,3 +536,90 @@ async def test_today_returns_empty_when_plan_complete(client, test_user, db_sess
     assert data["lessons"] == []
     assert data["progress_day"] == total
     assert data["total_days"] == total
+
+
+@pytest.mark.asyncio
+async def test_today_passes_previous_unit_lessons_to_generator(client, test_user, db_session):
+    """Lessons of the same unit are generated with the content of their siblings as context."""
+    user, headers = test_user
+
+    await deactivate_active_plans(db_session, user.id)
+    await make_study_plan(
+        db_session,
+        user_id=user.id,
+        cefr_level="A2",
+        goals=["grammar"],
+        duration_weeks=1,
+        days_per_week=1,
+        current_unit="a2_unit_1",
+        generated_plan={
+            "title": "Test Plan",
+            "cefr_level": "A2",
+            "duration_weeks": 1,
+            "days_per_week": 1,
+            "ends_with_test": False,
+            "weekly_plan": [
+                {
+                    "week": 1,
+                    "theme": "basics",
+                    "days": [
+                        {
+                            "day": 1,
+                            "lesson_type": lesson_type,
+                            "title": title,
+                            "objectives": [],
+                            "estimated_minutes": 20,
+                            "unit_id": "a2_unit_1",
+                            "grammar_points": [],
+                            "vocabulary_set_ids": [],
+                        }
+                        for title, lesson_type in (
+                            ("Unit Lesson One", "grammar"),
+                            ("Unit Lesson Two", "vocabulary"),
+                        )
+                    ],
+                }
+            ],
+        },
+        is_active=True,
+        progress_day=0,
+    )
+
+    generated = LessonContent(
+        lesson_type="grammar",
+        title="Unit Lesson One",
+        cefr_level="A2",
+        unit_id="a2_unit_1",
+        explanation={
+            "text": "Explanation",
+            "key_points": [],
+            "examples": [{"sentence": "We booked a hotel.", "note": "Perfect tense"}],
+        },
+        exercises=[
+            ExerciseContent(
+                type="multiple_choice",
+                question="Question?",
+                options=["A", "B"],
+                correct="A",
+                explanation="Because.",
+            )
+        ],
+        vocabulary=[],
+        grammar_refs=[],
+    )
+    with patch(
+        "app.routers.study_plan.generate_lesson",
+        new=AsyncMock(return_value=generated),
+    ) as mock_generate:
+        response = await client.get("/api/study-plan/today", headers=headers)
+
+    assert response.status_code == 200
+    assert mock_generate.await_count == 2
+
+    first_call, second_call = mock_generate.await_args_list
+    assert first_call.kwargs["previous_lessons"] == []
+
+    previous = second_call.kwargs["previous_lessons"]
+    assert [item["title"] for item in previous] == ["Unit Lesson One"]
+    assert previous[0]["lesson_type"] == "grammar"
+    assert previous[0]["content"]["explanation"]["examples"][0]["sentence"] == "We booked a hotel."
