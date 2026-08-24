@@ -516,6 +516,48 @@ def test_lesson_generation_prompt_differentiates_lesson_types() -> None:
     assert grammar_block != reading_block
 
 
+def test_lesson_generation_prompt_scopes_grammar_ratio_to_lesson_type() -> None:
+    common = {
+        "cefr_level": "A2",
+        "target_language_name": "German",
+        "topic": "Perfekt mit haben und sein",
+        "unit_id": "a2-perfekt",
+        "grammar_points": "perfekt",
+        "vocabulary_set_ids": "travel",
+        "week": 1,
+        "day": 1,
+        "valid_slugs": "perfekt",
+    }
+
+    for lesson_type in ("grammar", "review", "experimental"):
+        prompt = build_lesson_generation_prompt(lesson_type=lesson_type, **common)
+        assert "at least 70% of exercises must target one" in prompt
+
+    for lesson_type in ("vocabulary", "reading", "writing", "listening"):
+        prompt = build_lesson_generation_prompt(lesson_type=lesson_type, **common)
+        assert "at least 30% of exercises must target one" in prompt
+        assert "at least 70% of exercises" not in prompt
+
+
+def test_lesson_generation_prompt_does_not_claim_pending_lessons_were_studied() -> None:
+    prompt = build_lesson_generation_prompt(
+        cefr_level="A2",
+        target_language_name="German",
+        lesson_type="grammar",
+        topic="Perfekt",
+        unit_id="a2-perfekt",
+        grammar_points="perfekt",
+        vocabulary_set_ids="travel",
+        week=1,
+        day=3,
+        valid_slugs="perfekt",
+        previous_lessons_summary='- "Lektion 1" (grammar)',
+    )
+
+    assert "has already worked through" not in prompt
+    assert "whether or not the student has worked through them yet" in prompt
+
+
 def test_lesson_generation_prompt_falls_back_for_unknown_lesson_type() -> None:
     prompt = build_lesson_generation_prompt(
         cefr_level="A2",

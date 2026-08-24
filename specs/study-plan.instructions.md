@@ -164,7 +164,7 @@ The `generate_lesson()` function receives:
 - `grammar_points`, `vocabulary_set_ids` (from curriculum context)
 - `target_language` (user's target language BCP-47)
 - `native_language` for every lesson level, so lessons can include a native-language explanation alongside the target-language explanation.
-- `previous_lessons` — the already generated lessons of the same `unit_id`, in the order the student worked through them. The router builds this list from the lessons it already loaded for the plan, so no extra query is needed, and appends lessons generated earlier in the same request.
+- `previous_lessons` — the already generated lessons of the same `unit_id`, in plan order (week, day), whether or not the student has completed them. The router builds this list from the lessons it already loaded for the plan, so no extra query is needed, and appends lessons generated earlier in the same request.
 
 It returns a structured JSON with:
 
@@ -177,8 +177,8 @@ It returns a structured JSON with:
 
 All lessons of a unit share the same `grammar_points` and `vocabulary_set_ids`, so the prompt needs two extra signals to keep them from converging on the same content:
 
-- **Sibling-lesson context.** `build_previous_lessons_summary()` condenses the siblings into a capped summary (at most the 6 most recent lessons, each with its title, type, a truncated explanation excerpt, up to 3 example sentences, up to 6 vocabulary words, and up to 2 common traps, followed by the vocabulary already introduced in the unit). The summary is injected as delimited data the model must not reuse. Lessons with no siblings yet get no block at all.
-- **Per-type behaviour.** The declared `lesson_type` (`grammar`, `vocabulary`, `reading`, `writing`, `listening`, `review`) selects an instruction block describing what the explanation, the exercise mix, and the vocabulary of that type must emphasise. Unknown types fall back to a generic block. `review` keeps recycling the unit's material by design, but still has to do it with new sentences and contexts.
+- **Sibling-lesson context.** `build_previous_lessons_summary()` condenses the siblings into a capped summary (at most the 6 most recent lessons, each with its title, type, a truncated explanation excerpt, up to 3 example sentences, up to 6 vocabulary words, and up to 2 common traps). The vocabulary list that closes the summary is collected from every sibling, not only from the 6 described in detail, and is capped at 40 words. The summary is injected as delimited data the model must not reuse. Siblings are every lesson of the unit that already has generated content, whether or not the student has completed it, so the block is worded as material the unit already covers rather than as material the student knows. Lessons with no siblings yet get no block at all.
+- **Per-type behaviour.** The declared `lesson_type` (`grammar`, `vocabulary`, `reading`, `writing`, `listening`, `review`) selects an instruction block describing what the explanation, the exercise mix, and the vocabulary of that type must emphasise. Unknown types fall back to a generic block. `review` keeps recycling the unit's material by design, but still has to do it with new sentences and contexts. The same `lesson_type` also scopes the minimum share of exercises that must target the unit grammar points: 70% for `grammar`, `review`, and unknown types, 30% for the types whose focus block asks for lexical, comprehension, or production exercises.
 
 If the LLM call fails or returns an empty exercises list, the lesson is discarded (rolled back) and that slot returns `id: null` in the today response. The user can retry by refreshing.
 

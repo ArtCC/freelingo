@@ -427,6 +427,55 @@ class TestBuildPreviousLessonsSummary:
         assert "Satz 8-3" not in summary
         unit_words = summary.rsplit("Vocabulary already introduced in this unit: ", 1)[1]
         assert unit_words.count("buchen") == 1
+        # The unit vocabulary covers the whole unit, not only the detailed lessons.
+        assert "Wort 0" in unit_words
+        assert f"Wort {PREVIOUS_LESSONS_LIMIT + 2}" in unit_words
+
+    def test_collects_unit_vocabulary_beyond_the_detailed_lessons(self):
+        from app.services.lesson_generator import (
+            PREVIOUS_LESSONS_LIMIT,
+            build_previous_lessons_summary,
+        )
+
+        lessons = [
+            {
+                "title": f"Lektion {index}",
+                "lesson_type": "vocabulary",
+                "content": {"vocabulary": [{"word": f"Wort {index}"}]},
+            }
+            for index in range(PREVIOUS_LESSONS_LIMIT + 4)
+        ]
+
+        summary = build_previous_lessons_summary(lessons)
+
+        unit_words = summary.rsplit("Vocabulary already introduced in this unit: ", 1)[1]
+        for index in range(PREVIOUS_LESSONS_LIMIT + 4):
+            assert f"Wort {index}" in unit_words
+        assert summary.count('" (vocabulary)') == PREVIOUS_LESSONS_LIMIT
+
+    def test_ignores_explanation_blocks_that_are_not_lists(self):
+        from app.services.lesson_generator import build_previous_lessons_summary
+
+        summary = build_previous_lessons_summary(
+            [
+                {
+                    "title": "Lektion 1",
+                    "lesson_type": "grammar",
+                    "content": {
+                        "explanation": {"text": "Das Perfekt.", "examples": 1},
+                        "native_explanation": {"common_traps": True},
+                        "vocabulary": "die Reise",
+                    },
+                }
+            ]
+        )
+
+        assert '- "Lektion 1" (grammar)' in summary
+        assert "explained: Das Perfekt." in summary
+        assert "example sentences used:" not in summary
+        assert "vocabulary taught:" not in summary
+        assert "common traps listed:" not in summary
+        assert "Vocabulary already introduced in this unit:" not in summary
 
     def test_truncates_long_text_and_collapses_whitespace(self):
         from app.services.lesson_generator import (

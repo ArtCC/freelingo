@@ -42,6 +42,15 @@ def _compact(value: Any, limit: int) -> str:
     return f"{text[: limit - 1].rstrip()}…" if len(text) > limit else text
 
 
+def _as_list(value: Any) -> list[Any]:
+    """Return the value only when it is a list.
+
+    The lesson content schema types the explanation blocks as free-form dictionaries, so a model
+    response can put a scalar where a list of examples, words, or traps is expected.
+    """
+    return value if isinstance(value, list) else []
+
+
 def build_previous_lessons_summary(previous_lessons: list[dict[str, Any]]) -> str:
     """Summarize the already generated lessons of a unit.
 
@@ -52,9 +61,28 @@ def build_previous_lessons_summary(previous_lessons: list[dict[str, Any]]) -> st
     unit_words: list[str] = []
     seen_words: set[str] = set()
 
-    for previous in previous_lessons[-PREVIOUS_LESSONS_LIMIT:]:
+    # The vocabulary of the whole unit is collected from every previous lesson; only the most
+    # recent ones are described in detail, so the summary stays inside the prompt budget.
+    detailed_from = max(len(previous_lessons) - PREVIOUS_LESSONS_LIMIT, 0)
+
+    for index, previous in enumerate(previous_lessons):
         content = previous.get("content")
         content = content if isinstance(content, dict) else {}
+
+        words = [
+            _compact(item.get("word"), 40)
+            for item in _as_list(content.get("vocabulary"))
+            if isinstance(item, dict) and item.get("word")
+        ]
+        for word in words:
+            key = word.casefold()
+            if key not in seen_words:
+                seen_words.add(key)
+                unit_words.append(word)
+
+        if index < detailed_from:
+            continue
+
         explanation = content.get("explanation")
         explanation = explanation if isinstance(explanation, dict) else {}
         native_explanation = content.get("native_explanation")
@@ -70,28 +98,18 @@ def build_previous_lessons_summary(previous_lessons: list[dict[str, Any]]) -> st
 
         sentences = [
             _compact(example.get("sentence"), PREVIOUS_LESSON_TEXT_CHARS)
-            for example in (explanation.get("examples") or [])
+            for example in _as_list(explanation.get("examples"))
             if isinstance(example, dict) and example.get("sentence")
         ][:PREVIOUS_LESSON_SENTENCES]
         if sentences:
             lines.append(f"  example sentences used: {' | '.join(sentences)}")
 
-        words = [
-            _compact(item.get("word"), 40)
-            for item in (content.get("vocabulary") or [])
-            if isinstance(item, dict) and item.get("word")
-        ]
         if words:
             lines.append(f"  vocabulary taught: {', '.join(words[:PREVIOUS_LESSON_WORDS])}")
-        for word in words:
-            key = word.casefold()
-            if key not in seen_words:
-                seen_words.add(key)
-                unit_words.append(word)
 
         traps = [
             _compact(trap.get("mistake"), 90)
-            for trap in (native_explanation.get("common_traps") or [])
+            for trap in _as_list(native_explanation.get("common_traps"))
             if isinstance(trap, dict) and trap.get("mistake")
         ][:PREVIOUS_LESSON_TRAPS]
         if traps:
