@@ -92,7 +92,7 @@ export default function AdaptiveQuizCard({
           {/* Declared gap — kept apart from A-D so it does not read as a fifth option */}
           <button
             onClick={() => onAnswer(DONT_KNOW_ANSWER)}
-            className="text-fl-label text-fl-muted-4 hover:text-fl-muted-2 w-full font-mono tracking-widest uppercase transition-colors"
+            className="text-fl-caption text-fl-muted-1 hover:text-fl-fg w-full py-3 font-mono tracking-widest uppercase transition-colors"
           >
             {t('dontKnow')}
           </button>
