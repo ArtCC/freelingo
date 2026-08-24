@@ -91,7 +91,7 @@ This document records what was built and the completion criteria met.
 - [x] Audio button functional in flashcards and lessons
 - [x] Pronunciation recording and evaluation operational
 - [x] GPU used by both services (CPU-only hosts supported via compose changes)
-- [x] STT endpoint corrected to `POST /asr?output=json&language=en&task=transcribe` (not OpenAI API)
+- [x] STT endpoint uses `POST /asr?output=json&language=<iso>&task=transcribe` for local Whisper, with the ISO code derived from the user-owned study plan (not the OpenAI API path)
 - [x] Default STT model upgraded to `large-v3-turbo`
 - [x] `STT_ENGINE` variable added for engine selection
 - [x] No regressions in Phase 1 features
@@ -119,7 +119,7 @@ This document records what was built and the completion criteria met.
 - [x] Automatic VAD operational with onnxruntime-web threaded WASM (COOP+COEP headers)
 - [x] Conversation history maintained correctly during session
 - [x] Session timeout watchers (max duration + inactivity) with 60s warning
-- [x] `TTS_ENABLED=true` and `STT_ENABLED=true` required for WebSocket endpoint
+- [x] Both configured speech services must be available for the WebSocket endpoint
 - [x] `LOG_LEVEL` controls pipeline logging verbosity
 - [x] No regressions in Phase 1 and 2
 

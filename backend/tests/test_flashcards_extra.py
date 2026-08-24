@@ -150,11 +150,8 @@ async def test_generate_flashcards_success(client, test_user, db_session):
     user, headers = test_user
     await _seed_plan(db_session, user.id)
 
-    with patch(
-        "app.routers.flashcards.generate_flashcards",
-        new_callable=AsyncMock,
-        return_value=_FAKE_GENERATED,
-    ):
+    generate_mock = AsyncMock(return_value=_FAKE_GENERATED)
+    with patch("app.routers.flashcards.generate_flashcards", new=generate_mock):
         response = await client.post(
             "/api/flashcards/generate",
             headers=headers,
@@ -162,7 +159,7 @@ async def test_generate_flashcards_success(client, test_user, db_session):
                 "topic": "technology",
                 "count": 2,
                 "cefr_level": "B2",
-                "native_language": "es",
+                "target_language": "it-IT",
             },
         )
 
@@ -171,6 +168,7 @@ async def test_generate_flashcards_success(client, test_user, db_session):
     assert len(data["flashcards"]) == 2
     words = [c["word"] for c in data["flashcards"]]
     assert "ubiquitous" in words
+    assert generate_mock.await_args.kwargs["target_language"] == "en-US"
 
     # Verify cards were persisted
     from sqlalchemy import select

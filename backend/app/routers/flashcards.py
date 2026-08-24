@@ -183,7 +183,6 @@ async def review_flashcard(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    plan = await _get_active_plan_or_404(db, current_user.id)
     card = await db.get(Flashcard, card_id)
     if not card or card.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Flashcard not found")
@@ -198,7 +197,7 @@ async def review_flashcard(
         flashcard_reviewed=True,
         skill="vocabulary",
         skill_score=min(data.quality / 5.0, 1.0),
-        study_plan_id=plan.id,
+        study_plan_id=card.study_plan_id,
     )
     return card
 
@@ -212,7 +211,6 @@ async def generate_flashcards_endpoint(
     db: AsyncSession = Depends(get_db),
 ):
     plan = await _get_active_plan_or_404(db, current_user.id)
-    target_lang = data.target_language or plan.target_language
     try:
         existing = await db.execute(
             select(Flashcard.word).where(
@@ -228,7 +226,7 @@ async def generate_flashcards_endpoint(
             count=data.count,
             cefr_level=data.cefr_level,
             native_language=current_user.native_language,
-            target_language=target_lang,
+            target_language=plan.target_language,
         )
         unique_flashcards = []
         for card_data in result.flashcards:

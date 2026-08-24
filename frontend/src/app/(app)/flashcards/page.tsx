@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { apiFetch } from '@/lib/api'
@@ -13,6 +13,7 @@ import { CEFR_LEVELS } from '@/data/curriculum'
 
 interface CardData {
   id: number
+  study_plan_id: number
   word: string
   definition: string
   example_sentence: string
@@ -39,6 +40,8 @@ export default function FlashcardsPage() {
   const [generating, setGenerating] = useState(false)
   const [genError, setGenError] = useState('')
   const [speakingMode, setSpeakingMode] = useState(false)
+  const [reviewing, setReviewing] = useState(false)
+  const reviewingRef = useRef(false)
 
   const loadDue = useCallback(async () => {
     setLoading(true)
@@ -65,18 +68,28 @@ export default function FlashcardsPage() {
   }, [loadDue, activeLangCode])
 
   async function reviewCard(quality: number) {
-    if (cards.length === 0) return
+    if (cards.length === 0 || reviewingRef.current) return
+    reviewingRef.current = true
+    setReviewing(true)
     const card = cards[current]
-    await apiFetch(`/api/flashcards/${card.id}/review`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ quality }),
-    })
-    if (current < cards.length - 1) {
-      setCurrent(current + 1)
-      setFlipped(false)
-    } else {
-      await loadDue()
+    try {
+      const response = await apiFetch(`/api/flashcards/${card.id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quality }),
+      })
+      if (!response.ok) return
+      if (current < cards.length - 1) {
+        setCurrent(current + 1)
+        setFlipped(false)
+      } else {
+        await loadDue()
+      }
+    } catch {
+      return
+    } finally {
+      reviewingRef.current = false
+      setReviewing(false)
     }
   }
 
@@ -105,7 +118,6 @@ export default function FlashcardsPage() {
           topic: genTopic.trim(),
           count: genCount,
           cefr_level: genCefr,
-          target_language: activeLanguage?.code,
         }),
       })
       if (!res.ok) {
@@ -269,20 +281,22 @@ export default function FlashcardsPage() {
             {/* Mode toggle */}
             <div className="flex gap-1">
               <button
+                disabled={reviewing}
                 onClick={() => {
                   setSpeakingMode(false)
                   setFlipped(false)
                 }}
-                className={`text-fl-hint border px-3 py-1 tracking-widest transition-colors ${!speakingMode ? 'border-fl-border-2 text-fl-fg' : 'border-fl-border text-fl-muted-3 hover:text-fl-muted-1'}`}
+                className={`text-fl-hint border px-3 py-1 tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${!speakingMode ? 'border-fl-border-2 text-fl-fg' : 'border-fl-border text-fl-muted-3 hover:text-fl-muted-1'}`}
               >
                 {t('standardMode')}
               </button>
               <button
+                disabled={reviewing}
                 onClick={() => {
                   setSpeakingMode(true)
                   setFlipped(false)
                 }}
-                className={`text-fl-hint border px-3 py-1 tracking-widest transition-colors ${speakingMode ? 'border-fl-border-2 text-fl-fg' : 'border-fl-border text-fl-muted-3 hover:text-fl-muted-1'}`}
+                className={`text-fl-hint border px-3 py-1 tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${speakingMode ? 'border-fl-border-2 text-fl-fg' : 'border-fl-border text-fl-muted-3 hover:text-fl-muted-1'}`}
               >
                 {t('speakingMode')}
               </button>
@@ -360,8 +374,9 @@ export default function FlashcardsPage() {
                   ].map(({ key, q, color }) => (
                     <button
                       key={q}
+                      disabled={reviewing}
                       onClick={() => reviewCard(q)}
-                      className="border-fl-border text-fl-label hover:border-fl-border-2 min-w-[80px] flex-1 border py-3 font-mono tracking-widest uppercase transition-all"
+                      className="border-fl-border text-fl-label hover:border-fl-border-2 min-w-[80px] flex-1 border py-3 font-mono tracking-widest uppercase transition-all disabled:cursor-not-allowed disabled:opacity-50"
                       style={{ color }}
                     >
                       {t(key)}
@@ -410,8 +425,10 @@ export default function FlashcardsPage() {
                   </p>
                 )}
                 <VoiceRecorder
+                  studyPlanId={cards[current].study_plan_id}
                   onTranscription={handleSpeakingTranscription}
                   maxSeconds={5}
+                  disabled={reviewing}
                   className="mt-2"
                 />
               </div>

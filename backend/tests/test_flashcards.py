@@ -1,9 +1,16 @@
 from datetime import date, timedelta
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 
-async def _seed_plan(db_session, user_id: int):
+async def _seed_plan(
+    db_session,
+    user_id: int,
+    *,
+    target_language: str = "en-US",
+    is_active: bool = True,
+):
     """Create a minimal active A1 plan so flashcard endpoints have a study_plan_id."""
     from tests.conftest import make_study_plan
 
@@ -11,13 +18,13 @@ async def _seed_plan(db_session, user_id: int):
         db_session,
         user_id=user_id,
         cefr_level="A1",
-        target_language="en-US",
+        target_language=target_language,
         goals=["grammar"],
         duration_weeks=4,
         days_per_week=4,
         current_unit="",
         generated_plan={},
-        is_active=True,
+        is_active=is_active,
     )
 
 
@@ -87,7 +94,7 @@ def test_sm2_next_review_is_future():
 @pytest.mark.asyncio
 async def test_create_flashcard(client, test_user, db_session):
     user, headers = test_user
-    await _seed_plan(db_session, user.id)
+    plan = await _seed_plan(db_session, user.id)
 
     response = await client.post(
         "/api/flashcards",
@@ -102,6 +109,7 @@ async def test_create_flashcard(client, test_user, db_session):
     assert response.status_code == 200
     data = response.json()
     assert data["word"] == "hello"
+    assert data["study_plan_id"] == plan.id
     assert data["ease_factor"] == 2.5
     assert data["interval"] == 0
 
@@ -130,6 +138,7 @@ async def test_get_due_flashcards(client, test_user, db_session):
     data = response.json()
     assert len(data["due"]) == 1
     assert data["total"] == 1
+    assert data["due"][0]["study_plan_id"] == plan.id
 
 
 @pytest.mark.asyncio
@@ -160,6 +169,46 @@ async def test_review_flashcard(client, test_user, db_session):
     data = response.json()
     assert data["repetitions"] == 1
     assert data["interval"] == 1
+
+
+@pytest.mark.asyncio
+async def test_review_flashcard_credits_owning_plan_after_language_switch(
+    client,
+    test_user,
+    db_session,
+):
+    user, headers = test_user
+
+    from app.models.flashcard import Flashcard
+
+    card_plan = await _seed_plan(
+        db_session,
+        user.id,
+        target_language="en-US",
+        is_active=False,
+    )
+    await _seed_plan(db_session, user.id, target_language="it-IT")
+    card = Flashcard(
+        user_id=user.id,
+        study_plan_id=card_plan.id,
+        word="hello",
+        definition="a greeting",
+        example_sentence="Hello there.",
+        translation="ciao",
+    )
+    db_session.add(card)
+    await db_session.commit()
+
+    progress_mock = AsyncMock()
+    with patch("app.routers.flashcards.update_daily_progress", new=progress_mock):
+        response = await client.post(
+            f"/api/flashcards/{card.id}/review",
+            headers=headers,
+            json={"quality": 5},
+        )
+
+    assert response.status_code == 200
+    assert progress_mock.await_args.kwargs["study_plan_id"] == card_plan.id
 
 
 @pytest.mark.asyncio

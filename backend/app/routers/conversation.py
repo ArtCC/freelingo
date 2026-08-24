@@ -175,7 +175,12 @@ async def _warmup_tts(tts_service: object) -> None:
 async def _warmup_stt(stt_service: object) -> None:
     try:
         wav = _make_silence_wav()
-        await stt_service.transcribe(wav, "warmup.wav", "audio/wav")  # type: ignore[union-attr]
+        await stt_service.transcribe(  # type: ignore[union-attr]
+            wav,
+            "warmup.wav",
+            "audio/wav",
+            language="en",
+        )
         logger.info("[warmup] STT ready")
     except Exception as exc:
         logger.warning("[warmup] STT warmup error: %s", exc)

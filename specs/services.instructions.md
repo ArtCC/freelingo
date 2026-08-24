@@ -58,7 +58,7 @@ LLM-powered lesson content generation with strict constraints:
 Full SM-2 spaced repetition algorithm:
 
 - `sm2_update(card, quality)`: modifies ease_factor, interval, repetitions, and next_review based on 0–5 quality rating
-- LLM-powered `generate_flashcards`: creates flashcards with native-language translations; stored native-language codes are converted to human-readable names before prompt injection.
+- LLM-powered `generate_flashcards`: creates flashcards with native-language translations; stored native-language codes are converted to human-readable names before prompt injection. The router always supplies the active persisted plan's target language and does not accept a client-selected target language for generated cards.
 
 ## Resource Native Help (`resource_native_help.py`)
 
@@ -114,10 +114,12 @@ Abstracts TTS behind a common `synthesise(text, voice) → bytes` interface. Pro
 
 ## STT Service (`stt_service.py`)
 
-Abstracts STT behind a common `transcribe(audio_bytes, language) → str` interface. Provider selected via `STT_PROVIDER`:
+Abstracts STT behind a common `transcribe(audio_bytes, filename, mime_type, *, language) → str` interface. `language` is a required keyword-only ISO 639-1 code; neither provider has an implicit English fallback. Provider selected via `STT_PROVIDER`:
 
 - **`local`**: HTTP client to Whisper ASR — `POST /asr?output=json&language=<lang>&task=transcribe` (multipart). Uses `onerahmet/openai-whisper-asr-webservice` image (not OpenAI-compatible endpoint).
 - **`openai`**: OpenAI Whisper API (`whisper-1` model, configurable via `OPENAI_STT_MODEL`).
+
+Generic pronunciation and flashcard recordings include a required `study_plan_id`. The STT router verifies that the plan belongs to the authenticated user, reads `StudyPlan.target_language`, and converts it through `language_helpers.get_iso639` before calling the selected service. Conversation sessions derive the same code from their selected target language; the synthetic warmup probe passes `en` explicitly because its silent audio has no learning-language content.
 
 ## Logging & Observability (`core/app_logger.py`)
 
@@ -131,7 +133,7 @@ Backend modules now use a shared logging wrapper:
 
 For TTS diagnostics, `/api/tts` emits per-request trace and latency fields in logs and response headers so frontend, proxy, and backend timings can be correlated end-to-end.
 
-The `language` parameter is derived dynamically from `target_language` via `language_helpers.get_iso639` (e.g. `"en-US"` → `"en"`).
+The `language` parameter is derived dynamically from the resource-owning plan's `target_language` via `language_helpers.get_iso639` (e.g. `"it-IT"` → `"it"`). STT request logs include user, plan, BCP-47 target language, effective ISO code, provider, model, and audio byte count.
 
 ## Email Service (`email_service.py`)
 

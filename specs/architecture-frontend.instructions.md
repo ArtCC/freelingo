@@ -118,7 +118,7 @@ frontend/
 │   │
 │   └── middleware.ts            # Auth guard (redirect to /login) + locale detection
 │
-├── tests/                       # Vitest suite (43 test files, 460 tests; coverage not configured)
+├── tests/                       # Vitest suite (47 test files, 474 tests; coverage not configured)
 │   ├── setup.ts                 # Global mocks: localStorage, next/navigation, next-intl
 │   ├── middleware.test.ts
 │   ├── components/
@@ -219,7 +219,7 @@ These are Next.js Route Handlers that proxy requests to the backend:
 
 - `/api/chat` — Method: POST; Purpose: SSE chat streaming proxy
 - `/api/tts` — Method: POST; Purpose: Text-to-speech proxy
-- `/api/stt` — Method: POST; Purpose: Speech-to-text proxy
+- `/api/stt` — Method: POST; Purpose: Multipart speech-to-text proxy preserving the required `audio` and resource-owned `study_plan_id` fields
 
 ## State management (Zustand)
 
@@ -275,7 +275,7 @@ Seven Zustand stores hold all client-side state. No React Context is used for gl
 - **`TargetLanguageText.tsx`** — Reusable wrapper for content in the learner's target language. It applies `lang`, language-aware typography classes from `target-languages.ts`, and optional secondary reading/translation lines for future romanisation/pinyin support.
 - **`LanguageSwitcher.tsx`** — UI locale switcher
 - **`CookieBanner.tsx`** — GDPR cookie consent banner
-- **`ui/`** — shadcn/ui primitives (`button`, `card`, `input`, `progress`, `badge`, `separator`, `sheet`, `tabs`) + custom: `AudioPlayer`, `VoiceRecorder`, `confirm-dialog`
+- **`ui/`** — shadcn/ui primitives (`button`, `card`, `input`, `progress`, `badge`, `separator`, `sheet`, `tabs`) + custom: `AudioPlayer`, `VoiceRecorder`, `confirm-dialog`. `VoiceRecorder` requires a `studyPlanId`, captures that ID and its result handler when recording starts, stops microphone streams that resolve after cancellation or unmount, uploads the immutable plan context with the WAV, awaits asynchronous handlers, and aborts pending work on unmount. The STT Route Handler forwards that cancellation signal to the backend. Lesson pronunciation uses `lesson.study_plan_id`, while flashcard speaking mode uses the current card's exposed `study_plan_id` and serializes review updates until transcription handling completes.
 - **Memory notification** — `useTransientToast` owns one resettable, unmount-safe timer and increments an announcement ID for every confirmed save. `MemorySavedToast` remounts its `role="status"`/`aria-live="polite"` region for consecutive announcements and tells the user the memory can be reviewed in Settings without exposing stored content or presenting a timed action. Failed, skipped, duplicate, or unsupported automatic memory work produces no user-facing message.
 
 ---

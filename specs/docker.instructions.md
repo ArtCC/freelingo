@@ -136,9 +136,9 @@ When using `openai` providers, the corresponding Docker service can be removed f
 The Whisper service (`onerahmet/openai-whisper-asr-webservice`) does **not** implement the OpenAI API format. The correct endpoint is:
 
 ```
-POST /asr?output=json&language=en&task=transcribe
+POST /asr?output=json&language=<iso>&task=transcribe
 Content-Type: multipart/form-data
 Field: audio_file
 ```
 
-The backend's `STTService` calls this endpoint correctly. Do not confuse it with the OpenAI-compatible `/v1/audio/transcriptions` path, which does not exist in this service.
+The backend passes the required ISO 639-1 language derived from the user-owned study plan. Its local STT service calls this endpoint correctly; do not confuse it with the OpenAI-compatible `/v1/audio/transcriptions` path, which does not exist in this service.

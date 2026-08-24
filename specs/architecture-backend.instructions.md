@@ -142,7 +142,7 @@ backend/
 ├── alembic/
 │   └── versions/                # DB migrations (50 migrations)
 │
-└── tests/                       # pytest suite (44 test files, 995 tests)
+└── tests/                       # pytest suite (45 test files, 1019 tests)
 ```
 
 ## Database models
@@ -184,6 +184,7 @@ The application uses 21 services plus a centralized `services/prompts/` package 
 
 Key architectural decisions:
 
+- **STT language context** is plan-authoritative for pronunciation exercises and flashcard speaking mode. `POST /api/stt` verifies the submitted `study_plan_id` against the authenticated user, resolves `StudyPlan.target_language`, normalizes it with `get_iso639`, and passes the ISO code through a required keyword-only service argument. Conversation STT follows the same explicit-language contract, so missing caller context cannot silently fall back to English. Flashcard generation takes its target language exclusively from the active persisted plan before saving cards under that plan, and review progress follows each card's own persisted plan even after a language switch.
 - **LLM Adapter** is a singleton with provider-agnostic interface (Ollama, OpenAI, Anthropic, DeepSeek). Streaming native tools normalize OpenAI-compatible and Anthropic events, forward visible text progressively while filtering tool metadata, execute at most one call, and continue once with provider-native tool-result messages. OpenAI GPT-5.6 Chat Completions set `reasoning_effort="none"` only for tool rounds. Tool-free retries receive a clean fallback prompt; explicit incompatibilities become session-local unavailable capability for voice, while transient failures are probed again. Known incompatibility or continuation failure after visible output resets the consumer before retrying the complete turn, and empty fallbacks fail instead of producing a successful blank response. Committed tool results are exposed immediately, while executor failures remain internal failed tool results.
 - **Memory Service** owns strict native `save_user_memory` execution, escaped global context, exact per-user deduplication, a 150-item cap, manual creation, and owner-scoped management. Saves, individual deletion, and clear-all serialize on the same user-row lock. `study_plan_id` records nullable provenance only.
 - **Voice memory capability** is session-local state on `ConversationPipeline`. Once a model explicitly rejects tools, later turns in the same WebSocket session omit them; a new voice session probes capability again.
@@ -214,9 +215,9 @@ Testing infrastructure and strategy are documented in [testing.instructions.md](
 **Summary:**
 
 - **Framework**: pytest + pytest-asyncio + httpx AsyncClient
-- **Test files**: 44 (plus conftest.py for shared fixtures)
-- **Tests**: 995
-- **Coverage**: 85.17% last measured (target: ≥70%)
+- **Test files**: 45 (plus conftest.py for shared fixtures)
+- **Tests**: 1019
+- **Coverage**: 85.56% last measured (target: ≥70%)
 - **Key fixtures**: async database session, test client with auth headers, Redis mock, user_language fixture
 
 ---

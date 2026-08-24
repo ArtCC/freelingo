@@ -25,6 +25,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     method: 'POST',
     headers,
     body: formData,
+    signal: request.signal,
   })
 
   if (!backendRes.ok) {

@@ -86,9 +86,9 @@ Dynamic route rendering a single grammar topic. The `[slug]` parameter maps dire
 
 **VocabularyEntry** (per word):
 
-- `word` — Type: string; Description: English word
+- `word` — Type: string; Description: Target-language word
 - `pos` — Type: PartOfSpeech; Description: Noun, verb, adjective, adverb, phrase, conjunction, preposition, numeral, pronoun
-- `definition` — Type: string; Description: Simple English definition
+- `definition` — Type: string; Description: Simple definition in the target language
 - `example` — Type: string; Description: Natural usage example
 - `ipa` — Type: string (optional); Description: IPA pronunciation
 - `frequency_rank` — Type: number (optional); Description: Usage frequency ranking
@@ -177,7 +177,7 @@ Each category card shows:
 
 ### Usage
 
-The phrasebook is designed as a quick reference for real-world English. It complements the grammar and vocabulary references by focusing on complete, usable expressions rather than isolated words or rules.
+The phrasebook is designed as a quick reference for real-world use of the selected learning language. It complements the grammar and vocabulary references by focusing on complete, usable expressions rather than isolated words or rules.
 
 ---
 

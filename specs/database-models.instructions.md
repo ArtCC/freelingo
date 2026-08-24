@@ -160,7 +160,7 @@ SM-2 spaced repetition cards, per user per language.
 - user_id — Type: integer; Notes: FK → users
 - study_plan_id — Type: integer; Notes: FK → study_plans (CASCADE), NOT NULL, indexed. Added in Phase 10.
 - word — Type: string; Notes: Target language word/phrase
-- definition — Type: text; Notes: English definition
+- definition — Type: text; Notes: Simple definition in the user's native language
 - example_sentence — Type: text; Notes: Usage example
 - translation — Type: text; Notes: Translation to user's native language
 - source — Type: varchar(20); Notes: Origin of the card: `NULL` (generated), `"from_text"` (saved from reading exercise)
