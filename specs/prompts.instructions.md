@@ -131,7 +131,7 @@ Common variables:
 Domain-specific variables:
 
 - Tutor: `total_xp`, `streak`, `lessons_today`, `skills`.
-- Lesson generation: `lesson_type`, `topic`, `unit_id`, `grammar_points`, `vocabulary_set_ids`, `week`, `day`, `valid_slugs`, `previous_lessons_summary` (capped summary of the already generated lessons of the same unit, built by `lesson_generator.build_previous_lessons_summary()`), optional `native_language_name` for lesson-level and per-exercise `native_explanation`, per-exercise `native_hint`, and native-language vocabulary support.
+- Lesson generation: `lesson_type`, `topic`, `unit_id`, `grammar_points`, `vocabulary_set_ids`, `week`, `day`, `valid_slugs`, `previous_lessons_summary` (summary of the already generated lessons of the same unit, built by `lesson_generator.build_previous_lessons_summary()`; the per-lesson detail is capped at the 6 most recent, while the vocabulary list that closes it spans every sibling), optional `native_language_name` for lesson-level and per-exercise `native_explanation`, per-exercise `native_hint`, and native-language vocabulary support.
 - Exercise regeneration: `cefr_level`, `target_language_name`, `native_language_name`, `lesson_type`, `topic`, `exercise_type`, `lesson_explanation`, `lesson_vocabulary`, `invalid_exercise`, and `language_prompt_overlay`.
 - Native explanation generation: `target_language_name`, `native_language_name`, and delimited source explanation JSON.
 - Native exercise explanation generation: `target_language_name`, `native_language_name`, `exercise_type`, `question`, `correct_answer`, and target-language `explanation`.
