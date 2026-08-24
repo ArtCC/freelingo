@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from typing import get_args
+
 import pytest
 
+from app.data._types import LessonType
+from app.data.curriculum import _LANG_MODULES, get_curriculum
 from app.routers.chat import _build_tutor_system_prompt
 from app.services.conversation_pipeline import _build_conversation_system_prompt
 from app.services.flashcard_sm2 import _get_lang_hint
@@ -36,6 +40,8 @@ from app.services.prompts.flashcards import (
     build_word_lookup_prompt,
 )
 from app.services.prompts.lesson import (
+    GRAMMAR_EXERCISE_RATIO,
+    LESSON_TYPE_GUIDANCE,
     build_fill_blank_eval_prompt,
     build_free_write_eval_prompt,
     build_lesson_generation_prompt,
@@ -516,6 +522,42 @@ def test_lesson_generation_prompt_differentiates_lesson_types() -> None:
     assert grammar_block != reading_block
 
 
+def test_speaking_lesson_generation_prompt_focuses_on_oral_production() -> None:
+    prompt = build_lesson_generation_prompt(
+        cefr_level="B2",
+        target_language_name="Mainland Chinese",
+        lesson_type="speaking",
+        topic="讨论、论证和立场",
+        unit_id="b2-unit-1",
+        grammar_points="cong-er-kan",
+        vocabulary_set_ids="debate_b2",
+        week=1,
+        day=4,
+        valid_slugs="cong-er-kan",
+    )
+
+    assert 'LESSON TYPE FOCUS — this is a "speaking" lesson:' in prompt
+    assert "Teach oral production" in prompt
+    assert "at least one pronunciation exercise" in prompt
+    assert "at least 30% of exercises must target one" in prompt
+    assert "The declared lesson type must visibly shape the lesson" not in prompt
+
+
+def test_all_curriculum_lesson_types_have_explicit_prompt_policies() -> None:
+    curriculum_types = {
+        lesson_type
+        for target_language in _LANG_MODULES
+        for units in get_curriculum(target_language).values()
+        for unit in units
+        for lesson_type in unit.lesson_types
+    }
+    declared_types = set(get_args(LessonType))
+
+    assert curriculum_types == declared_types
+    assert set(LESSON_TYPE_GUIDANCE) == declared_types
+    assert set(GRAMMAR_EXERCISE_RATIO) == declared_types
+
+
 def test_lesson_generation_prompt_scopes_grammar_ratio_to_lesson_type() -> None:
     common = {
         "cefr_level": "A2",
@@ -533,7 +575,7 @@ def test_lesson_generation_prompt_scopes_grammar_ratio_to_lesson_type() -> None:
         prompt = build_lesson_generation_prompt(lesson_type=lesson_type, **common)
         assert "at least 70% of exercises must target one" in prompt
 
-    for lesson_type in ("vocabulary", "reading", "writing", "listening"):
+    for lesson_type in ("vocabulary", "reading", "writing", "listening", "speaking"):
         prompt = build_lesson_generation_prompt(lesson_type=lesson_type, **common)
         assert "at least 30% of exercises must target one" in prompt
         assert "at least 70% of exercises" not in prompt

@@ -9,7 +9,15 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 CEFRLevel = Literal["A1", "A2", "B1", "B2", "C1", "C2"]
-LessonType = Literal["grammar", "vocabulary", "reading", "writing", "listening", "review"]
+LessonType = Literal[
+    "grammar",
+    "vocabulary",
+    "reading",
+    "writing",
+    "listening",
+    "speaking",
+    "review",
+]
 
 
 @dataclass
