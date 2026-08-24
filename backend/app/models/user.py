@@ -33,6 +33,13 @@ class User(Base):
         nullable=False,
         default=settings.DEFAULT_CONVERSATION_INACTIVITY_TIMEOUT,
     )
+    # Silence in milliseconds that ends a spoken turn; 0 means derive it from the CEFR level.
+    conversation_speech_pause: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default="0",
+    )
     conversation_weekly_sessions: Mapped[int] = mapped_column(
         Integer,
         nullable=False,

@@ -263,6 +263,52 @@ async def test_patch_me_invalid_inactivity_timeout(client, test_user) -> None:
     assert response.status_code == 422
 
 
+@pytest.mark.asyncio
+async def test_patch_me_speech_pause(client, test_user) -> None:
+    """PATCH /api/auth/me should persist the end-of-turn pause."""
+    _, headers = test_user
+
+    response = await client.patch(
+        "/api/auth/me",
+        headers=headers,
+        json={"conversation_speech_pause": 3000},
+    )
+    assert response.status_code == 200
+    assert response.json()["conversation_speech_pause"] == 3000
+
+
+@pytest.mark.asyncio
+async def test_patch_me_speech_pause_back_to_automatic(client, test_user) -> None:
+    """Zero restores the level-derived end-of-turn pause."""
+    _, headers = test_user
+
+    await client.patch(
+        "/api/auth/me",
+        headers=headers,
+        json={"conversation_speech_pause": 2000},
+    )
+    response = await client.patch(
+        "/api/auth/me",
+        headers=headers,
+        json={"conversation_speech_pause": 0},
+    )
+    assert response.status_code == 200
+    assert response.json()["conversation_speech_pause"] == 0
+
+
+@pytest.mark.asyncio
+async def test_patch_me_invalid_speech_pause(client, test_user) -> None:
+    """PATCH /api/auth/me rejects pause values outside the offered set."""
+    _, headers = test_user
+
+    response = await client.patch(
+        "/api/auth/me",
+        headers=headers,
+        json={"conversation_speech_pause": 1500},
+    )
+    assert response.status_code == 422
+
+
 # ---------------------------------------------------------------------------
 # GET /me — new fields present in response
 # ---------------------------------------------------------------------------
@@ -278,9 +324,11 @@ async def test_get_me_includes_conversation_fields(client, test_user) -> None:
     data = response.json()
     assert "conversation_max_duration" in data
     assert "conversation_inactivity_timeout" in data
+    assert "conversation_speech_pause" in data
     # defaults
     assert data["conversation_max_duration"] == 1800
     assert data["conversation_inactivity_timeout"] == 180
+    assert data["conversation_speech_pause"] == 0
 
 
 # ---------------------------------------------------------------------------

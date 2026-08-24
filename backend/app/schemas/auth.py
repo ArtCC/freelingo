@@ -140,6 +140,7 @@ class UserResponse(BaseModel):
     is_verified: bool
     conversation_max_duration: int
     conversation_inactivity_timeout: int
+    conversation_speech_pause: int = 0
     avatar: str | None = None
     bio: str | None = None
     learning_goals: list[str] | None = None
@@ -185,6 +186,7 @@ class UserUpdateRequest(BaseModel):
     ui_locale: str | None = Field(default=None, min_length=2, max_length=5)
     conversation_max_duration: int | None = None
     conversation_inactivity_timeout: int | None = None
+    conversation_speech_pause: int | None = None
     bio: str | None = Field(default=None, max_length=500)
     learning_goals: list[str] | None = None
 
@@ -237,6 +239,13 @@ class UserUpdateRequest(BaseModel):
     def validate_inactivity_timeout(cls, v: int | None) -> int | None:
         if v is not None and v not in (60, 180, 300):
             raise ValueError("conversation_inactivity_timeout must be 60, 180, or 300")
+        return v
+
+    @field_validator("conversation_speech_pause")
+    @classmethod
+    def validate_speech_pause(cls, v: int | None) -> int | None:
+        if v is not None and v not in (0, 1000, 2000, 3000):
+            raise ValueError("conversation_speech_pause must be 0, 1000, 2000, or 3000")
         return v
 
     @field_validator("learning_goals")

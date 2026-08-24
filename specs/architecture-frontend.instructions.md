@@ -98,10 +98,11 @@ frontend/
 │   │   ├── progress.ts          # XP, streak, skill scores, dashboard data
 │   │   └── theme.ts             # Dark/light/system theme
 │   │
-│   ├── lib/                     # Utility modules (11)
+│   ├── lib/                     # Utility modules (12)
 │   │   ├── api.ts               # apiFetch: auth interceptor, 401 → silent refresh → retry
 │   │   ├── audio.ts             # Audio player, audio queue, gapless playback helpers
 │   │   ├── billing-copy.ts      # Billing CTA copy helpers and shared BillingInterval type
+│   │   ├── conversation-vad.ts  # End-of-turn silence window for voice conversation (user setting + CEFR fallback)
 │   │   ├── conversation-ws.ts   # WebSocket client for voice conversation
 │   │   ├── landing-subscription.ts # Shared landing subscription-status check
 │   │   ├── locales.ts           # Locale utilities for next-intl
@@ -116,7 +117,7 @@ frontend/
 │   │
 │   └── middleware.ts            # Auth guard (redirect to /login) + locale detection
 │
-├── tests/                       # Vitest suite (41 test files, 446 tests; coverage not configured)
+├── tests/                       # Vitest suite (43 test files, 460 tests; coverage not configured)
 │   ├── setup.ts                 # Global mocks: localStorage, next/navigation, next-intl
 │   ├── middleware.test.ts
 │   ├── components/
