@@ -118,13 +118,13 @@ export function ConversationSection({ title }: { title?: string } = {}) {
           <label className="text-fl-label text-fl-muted-2 mb-2 block font-mono tracking-widest uppercase">
             {t('conversationSpeechPause')}
           </label>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {SPEECH_PAUSE_OPTIONS.map((val) => (
               <button
                 key={val}
                 type="button"
                 onClick={() => setConvSpeechPause(val)}
-                className={`flex-1 border py-3 font-mono text-xs tracking-widest uppercase transition-colors ${
+                className={`border py-3 font-mono text-xs tracking-widest uppercase transition-colors ${
                   convSpeechPause === val
                     ? 'border-fl-accent bg-fl-accent text-fl-accent-fg'
                     : 'border-fl-border text-fl-muted-2 hover:border-fl-border-2 hover:text-fl-fg'
