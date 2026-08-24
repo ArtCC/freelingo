@@ -24,6 +24,7 @@ export interface User {
   role: 'admin' | 'user'
   conversation_max_duration: number
   conversation_inactivity_timeout: number
+  conversation_speech_pause?: number
   avatar?: string | null
   is_verified?: boolean
   bio?: string | null

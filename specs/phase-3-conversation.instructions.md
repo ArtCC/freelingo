@@ -51,6 +51,7 @@ The `ConversationMode` component is dynamically imported with `ssr: false` (no s
 - **Model**: Silero VAD v5 (ONNX)
 - **Runtime**: onnxruntime-web **1.25.1 threaded WASM** (requires `SharedArrayBuffer`)
 - **Detection**: `useMicVAD` hook with `onSpeechEnd` callback — fires automatically when the user stops speaking
+- **End-of-turn window**: `redemptionMs` comes from `lib/conversation-vad.ts`. `conversation_speech_pause` on the user wins when set (1000, 2000, or 3000 ms); `0` derives it from the CEFR level — 1800 ms for A1/A2, 1500 ms for B1/B2, 1200 ms for C1/C2, 1500 ms without a level. Beginners hesitate mid-sentence, so the automatic values leave more room than the level alone would suggest. The window is read when the VAD is created, so a changed setting applies to the next session.
 
 **COOP/COEP headers**: Threaded WASM requires `SharedArrayBuffer`, which browsers only expose when the page has specific cross-origin isolation headers. The Next.js config adds:
 
@@ -153,6 +154,7 @@ Two asyncio tasks run concurrently with the main pipeline loop:
 - Max duration — Default: 1800 s (30 min); User-configurable: `conversation_max_duration` (from user table); Warning: 60 s warning via `session_warning` message
 - Post-assessment demo duration — 300 s (5 min), enforced by backend regardless of the user's normal `conversation_max_duration`.
 - Inactivity — Default: 180 s (3 min); User-configurable: `conversation_inactivity_timeout` (from user table); Warning: 60 s warning via `session_warning` message
+- End-of-turn pause — Default: automatic (CEFR-derived); User-configurable: `conversation_speech_pause` (from user table); Enforced in the browser VAD, not by the backend
 
 The inactivity timer resets on each received audio chunk. When either timeout fires, a `session_end` message is sent and the WebSocket connection is closed cleanly.
 
@@ -187,8 +189,9 @@ Users configure their voice conversation preferences from `/settings`:
 
 - Conversation max duration — Default: 30 min; Range: 1–60 min; Purpose: Total session length
 - Conversation inactivity timeout — Default: 3 min; Range: 1–10 min; Purpose: Silence before auto-disconnect
+- End-of-turn pause — Default: automatic; Options: automatic, 1 s, 2 s, 3 s; Purpose: How long the learner can pause mid-sentence before the turn is sent
 
-Settings are stored in the User model (`conversation_max_duration`, `conversation_inactivity_timeout` columns) and updatable via `PATCH /api/auth/me`. The WebSocket reads them on each new connection.
+Settings are stored in the User model (`conversation_max_duration`, `conversation_inactivity_timeout`, `conversation_speech_pause` columns) and updatable via `PATCH /api/auth/me`. The WebSocket reads the two timeout settings on each new connection; the end-of-turn pause is used by the browser VAD only.
 
 ---
 

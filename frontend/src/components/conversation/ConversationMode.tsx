@@ -5,6 +5,7 @@ import { useMicVAD } from '@ricky0123/vad-react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@/store/auth'
+import { resolveVadRedemptionMs } from '@/lib/conversation-vad'
 import { useConfigStore } from '@/store/config'
 import { apiFetch } from '@/lib/api'
 import { float32ToWav, createAudioQueue, type AudioQueue } from '@/lib/audio'
@@ -243,13 +244,6 @@ function TrialPremiumCta() {
   )
 }
 
-function vadRedemptionMs(cefrLevel: string | null | undefined): number {
-  if (!cefrLevel) return 1000
-  if (cefrLevel === 'A1' || cefrLevel === 'A2') return 1300
-  if (cefrLevel === 'B1' || cefrLevel === 'B2') return 1100
-  return 900 // C1, C2
-}
-
 const ENABLE_CONVERSATION_AUDIO_DEBUG_LOGS = false
 const ENABLE_CONVERSATION_BARGE_IN = false
 const MIN_UTTERANCE_MS = 900
@@ -400,7 +394,10 @@ export default function ConversationMode({
     onnxWASMBasePath: '/vad/',
     model: 'v5',
     startOnLoad: false,
-    redemptionMs: vadRedemptionMs(cefrLevel),
+    redemptionMs: resolveVadRedemptionMs(
+      user?.conversation_speech_pause,
+      cefrLevel
+    ),
     ortConfig: (ort) => {
       // Single-threaded ONNX — no SharedArrayBuffer / COOP headers required
       ort.env.wasm.numThreads = 1
