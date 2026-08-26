@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -29,6 +29,7 @@ import {
   SUPPORTED_TARGET_LANGUAGES,
 } from '@/lib/target-languages'
 import { useAuthStore } from '@/store/auth'
+import { useConfigStore } from '@/store/config'
 import { useLanguageStore } from '@/store/language'
 
 interface AdminUserItem {
@@ -136,7 +137,9 @@ export default function AdminUsersPage() {
   const [actionBusy, setActionBusy] = useState<string | null>(null)
   const [deletePending, setDeletePending] = useState<AdminUserItem | null>(null)
   const [activePending, setActivePending] = useState<AdminUserItem | null>(null)
+  const loadRequestId = useRef(0)
   const currentUserId = useAuthStore((s) => s.user?.id)
+  const stripeEnabled = useConfigStore((s) => s.stripeEnabled)
   const availableLanguageCodes = useLanguageStore(
     (s) => s.availableLanguageCodes
   )
@@ -207,6 +210,7 @@ export default function AdminUsersPage() {
       ].sort((a, b) => a.label.localeCompare(b.label)),
     [tBilling]
   )
+  const activeSubscriptionFilter = stripeEnabled ? subscriptionFilter : ''
 
   const loadUsers = useCallback(
     async (
@@ -216,6 +220,7 @@ export default function AdminUsersPage() {
       role: string,
       active: string
     ) => {
+      const requestId = ++loadRequestId.current
       setLoading(true)
       setError('')
       try {
@@ -228,8 +233,10 @@ export default function AdminUsersPage() {
         if (role) params.set('role', role)
         if (active) params.set('is_active', active)
         const res = await apiFetch(`/api/admin/users?${params.toString()}`)
+        if (requestId !== loadRequestId.current) return
         if (res.ok) {
           const data = await res.json()
+          if (requestId !== loadRequestId.current) return
           setUsers(data.items)
           setTotal(data.total)
         } else if (res.status === 403) {
@@ -238,25 +245,41 @@ export default function AdminUsersPage() {
           setError(t('usersLoadError'))
         }
       } catch {
-        setError(t('usersLoadError'))
+        if (requestId === loadRequestId.current) {
+          setError(t('usersLoadError'))
+        }
       } finally {
-        setLoading(false)
+        if (requestId === loadRequestId.current) {
+          setLoading(false)
+        }
       }
     },
     [t]
   )
 
   useEffect(() => {
-    loadUsers(page, searchTerm, subscriptionFilter, roleFilter, activeFilter)
+    loadUsers(
+      page,
+      searchTerm,
+      activeSubscriptionFilter,
+      roleFilter,
+      activeFilter
+    )
   }, [loadUsers, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (page !== 0) {
       setPage(0)
     } else {
-      loadUsers(0, searchTerm, subscriptionFilter, roleFilter, activeFilter)
+      loadUsers(
+        0,
+        searchTerm,
+        activeSubscriptionFilter,
+        roleFilter,
+        activeFilter
+      )
     }
-  }, [subscriptionFilter, roleFilter, activeFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeSubscriptionFilter, roleFilter, activeFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSearch() {
     const term = searchInput
@@ -264,7 +287,7 @@ export default function AdminUsersPage() {
     if (page !== 0) {
       setPage(0)
     } else {
-      loadUsers(0, term, subscriptionFilter, roleFilter, activeFilter)
+      loadUsers(0, term, activeSubscriptionFilter, roleFilter, activeFilter)
     }
   }
 
@@ -318,7 +341,7 @@ export default function AdminUsersPage() {
       await loadUsers(
         page,
         searchTerm,
-        subscriptionFilter,
+        activeSubscriptionFilter,
         roleFilter,
         activeFilter
       )
@@ -346,7 +369,7 @@ export default function AdminUsersPage() {
     await loadUsers(
       page,
       searchTerm,
-      subscriptionFilter,
+      activeSubscriptionFilter,
       roleFilter,
       activeFilter
     )
@@ -372,7 +395,7 @@ export default function AdminUsersPage() {
         await loadUsers(
           targetPage,
           searchTerm,
-          subscriptionFilter,
+          activeSubscriptionFilter,
           roleFilter,
           activeFilter
         )
@@ -412,7 +435,7 @@ export default function AdminUsersPage() {
 
   const hasFilters =
     searchTerm ||
-    subscriptionFilter ||
+    activeSubscriptionFilter ||
     roleFilter ||
     activeFilter ||
     searchInput
@@ -503,7 +526,13 @@ export default function AdminUsersPage() {
           </span>
         </div>
 
-        <div className="border-fl-border grid gap-2 border-b px-5 py-3 lg:grid-cols-[minmax(14rem,1fr)_auto_auto_auto_auto]">
+        <div
+          className={`border-fl-border grid gap-2 border-b px-5 py-3 ${
+            stripeEnabled
+              ? 'lg:grid-cols-[minmax(14rem,1fr)_auto_auto_auto_auto]'
+              : 'lg:grid-cols-[minmax(14rem,1fr)_auto_auto_auto]'
+          }`}
+        >
           <div className="flex min-w-0">
             <input
               type="search"
@@ -553,19 +582,21 @@ export default function AdminUsersPage() {
               </option>
             ))}
           </select>
-          <select
-            value={subscriptionFilter}
-            onChange={(e) => setSubscriptionFilter(e.target.value)}
-            className="bg-fl-bg border-fl-border text-fl-fg focus:border-fl-border-2 appearance-none border px-4 py-2 font-mono text-xs transition-colors focus:outline-none"
-            aria-label={t('subscriptionFilter')}
-          >
-            <option value="">{t('allSubscriptions')}</option>
-            {subscriptionOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          {stripeEnabled && (
+            <select
+              value={subscriptionFilter}
+              onChange={(e) => setSubscriptionFilter(e.target.value)}
+              className="bg-fl-bg border-fl-border text-fl-fg focus:border-fl-border-2 appearance-none border px-4 py-2 font-mono text-xs transition-colors focus:outline-none"
+              aria-label={t('subscriptionFilter')}
+            >
+              <option value="">{t('allSubscriptions')}</option>
+              {subscriptionOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          )}
           <button
             type="button"
             onClick={clearFilters}
@@ -587,21 +618,31 @@ export default function AdminUsersPage() {
               <table className="w-full table-fixed border-collapse">
                 <thead>
                   <tr className="border-fl-border border-b">
-                    <th className="text-fl-label text-fl-muted-4 w-[25%] px-5 py-3 text-left font-mono tracking-widest uppercase">
+                    <th
+                      className={`text-fl-label text-fl-muted-4 px-5 py-3 text-left font-mono tracking-widest uppercase ${stripeEnabled ? 'w-[25%]' : 'w-[30%]'}`}
+                    >
                       {t('userColumn')}
                     </th>
-                    <th className="text-fl-label text-fl-muted-4 w-[25%] px-5 py-3 text-left font-mono tracking-widest uppercase">
+                    <th
+                      className={`text-fl-label text-fl-muted-4 px-5 py-3 text-left font-mono tracking-widest uppercase ${stripeEnabled ? 'w-[25%]' : 'w-[30%]'}`}
+                    >
                       {t('fieldEmail')}
                     </th>
-                    <th className="text-fl-label text-fl-muted-4 w-[12.5%] px-5 py-3 text-left font-mono tracking-widest uppercase">
+                    <th
+                      className={`text-fl-label text-fl-muted-4 px-5 py-3 text-left font-mono tracking-widest uppercase ${stripeEnabled ? 'w-[12.5%]' : 'w-[15%]'}`}
+                    >
                       {t('role')}
                     </th>
-                    <th className="text-fl-label text-fl-muted-4 w-[12.5%] px-5 py-3 text-left font-mono tracking-widest uppercase">
+                    <th
+                      className={`text-fl-label text-fl-muted-4 px-5 py-3 text-left font-mono tracking-widest uppercase ${stripeEnabled ? 'w-[12.5%]' : 'w-[15%]'}`}
+                    >
                       {t('status')}
                     </th>
-                    <th className="text-fl-label text-fl-muted-4 w-[15%] px-5 py-3 text-left font-mono tracking-widest uppercase">
-                      {t('fieldSubscription')}
-                    </th>
+                    {stripeEnabled && (
+                      <th className="text-fl-label text-fl-muted-4 w-[15%] px-5 py-3 text-left font-mono tracking-widest uppercase">
+                        {t('fieldSubscription')}
+                      </th>
+                    )}
                     <th className="text-fl-label text-fl-muted-4 w-[10%] px-5 py-3 text-right font-mono tracking-widest uppercase">
                       {t('actions')}
                     </th>
@@ -647,13 +688,15 @@ export default function AdminUsersPage() {
                           {u.is_active ? t('active') : t('inactive')}
                         </span>
                       </td>
-                      <td className="px-5 py-4 align-middle">
-                        <span
-                          className={`text-fl-hint border px-2 py-0.5 font-mono tracking-widest uppercase ${statusBadgeClass(u.subscription_status)}`}
-                        >
-                          {subscriptionLabel(u.subscription_status, tBilling)}
-                        </span>
-                      </td>
+                      {stripeEnabled && (
+                        <td className="px-5 py-4 align-middle">
+                          <span
+                            className={`text-fl-hint border px-2 py-0.5 font-mono tracking-widest uppercase ${statusBadgeClass(u.subscription_status)}`}
+                          >
+                            {subscriptionLabel(u.subscription_status, tBilling)}
+                          </span>
+                        </td>
+                      )}
                       <td className="px-5 py-4 align-middle">
                         <div className="flex justify-end gap-1">
                           <Link
@@ -762,11 +805,13 @@ export default function AdminUsersPage() {
                       {u.username.toLowerCase()} {u.email ? `/ ${u.email}` : ''}{' '}
                       / {u.native_language}
                     </p>
-                    <span
-                      className={`text-fl-hint inline-flex border px-2 py-0.5 font-mono tracking-widest uppercase ${statusBadgeClass(u.subscription_status)}`}
-                    >
-                      {subscriptionLabel(u.subscription_status, tBilling)}
-                    </span>
+                    {stripeEnabled && (
+                      <span
+                        className={`text-fl-hint inline-flex border px-2 py-0.5 font-mono tracking-widest uppercase ${statusBadgeClass(u.subscription_status)}`}
+                      >
+                        {subscriptionLabel(u.subscription_status, tBilling)}
+                      </span>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Link

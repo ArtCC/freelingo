@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.45] - Unpublished
+## [1.8.45] - 2026-08-26
 
 ### Added
 
@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Stripe-disabled administration**: self-hosted deployments now hide subscription metrics and overdue alerts from the admin overview, hide and ignore subscription filters and values in the user list, and omit subscription status and override controls from user detail while keeping quota management available.
 - **Target-language speech transcription**: pronunciation exercises and flashcard speaking mode now capture and send their owning study plan with each recording, so the backend validates that immutable context and passes the plan's ISO language code to STT instead of silently treating every recording as English. Late microphone permissions and in-flight proxy requests are cleaned up safely, flashcard reviews stay serialized until voice-result handling completes, and each review credits progress to the card's owning plan even if the active language changed. Flashcard generation also derives its language from the active persisted plan rather than a client-supplied language value.
 - **Anthropic lesson generation truncation**: Anthropic no longer uses the previous 4096-token output ceiling that could cut bilingual lesson JSON mid-response, and `stop_reason=max_tokens` now produces an explicit `LLMResponseError` retaining the partial output instead of a misleading JSON decode failure.
 - **Lesson variety within curriculum units**: New lessons receive a capped summary of already generated siblings and type-specific guidance for grammar, vocabulary, reading, writing, listening, and review, reducing repeated explanations, examples, vocabulary, and common traps while keeping the exercise grammar ratio aligned with each lesson's focus.

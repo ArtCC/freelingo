@@ -40,7 +40,7 @@ function jsonResponse(data: unknown, status = 200) {
 describe('AdminOverviewPage', () => {
   beforeEach(() => {
     mockApiFetch.mockReset()
-    useConfigStore.setState({ maintenanceMode: false })
+    useConfigStore.setState({ maintenanceMode: false, stripeEnabled: true })
   })
 
   it('loads and renders admin overview stats', async () => {
@@ -79,5 +79,28 @@ describe('AdminOverviewPage', () => {
     await waitFor(() =>
       expect(screen.getByText('adminStatsError')).toBeDefined()
     )
+  })
+
+  it('hides subscription metrics and alerts when Stripe is disabled', async () => {
+    useConfigStore.setState({ stripeEnabled: false })
+    mockApiFetch.mockResolvedValueOnce(
+      jsonResponse({
+        users_total: 12,
+        users_active: 10,
+        subscriptions_active: 4,
+        subscriptions_trialing: 3,
+        subscriptions_past_due: 1,
+        feedback_pending: 5,
+        feedback_bug_pending: 2,
+        reviews_pending: 1,
+      })
+    )
+
+    render(<AdminOverviewPage />)
+
+    await waitFor(() => expect(screen.getByText('12')).toBeDefined())
+    expect(screen.queryByText('paidAccess')).toBeNull()
+    expect(screen.queryByText('4 / 3')).toBeNull()
+    expect(screen.queryByText('pastDueSubscriptions')).toBeNull()
   })
 })
