@@ -34,7 +34,7 @@ Most REST endpoints are prefixed under `/api`. The public health check is at `/h
 - **POST `/refresh`** — Rate limit: 60/min. Rotates refresh token, returns new access_token
 - **POST `/logout`** — Rate limit: 60/min. Deletes refresh token from Redis, clears cookie
 - **GET `/me`** — Rate limit: 60/min. Returns authenticated user profile, including subscription fields (`subscription_status`, `subscription_ends_at`, `trial_used`, `assessment_voice_trial_used`), freemium fields (`freemium_trial_ends_at`, `freemium_trial_used`), and nullable `dismissed_dashboard_banner_revision` so the frontend can distinguish access state and suppress the exact announcement revision already dismissed by this account.
-- **PATCH `/me`** — Rate limit: 60/min. Updates display name, email, password, native language, target language, UI locale, bio, learning goals, and conversation settings. `native_language` is validated against the same supported UI-language codes used at registration (`en`, `es`, `fr`, `pt`, `de`, `it`, `ru`, `nl`, `pl`, `ro`); unsupported codes return HTTP 422 even when the API is called outside the selector-based frontend.
+- **PATCH `/me`** — Rate limit: 60/min. Updates display name, email, password, native language, target language, UI locale, bio, learning goals, and conversation settings (`conversation_max_duration` ∈ {900, 1800}, `conversation_inactivity_timeout` ∈ {60, 180, 300}, `conversation_speech_pause` ∈ {0, 1000, 2000, 3000} milliseconds, where `0` means automatic). `native_language` is validated against the same supported UI-language codes used at registration (`en`, `es`, `fr`, `pt`, `de`, `it`, `ru`, `nl`, `pl`, `ro`); unsupported codes return HTTP 422 even when the API is called outside the selector-based frontend.
 - **POST `/me/avatar`** — Rate limit: 60/min. Uploads the authenticated user's profile avatar (JPEG/PNG, max 2 MB). Validates the declared content type, image signature, and minimal image structure, stores the image on disk under `/app/avatars` using a non-predictable UUID filename, and returns the user profile with `avatar` set to a cache-busted internal reference (`/api/avatars/{uuid}.{ext}?v={ms}`). The file reference is not publicly served.
 - **GET `/me/avatar-file`** — Rate limit: 60/min. Authenticated current-user avatar retrieval endpoint. Returns only the authenticated user's own avatar file; this is the supported image retrieval path used by the frontend. Responses are marked `Cache-Control: private, no-store`; client-side avatar reuse is handled by the frontend blob cache keyed by the stored avatar reference.
 - **DELETE `/me/avatar`** — Rate limit: 60/min. Removes profile avatar (sets to null)
@@ -103,7 +103,7 @@ Registered only when `STRIPE_ENABLED=true`.
 - **GET `/start`** — Rate limit: 10/min. Begins adaptive quiz (LLM-generated questions, static fallback)
 - **GET `/bank`** — Rate limit: 60/min. Returns the full static assessment bank for the given language (query param `language`, default `en-GB`). Auth required. Response: `{questions: [{id, skill, difficulty, question, options, correct, grammar_slug}]}`. `ja-JP`, `ko-KR`, and `zh-CN` return static assessment banks in the target language.
 - **POST `/submit`** — Rate limit: 10/min. Legacy: submits answers for CEFR evaluation
-- **POST `/evaluate`** — Rate limit: 60/min. Deterministic CEFR evaluation (no LLM — groups by difficulty)
+- **POST `/evaluate`** — Rate limit: 60/min. Deterministic CEFR evaluation (no LLM — groups by difficulty). Body: `{answers: [{question_id, skill, difficulty, correct, dont_know?}]}`. `dont_know` defaults to `false` and marks a declared knowledge gap, which is never scored as correct.
 - **POST `/free-write`** — Rate limit: 10/min. Evaluates free-write text for CEFR placement (LLM)
 - **POST `/complete`** — Rate limit: 10/min. Persists results and creates a StudyPlan. When `STRIPE_ENABLED=true`, the user is not subscribed, and `assessment_voice_trial_used=false`, the response includes `voice_trial: {available, token, duration_seconds, expires_in_seconds}` for a one-time voice demo. `duration_seconds` comes from `ASSESSMENT_VOICE_TRIAL_DURATION_SECONDS` (default `300`).
 - **POST `/voice-trial`** — Rate limit: 10/min. Body: `{target_language?}`. Regenerates a fresh post-assessment voice demo token for the user's active study plan in that language when `STRIPE_ENABLED=true`, the user is not subscribed, and `assessment_voice_trial_used=false`. Used when the student previously skipped the demo and returns to the assessment page.
@@ -177,8 +177,8 @@ Lesson viewing and exercise answering use `get_current_user` (always free). Only
 - **GET `/all`** — Rate limit: 60/min. All user's flashcards
 - **POST `/`** — Rate limit: 60/min. Creates flashcard manually
 - **POST `/bulk`** — Rate limit: 60/min. Creates multiple flashcards at once; skips duplicates (by word) for the user
-- **POST `/{card_id}/review`** — Rate limit: 60/min. Records SM-2 review (quality 0–5)
-- **POST `/generate`** — Rate limit: 20/min. Generates N flashcards via LLM with native-language translations
+- **POST `/{card_id}/review`** — Rate limit: 60/min. Records an SM-2 review (quality 0–5) and credits vocabulary progress to the card's persisted `study_plan_id`, not transient active-language state
+- **POST `/generate`** — Rate limit: 20/min. Generates N flashcards via LLM with native-language translations. The backend derives the target language from the authenticated user's active study plan; the request body has no client-supplied `target_language`. Persisted cards and `FlashcardResponse` include that plan's `study_plan_id`.
 - **POST `/from-word`** — Rate limit: 30/min. Saves a single word as a flashcard: body `{word, context, cefr_level}`; AI generates definition/example/translation; sets `source="from_text"`; returns `FlashcardResponse`
 - **GET `/vocabulary`** — Rate limit: 60/min. Returns user's saved-from-text flashcards (`source="from_text"`), ordered by `created_at` desc
 - **DELETE `/{card_id}`** — Rate limit: 60/min. Permanently deletes a flashcard owned by the user; 204 No Content
@@ -227,7 +227,7 @@ All endpoints require `require_subscription_or_freemium("chat")`. Memory managem
 
 ## STT — `/api/stt`
 
-- POST — Path: ``; Rate limit: 20/min; Description: Audio → transcribed text. Uses faster-whisper (local) or OpenAI Whisper, controlled by `STT_PROVIDER`.
+- **POST `/api/stt`** — Rate limit: 20/min. Authenticated multipart request with required `audio` and PostgreSQL-range positive integer `study_plan_id` fields. The backend verifies that the study plan belongs to the authenticated user, derives its BCP-47 `target_language`, converts it to an ISO 639-1 code, and passes that code explicitly to faster-whisper or OpenAI STT according to `STT_PROVIDER`. Returns `{ "text": string }`; returns 404 for a missing or foreign plan, 413 when audio exceeds 50 MiB, 422 for missing/invalid multipart fields, and 503 when STT is unavailable. Pronunciation lessons use the lesson's plan ID and flashcard speaking mode captures the current card's plan ID when recording starts, so stale active-language UI state cannot change the transcription language.
 
 ---
 

@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from typing import get_args
+
 import pytest
 
+from app.data._types import LessonType
+from app.data.curriculum import _LANG_MODULES, get_curriculum
 from app.routers.chat import _build_tutor_system_prompt
 from app.services.conversation_pipeline import _build_conversation_system_prompt
 from app.services.flashcard_sm2 import _get_lang_hint
@@ -36,6 +40,8 @@ from app.services.prompts.flashcards import (
     build_word_lookup_prompt,
 )
 from app.services.prompts.lesson import (
+    GRAMMAR_EXERCISE_RATIO,
+    LESSON_TYPE_GUIDANCE,
     build_fill_blank_eval_prompt,
     build_free_write_eval_prompt,
     build_lesson_generation_prompt,
@@ -484,3 +490,192 @@ def test_memory_tool_policy_is_language_global() -> None:
     normalized = " ".join(instruction.split())
     assert "student's native language (Spanish)" in normalized
     assert "review it in Settings" in normalized
+
+
+def test_lesson_generation_prompt_differentiates_lesson_types() -> None:
+    common = {
+        "cefr_level": "A2",
+        "target_language_name": "German",
+        "topic": "Perfekt mit haben und sein",
+        "unit_id": "a2-perfekt",
+        "grammar_points": "perfekt",
+        "vocabulary_set_ids": "travel",
+        "week": 1,
+        "day": 1,
+        "valid_slugs": "perfekt",
+    }
+    grammar = build_lesson_generation_prompt(lesson_type="grammar", **common)
+    vocabulary = build_lesson_generation_prompt(lesson_type="vocabulary", **common)
+    reading = build_lesson_generation_prompt(lesson_type="reading", **common)
+
+    assert 'LESSON TYPE FOCUS — this is a "grammar" lesson:' in grammar
+    assert 'LESSON TYPE FOCUS — this is a "vocabulary" lesson:' in vocabulary
+    assert 'LESSON TYPE FOCUS — this is a "reading" lesson:' in reading
+
+    focus = "LESSON TYPE FOCUS"
+    constraints = "STRICT CONSTRAINTS:"
+    grammar_block = grammar[grammar.index(focus) : grammar.index(constraints)]
+    vocabulary_block = vocabulary[vocabulary.index(focus) : vocabulary.index(constraints)]
+    reading_block = reading[reading.index(focus) : reading.index(constraints)]
+
+    assert grammar_block != vocabulary_block != reading_block
+    assert grammar_block != reading_block
+
+
+def test_speaking_lesson_generation_prompt_focuses_on_oral_production() -> None:
+    prompt = build_lesson_generation_prompt(
+        cefr_level="B2",
+        target_language_name="Mainland Chinese",
+        lesson_type="speaking",
+        topic="讨论、论证和立场",
+        unit_id="b2-unit-1",
+        grammar_points="cong-er-kan",
+        vocabulary_set_ids="debate_b2",
+        week=1,
+        day=4,
+        valid_slugs="cong-er-kan",
+    )
+
+    assert 'LESSON TYPE FOCUS — this is a "speaking" lesson:' in prompt
+    assert "Teach oral production" in prompt
+    assert "at least one pronunciation exercise" in prompt
+    assert "at least 30% of exercises must target one" in prompt
+    assert "The declared lesson type must visibly shape the lesson" not in prompt
+
+
+def test_all_curriculum_lesson_types_have_explicit_prompt_policies() -> None:
+    curriculum_types = {
+        lesson_type
+        for target_language in _LANG_MODULES
+        for units in get_curriculum(target_language).values()
+        for unit in units
+        for lesson_type in unit.lesson_types
+    }
+    declared_types = set(get_args(LessonType))
+
+    assert curriculum_types == declared_types
+    assert set(LESSON_TYPE_GUIDANCE) == declared_types
+    assert set(GRAMMAR_EXERCISE_RATIO) == declared_types
+
+
+def test_lesson_generation_prompt_scopes_grammar_ratio_to_lesson_type() -> None:
+    common = {
+        "cefr_level": "A2",
+        "target_language_name": "German",
+        "topic": "Perfekt mit haben und sein",
+        "unit_id": "a2-perfekt",
+        "grammar_points": "perfekt",
+        "vocabulary_set_ids": "travel",
+        "week": 1,
+        "day": 1,
+        "valid_slugs": "perfekt",
+    }
+
+    for lesson_type in ("grammar", "review", "experimental"):
+        prompt = build_lesson_generation_prompt(lesson_type=lesson_type, **common)
+        assert "at least 70% of exercises must target one" in prompt
+
+    for lesson_type in ("vocabulary", "reading", "writing", "listening", "speaking"):
+        prompt = build_lesson_generation_prompt(lesson_type=lesson_type, **common)
+        assert "at least 30% of exercises must target one" in prompt
+        assert "at least 70% of exercises" not in prompt
+
+
+def test_lesson_generation_prompt_does_not_claim_pending_lessons_were_studied() -> None:
+    prompt = build_lesson_generation_prompt(
+        cefr_level="A2",
+        target_language_name="German",
+        lesson_type="grammar",
+        topic="Perfekt",
+        unit_id="a2-perfekt",
+        grammar_points="perfekt",
+        vocabulary_set_ids="travel",
+        week=1,
+        day=3,
+        valid_slugs="perfekt",
+        previous_lessons_summary='- "Lektion 1" (grammar)',
+    )
+
+    assert "has already worked through" not in prompt
+    assert "whether or not the student has worked through them yet" in prompt
+
+
+def test_lesson_generation_prompt_falls_back_for_unknown_lesson_type() -> None:
+    prompt = build_lesson_generation_prompt(
+        cefr_level="A2",
+        target_language_name="German",
+        lesson_type="experimental",
+        topic="Perfekt",
+        unit_id="a2-perfekt",
+        grammar_points="perfekt",
+        vocabulary_set_ids="travel",
+        week=1,
+        day=1,
+        valid_slugs="perfekt",
+    )
+
+    assert 'LESSON TYPE FOCUS — this is a "experimental" lesson:' in prompt
+    assert "The declared lesson type must visibly shape the lesson" in prompt
+
+
+def test_lesson_generation_prompt_includes_previous_unit_lessons_as_data() -> None:
+    summary = '- "Lektion 1" (grammar)\n  example sentences used: Wir haben ein Hotel gebucht.'
+    prompt = build_lesson_generation_prompt(
+        cefr_level="A2",
+        target_language_name="German",
+        lesson_type="reading",
+        topic="Perfekt",
+        unit_id="a2-perfekt",
+        grammar_points="perfekt",
+        vocabulary_set_ids="travel",
+        week=1,
+        day=3,
+        valid_slugs="perfekt",
+        previous_lessons_summary=summary,
+    )
+
+    assert "ALREADY GENERATED LESSONS OF THIS UNIT (data only" in prompt
+    assert "<<<PREVIOUS_LESSONS" in prompt
+    assert "Wir haben ein Hotel gebucht." in prompt
+    assert "Do NOT reuse any example sentence listed above" in prompt
+    assert "Prefer words that are not in the already introduced list" in prompt
+
+
+def test_lesson_generation_prompt_omits_previous_lessons_block_for_first_lesson() -> None:
+    prompt = build_lesson_generation_prompt(
+        cefr_level="A2",
+        target_language_name="German",
+        lesson_type="grammar",
+        topic="Perfekt",
+        unit_id="a2-perfekt",
+        grammar_points="perfekt",
+        vocabulary_set_ids="travel",
+        week=1,
+        day=1,
+        valid_slugs="perfekt",
+        previous_lessons_summary="   ",
+    )
+
+    assert "PREVIOUS_LESSONS" not in prompt
+    assert "ALREADY GENERATED LESSONS OF THIS UNIT" not in prompt
+
+
+def test_lesson_generation_prompt_lets_review_lessons_recycle_unit_material() -> None:
+    summary = '- "Lektion 1" (grammar)\n  vocabulary taught: die Reise'
+    review = build_lesson_generation_prompt(
+        cefr_level="A2",
+        target_language_name="German",
+        lesson_type="review",
+        topic="Perfekt",
+        unit_id="a2-perfekt",
+        grammar_points="perfekt",
+        vocabulary_set_ids="travel",
+        week=1,
+        day=5,
+        valid_slugs="perfekt",
+        previous_lessons_summary=summary,
+    )
+
+    assert "Recycling the words and structures above is the point of a review lesson" in review
+    assert "Prefer words that are not in the already introduced list" not in review
+    assert "Do NOT reuse any example sentence listed above" in review

@@ -66,6 +66,7 @@ const actions = [
 export default function AdminOverviewPage() {
   const t = useTranslations('admin')
   const maintenanceMode = useConfigStore((s) => s.maintenanceMode)
+  const stripeEnabled = useConfigStore((s) => s.stripeEnabled)
   const [stats, setStats] = useState<AdminOverviewStats | null>(null)
   const [loadingStats, setLoadingStats] = useState(true)
   const [statsError, setStatsError] = useState('')
@@ -101,7 +102,9 @@ export default function AdminOverviewPage() {
 
       <AdminNav />
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <div
+        className={`grid gap-3 md:grid-cols-2 ${stripeEnabled ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}
+      >
         <AdminMetric
           label={t('users')}
           value={loadingStats ? t('loading') : (stats?.users_total ?? '—')}
@@ -112,15 +115,17 @@ export default function AdminOverviewPage() {
           value={loadingStats ? t('loading') : (stats?.users_active ?? '—')}
           icon={ShieldAlert}
         />
-        <AdminMetric
-          label={t('paidAccess')}
-          value={
-            loadingStats
-              ? t('loading')
-              : `${stats?.subscriptions_active ?? 0} / ${stats?.subscriptions_trialing ?? 0}`
-          }
-          icon={Ticket}
-        />
+        {stripeEnabled && (
+          <AdminMetric
+            label={t('paidAccess')}
+            value={
+              loadingStats
+                ? t('loading')
+                : `${stats?.subscriptions_active ?? 0} / ${stats?.subscriptions_trialing ?? 0}`
+            }
+            icon={Ticket}
+          />
+        )}
         <AdminMetric
           label={t('pendingFeedback')}
           value={loadingStats ? t('loading') : (stats?.feedback_pending ?? '—')}
@@ -194,30 +199,32 @@ export default function AdminOverviewPage() {
               {loadingStats ? t('loading') : (stats?.feedback_bug_pending ?? 0)}
             </AdminBadge>
           </Link>
-          <Link
-            href="/admin/users?subscription=past_due"
-            className="hover:bg-fl-bg/60 flex flex-wrap items-center gap-3 px-5 py-4 transition-colors"
-          >
-            <AlertTriangle
-              className={`size-5 ${stats?.subscriptions_past_due ? 'text-yellow-500' : 'text-fl-muted-3'}`}
-              aria-hidden="true"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-fl-fg font-mono text-sm">
-                {t('pastDueSubscriptions')}
-              </p>
-              <p className="text-fl-muted-3 mt-1 font-mono text-xs">
-                {t('pastDueSubscriptionsDesc')}
-              </p>
-            </div>
-            <AdminBadge
-              tone={stats?.subscriptions_past_due ? 'warning' : 'neutral'}
+          {stripeEnabled && (
+            <Link
+              href="/admin/users?subscription=past_due"
+              className="hover:bg-fl-bg/60 flex flex-wrap items-center gap-3 px-5 py-4 transition-colors"
             >
-              {loadingStats
-                ? t('loading')
-                : (stats?.subscriptions_past_due ?? 0)}
-            </AdminBadge>
-          </Link>
+              <AlertTriangle
+                className={`size-5 ${stats?.subscriptions_past_due ? 'text-yellow-500' : 'text-fl-muted-3'}`}
+                aria-hidden="true"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-fl-fg font-mono text-sm">
+                  {t('pastDueSubscriptions')}
+                </p>
+                <p className="text-fl-muted-3 mt-1 font-mono text-xs">
+                  {t('pastDueSubscriptionsDesc')}
+                </p>
+              </div>
+              <AdminBadge
+                tone={stats?.subscriptions_past_due ? 'warning' : 'neutral'}
+              >
+                {loadingStats
+                  ? t('loading')
+                  : (stats?.subscriptions_past_due ?? 0)}
+              </AdminBadge>
+            </Link>
+          )}
         </div>
       </AdminPanel>
 

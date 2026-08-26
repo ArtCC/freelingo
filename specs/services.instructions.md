@@ -14,13 +14,13 @@ Singleton providing provider-agnostic LLM access. Supports four providers select
 - ollama — Client: AsyncOpenAI (openai SDK); Max tokens: 8192; Notes: Local, openai-compatible endpoint
 - openai — Client: AsyncOpenAI; Max tokens: 128K; Notes: —
 - deepseek — Client: AsyncOpenAI; Max tokens: 128K; Notes: openai-compatible endpoint
-- anthropic — Client: AsyncAnthropic (anthropic SDK); Max tokens: 200K; Notes: Separate code path; system message extracted
+- anthropic — Client: AsyncAnthropic (anthropic SDK); Context window: 200K; Output limit: configurable with `ANTHROPIC_MAX_TOKENS` (default 8192); Notes: Separate code path; system message extracted
 
 **Key capabilities:**
 
 - `chat(messages, stream=False, tools=None, tool_executor=None, fallback_messages=None)` — returns a string or normalized async stream; native tools require streaming and an executor, while optional fallback messages provide a prompt that does not advertise unavailable tools
 - Native tool streaming supports OpenAI-compatible and Anthropic event formats, forwards visible text progressively while keeping tool metadata internal, executes at most the first tool call, then performs one provider-native continuation without re-offering tools. OpenAI GPT-5.6 Chat Completions use `reasoning_effort="none"` only for that tool round; Anthropic, DeepSeek, Ollama, older OpenAI families, and ordinary no-tool requests receive no such parameter. Tool-enabled request or stream failures before visible output fall back once without tools across every provider. Explicit incompatibilities are detected through wrapped provider exceptions and become session-local unavailable capability for voice; generic transient failures do not. Known incompatibility or continuation failure after visible output emits `LLMStreamReset` before a complete no-tools retry, and an empty fallback raises `LLMResponseError`. Successful tool execution emits `LLMToolResultEvent` immediately so committed saves can be reported even if continuation later fails. The returned stream also exposes accumulated `tool_results`, combined token usage, and explicit incompatibility state.
-- `structured_output(messages, schema)` — returns validated Pydantic model (JSON mode + retry on parse failure)
+- `structured_output(messages, schema)` — returns a validated Pydantic model (JSON mode + retry on parse failure); Anthropic responses stopped by the configured output limit raise `LLMResponseError` with the partial response instead of surfacing a misleading JSON parse failure
 - `parse_llm_json(raw)` — module-level utility; strips optional code fences and parses JSON from LLM output. Kept for lower-level parsing tests and any legacy callers; reading/listening generation now uses `structured_output()`.
 - 2 automatic retries with exponential backoff, 120 s timeout
 - Custom exception hierarchy: `LLMError`, `LLMTimeoutError`, `LLMUnavailableError`, `LLMResponseError`, `LLMContextOverflowError`
@@ -50,6 +50,7 @@ LLM-powered lesson content generation with strict constraints:
 - Lesson generation receives the user's mandatory `native_language` at every CEFR level and may include `native_explanation` alongside the target-language `explanation`, including translated key points, examples, common traps, and a mini-glossary for guided study.
 - Generates 3-5 exercises per lesson (multiple_choice, fill_blank, free_write, pronunciation). Newly generated exercises can include an optional concise `native_explanation` in the user's native language and an optional `native_hint` that helps before answering without revealing the answer. Both are stored in `lesson.content.exercises[*]` and surfaced by the lesson detail endpoint without adding database columns. Exercises are schema-validated to reject empty questions/answers, require fill-blank questions to contain `___`, and require multiple-choice exercises to include usable options with an exact matching correct answer. Missing exercise-level native explanations and hints can be generated on demand from the target-language exercise fields and cached into the same JSON structure. One unanswered exercise with a technical validation error can also be regenerated on demand from the lesson context; the existing exercise row is updated in place and `lesson.content.exercises[*]` is kept in sync.
 - Generates enriched lesson vocabulary items with target-language word, definition, and example fields plus optional native-language translation, example translation, usage note, and optional reading/pronunciation guide. The extra fields are stored inside `lesson.content.vocabulary` and remain backward-compatible with older three-field vocabulary items.
+- Differentiates lessons inside a unit: `build_previous_lessons_summary()` condenses the already generated lessons of the same unit (titles, types, explanation excerpts, example sentences, vocabulary, common traps, capped in count and length) and the generation prompt receives them as delimited data the new lesson must not repeat. The declared `lesson_type` additionally selects a per-type instruction block, so `grammar`, `vocabulary`, `reading`, `writing`, `listening`, `speaking`, and `review` lessons on the same topic differ in explanation, exercise mix, and vocabulary. Speaking lessons use oral-production guidance and the same 30% grammar minimum as other lexical, comprehension, and production-focused types.
 - Separately evaluates free_write answers and pronunciation (scored 0.0–1.0 with feedback)
 
 ## Flashcard SM-2 (`flashcard_sm2.py`)
@@ -57,7 +58,7 @@ LLM-powered lesson content generation with strict constraints:
 Full SM-2 spaced repetition algorithm:
 
 - `sm2_update(card, quality)`: modifies ease_factor, interval, repetitions, and next_review based on 0–5 quality rating
-- LLM-powered `generate_flashcards`: creates flashcards with native-language translations; stored native-language codes are converted to human-readable names before prompt injection.
+- LLM-powered `generate_flashcards`: creates flashcards with native-language translations; stored native-language codes are converted to human-readable names before prompt injection. The router always supplies the active persisted plan's target language and does not accept a client-selected target language for generated cards.
 
 ## Resource Native Help (`resource_native_help.py`)
 
@@ -113,10 +114,12 @@ Abstracts TTS behind a common `synthesise(text, voice) → bytes` interface. Pro
 
 ## STT Service (`stt_service.py`)
 
-Abstracts STT behind a common `transcribe(audio_bytes, language) → str` interface. Provider selected via `STT_PROVIDER`:
+Abstracts STT behind a common `transcribe(audio_bytes, filename, mime_type, *, language) → str` interface. `language` is a required keyword-only ISO 639-1 code; neither provider has an implicit English fallback. Provider selected via `STT_PROVIDER`:
 
 - **`local`**: HTTP client to Whisper ASR — `POST /asr?output=json&language=<lang>&task=transcribe` (multipart). Uses `onerahmet/openai-whisper-asr-webservice` image (not OpenAI-compatible endpoint).
 - **`openai`**: OpenAI Whisper API (`whisper-1` model, configurable via `OPENAI_STT_MODEL`).
+
+Generic pronunciation and flashcard recordings include a required `study_plan_id`. The STT router verifies that the plan belongs to the authenticated user, reads `StudyPlan.target_language`, and converts it through `language_helpers.get_iso639` before calling the selected service. Conversation sessions derive the same code from their selected target language; the synthetic warmup probe passes `en` explicitly because its silent audio has no learning-language content.
 
 ## Logging & Observability (`core/app_logger.py`)
 
@@ -130,7 +133,7 @@ Backend modules now use a shared logging wrapper:
 
 For TTS diagnostics, `/api/tts` emits per-request trace and latency fields in logs and response headers so frontend, proxy, and backend timings can be correlated end-to-end.
 
-The `language` parameter is derived dynamically from `target_language` via `language_helpers.get_iso639` (e.g. `"en-US"` → `"en"`).
+The `language` parameter is derived dynamically from the resource-owning plan's `target_language` via `language_helpers.get_iso639` (e.g. `"it-IT"` → `"it"`). STT request logs include user, plan, BCP-47 target language, effective ISO code, provider, model, and audio byte count.
 
 ## Email Service (`email_service.py`)
 

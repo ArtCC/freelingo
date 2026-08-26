@@ -1,12 +1,12 @@
 ---
-description: "Phase 2 specification for FreeLingo: local TTS (Kokoro-FastAPI) and STT (faster-whisper) integration with pronunciation exercises, flashcard speaking mode, and frontend audio components."
+description: "Phase 2 specification for FreeLingo: provider-selectable TTS and STT integration with multilingual pronunciation exercises, flashcard speaking mode, and frontend audio components."
 ---
 
-# Phase 2 — Local TTS and STT
+# Phase 2 — TTS and STT
 
 ## Objective
 
-Add fully local voice synthesis (TTS) and speech recognition (STT) with no external API dependencies. Users can listen to natural-sounding English pronunciation and practice speaking by recording their voice — all processed by self-hosted Docker services behind backend proxies.
+Provide voice synthesis (TTS) and speech recognition (STT) behind backend proxies, with independently selectable local or OpenAI providers. Users can listen to natural target-language pronunciation and practice speaking by recording their voice without exposing provider credentials to the frontend.
 
 ---
 
@@ -25,7 +25,7 @@ Browser                          Backend                      Docker services
 └──────────┘            └──────────────────────┘           └───────────────┘
 ```
 
-The backend acts as the sole gateway — the frontend never calls Kokoro or Whisper directly. Both services are disabled at the application level by default (`TTS_ENABLED=false`, `STT_ENABLED=false`) and must be explicitly enabled in `.env`.
+The backend acts as the sole gateway — the frontend never calls Kokoro, faster-whisper, or OpenAI speech APIs directly. TTS and STT are always active; `TTS_PROVIDER` and `STT_PROVIDER` independently select the local or OpenAI adapter.
 
 ---
 
@@ -57,7 +57,7 @@ The `TTSService` class wraps the Kokoro HTTP API:
 - **Request**: `{ "text": string, "voice": string? }`
 - **Response**: `audio/mpeg` binary content
 - **Auth**: Requires valid access token
-- **Guard**: Returns 503 if `TTS_ENABLED=false`
+- **Guard**: Returns 503 if the configured TTS service is unavailable
 - **Voice preview text**: OpenAI voice previews introduce the AI tutor as Lingu, using the shared `TUTOR_DISPLAY_NAME` prompt constant.
 
 ---
@@ -68,7 +68,7 @@ The `TTSService` class wraps the Kokoro HTTP API:
 
 - **Image**: `onerahmet/openai-whisper-asr-webservice:latest-gpu` (default, CUDA GPU)
 - **CPU image**: `onerahmet/openai-whisper-asr-webservice:latest` (remove `deploy` block; use smaller model)
-- **API**: **NOT** OpenAI-compatible — uses custom endpoint `POST /asr?output=json&language=en&task=transcribe`
+- **API**: **NOT** OpenAI-compatible — uses custom endpoint `POST /asr?output=json&language=<iso>&task=transcribe`
 - **Form field**: `audio_file` (multipart file upload with filename)
 - **Default model**: `large-v3-turbo` (best speed/accuracy ratio, ~8× faster than `large-v3`)
 - **Engine**: `faster_whisper` or `ctranslate2`, controlled via `STT_ENGINE` env variable
@@ -77,10 +77,10 @@ The `TTSService` class wraps the Kokoro HTTP API:
 
 ### Backend integration (`app/services/stt_service.py`)
 
-The `STTService` class wraps the Whisper HTTP API:
+The local and OpenAI STT service classes share one explicit-language contract:
 
-- `transcribe(audio_bytes, filename)` → returns transcribed text string
-- HTTP POST to `POST /asr?output=json&language=en&task=transcribe`
+- `transcribe(audio_bytes, filename, mime_type, *, language)` → returns transcribed text string; `language` is required and has no fallback
+- Local HTTP POST to `POST /asr?output=json&language=<iso>&task=transcribe`; OpenAI passes the same ISO code in its transcription request
 - Multipart upload with `audio_file` field
 - 60-second timeout
 - Raises on non-2xx responses
@@ -89,24 +89,27 @@ The `STTService` class wraps the Whisper HTTP API:
 
 - **Endpoint**: `POST /api/stt`
 - **Rate limit**: 20 requests/minute
-- **Request**: `multipart/form-data` with `audio` field (binary audio file)
+- **Request**: `multipart/form-data` with required `audio` and PostgreSQL-range positive integer `study_plan_id` fields
 - **Response**: `{ "text": string }`
 - **Auth**: Requires valid access token
-- **Guard**: Returns 503 if `STT_ENABLED=false`
+- **Language resolution**: verifies the plan belongs to the user, reads its persisted BCP-47 `target_language`, and maps it to ISO 639-1
+- **Errors**: 404 for a missing or foreign plan, 413 for audio over 50 MiB, 422 for invalid multipart context, and 503 when STT is unavailable
 
 ---
 
 ## Environment variables (`.env` additions)
 
-- `TTS_ENABLED` — Default: `false`; Purpose: Enable Kokoro TTS proxy
+- `TTS_PROVIDER` — Default: `local`; Purpose: Select `local` Kokoro or `openai` TTS
 - `TTS_BASE_URL` — Default: `http://kokoro:8880`; Purpose: Kokoro service URL
 - `TTS_VOICE` — Default: `af_heart`; Purpose: Default TTS voice
-- `STT_ENABLED` — Default: `false`; Purpose: Enable Whisper STT proxy
+- `STT_PROVIDER` — Default: `local`; Purpose: Select `local` faster-whisper or `openai` STT
 - `STT_BASE_URL` — Default: `http://whisper:9000`; Purpose: Whisper service URL
 - `STT_MODEL` — Default: `large-v3-turbo`; Purpose: Whisper model (also: `tiny.en`, `small`, `medium`, `large-v3`)
 - `STT_ENGINE` — Default: `faster_whisper`; Purpose: Inference engine (`faster_whisper` or `ctranslate2`)
+- `OPENAI_API_KEY` — Required when either speech provider is `openai`
+- `OPENAI_TTS_MODEL`, `OPENAI_TTS_VOICE`, `OPENAI_STT_MODEL` — OpenAI speech model and voice overrides
 
-Both `TTS_ENABLED` and `STT_ENABLED` must be `true` for the Phase 3 voice conversation WebSocket to accept connections.
+The Phase 3 voice conversation WebSocket requires both configured provider services to initialize successfully.
 
 ---
 
@@ -132,12 +135,14 @@ Used in:
 
 Reusable button component for STT recording:
 
-- Requests microphone via `navigator.mediaDevices.getUserMedia({ audio: true })`
-- Records audio using `MediaRecorder` API (codec: `audio/webm`)
-- Maximum recording length: configurable via `maxSeconds` prop (default 5 s for exercises, unlimited for conversation)
+- Requires the resource-owning `studyPlanId` prop
+- Requests microphone via `navigator.mediaDevices.getUserMedia()` with echo cancellation, noise suppression, and automatic gain control
+- Captures PCM samples with the Web Audio API, resamples to 16 kHz, and encodes a WAV upload
+- Maximum recording length: configurable via `maxSeconds` prop (default 5 s); WebSocket voice conversation uses its separate continuous capture pipeline
 - Stops automatically after max duration
-- Uploads via `POST /api/stt` as multipart/form-data
-- Returns transcribed text to parent component
+- Captures `studyPlanId` and the result handler at recording start, then uploads WAV audio and that immutable `study_plan_id` via `POST /api/stt` as multipart/form-data
+- Awaits synchronous or asynchronous parent handling of the transcribed text before returning to idle
+- Stops media resources, including a permission stream that resolves after cancellation, and aborts an in-flight STT request when unmounted
 - Shows recording indicator (animated red dot)
 
 ---
@@ -148,7 +153,7 @@ Reusable button component for STT recording:
 
 Added to the exercise mix in lesson content. Properties:
 
-- `target_sentence`: the English text to pronounce
+- `target_sentence`: the target-language text to pronounce
 - `hint`: guidance about the sound or pattern to practice (e.g. "Focus on the 'th' sound")
 
 User flow:
@@ -156,7 +161,7 @@ User flow:
 1. Student sees the target sentence
 2. Presses 🔊 to hear the correct pronunciation (TTS)
 3. Presses microphone button to record their own pronunciation
-4. Recording is sent to `/api/stt` for transcription
+4. Recording and `lesson.study_plan_id` are sent to `/api/stt`; the backend derives the target language from that plan
 5. Transcribed text is compared to the target sentence by the LLM
 6. Score (0.0–1.0) and detailed feedback are returned
 
@@ -175,7 +180,7 @@ The pronunciation evaluation prompt (`PRONUNCIATION_EVAL_PROMPT` in `services/le
 
 An additional review mode on the `/flashcards` page:
 
-- Shows the English definition (not the word)
+- Shows the native-language definition and target-language example (not the answer word)
 - User speaks the word aloud
 - STT transcribes the audio
 - Transcription is compared to the correct word
@@ -189,7 +194,7 @@ An additional review mode on the `/flashcards` page:
 Both TTS and STT use dedicated Next.js Route Handlers to avoid issues with Next.js rewrites buffering or transforming binary/multipart data:
 
 - TTS — Route Handler: `src/app/api/tts/route.ts`; Purpose: Forwards binary audio without transformation
-- STT — Route Handler: `src/app/api/stt/route.ts`; Purpose: Forwards multipart form-data preserving file attachment
+- STT — Route Handler: `src/app/api/stt/route.ts`; Purpose: Forwards multipart form-data preserving file attachment and propagates request cancellation to the backend
 
 Both proxies attach the `Authorization` header from the auth store and forward the response body unchanged.
 
@@ -200,7 +205,7 @@ Both proxies attach the `Authorization` header from the auth store and forward t
 Both services default to GPU images with CUDA support. For CPU-only hosts:
 
 - Kokoro TTS — CPU image: `ghcr.io/remsky/kokoro-fastapi-cpu:latest`; Additional changes: Remove the `deploy.resources.reservations.devices` block
-- Whisper STT — CPU image: `onerahmet/openai-whisper-asr-webservice:latest`; Additional changes: Remove the `deploy` block; set `STT_MODEL=tiny.en` or `small` for acceptable performance
+- Whisper STT — CPU image: `onerahmet/openai-whisper-asr-webservice:latest`; Additional changes: Remove the `deploy` block; use `STT_MODEL=small` for multilingual plans, or `tiny.en` only for English-only deployments
 
 The `deploy` block must be removed entirely on CPU hosts — Docker will error if it references NVIDIA devices without the NVIDIA runtime installed.
 
@@ -210,11 +215,11 @@ The `deploy` block must be removed entirely on CPU hosts — Docker will error i
 
 - [x] Kokoro returns audio correctly from the backend (`POST /api/tts`)
 - [x] Whisper transcribes browser-recorded audio correctly (`POST /api/stt`)
-- [x] STT endpoint uses correct API: `POST /asr?output=json&language=en&task=transcribe` (not OpenAI API)
+- [x] Local STT uses the correct API: `POST /asr?output=json&language=<iso>&task=transcribe`, with explicit plan-derived language (not the OpenAI API path)
 - [x] Audio button functional in flashcards and lessons
 - [x] Pronunciation recording and evaluation operational
 - [x] Flashcard speaking mode functional
 - [x] Frontend API proxies handle binary and multipart correctly
-- [x] `TTS_ENABLED` and `STT_ENABLED` guard endpoints (503 when disabled)
+- [x] Endpoints and the conversation WebSocket reject requests when their configured speech services are unavailable
 - [x] GPU used by both services (CPU-only hosts supported with compose changes)
 - [x] No regressions in Phase 1 features

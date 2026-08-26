@@ -29,6 +29,7 @@ class AnswerRecord(BaseModel):
     skill: str  # grammar | vocabulary | reading
     difficulty: str  # CEFRLevel
     correct: bool
+    dont_know: bool = False  # learner declared a knowledge gap instead of guessing
 
 
 class AssessmentSubmitRequest(BaseModel):

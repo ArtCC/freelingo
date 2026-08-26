@@ -35,12 +35,12 @@ class FlashcardGenerateRequest(BaseModel):
     topic: str
     count: int = Field(default=5, ge=1, le=20)
     cefr_level: str = "B1"
-    target_language: str | None = None
 
 
 class FlashcardResponse(BaseModel):
     id: int
     user_id: int
+    study_plan_id: int
     word: str
     definition: str
     example_sentence: str

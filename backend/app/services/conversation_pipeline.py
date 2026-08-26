@@ -547,7 +547,10 @@ class ConversationPipeline:
             await self._send_status(ws, turn_id, "transcribing")
             stt_t0 = time.perf_counter()
             user_text = await self.stt.transcribe(
-                audio_bytes, "audio.wav", "audio/wav", self._stt_language
+                audio_bytes,
+                "audio.wav",
+                "audio/wav",
+                language=self._stt_language,
             )
             stt_ms = (time.perf_counter() - stt_t0) * 1000
             logger.info("[pipeline] STT result: %r", user_text)

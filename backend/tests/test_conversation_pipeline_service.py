@@ -487,6 +487,21 @@ async def test_process_empty_transcription() -> None:
 
 
 @pytest.mark.asyncio
+async def test_process_passes_italian_language_to_stt() -> None:
+    pipeline = _make_pipeline(target_language="it-IT")
+    pipeline.stt.transcribe = AsyncMock(return_value="")
+
+    await pipeline._process(b"audio", FakeWS())
+
+    pipeline.stt.transcribe.assert_awaited_once_with(
+        b"audio",
+        "audio.wav",
+        "audio/wav",
+        language="it",
+    )
+
+
+@pytest.mark.asyncio
 async def test_process_llm_timeout_error_sends_error_frame() -> None:
     pipeline = _make_pipeline(user_id=1, conversation_id=1)
     pipeline.stt.transcribe = AsyncMock(return_value="hello")

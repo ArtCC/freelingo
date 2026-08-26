@@ -258,7 +258,15 @@ Register the new router in `backend/app/main.py`.
 ### `GET /api/flashcards/*` and `POST /api/flashcards/generate`
 
 - Filter by `study_plan_id` of the active plan instead of just `user_id`.
-- `POST /api/flashcards/generate`: assign the active plan's `study_plan_id` to generated flashcards.
+- `POST /api/flashcards/generate`: derive `target_language` from the active persisted plan, ignore client-supplied language context, and assign that plan's `study_plan_id` to generated flashcards.
+- `POST /api/flashcards/{card_id}/review`: credit progress to the reviewed card's persisted `study_plan_id`, so a stale resource cannot leak XP or competency into a newly active language.
+- `FlashcardResponse` exposes the persisted `study_plan_id` so speaking mode can submit the card's own plan context to `/api/stt` rather than relying on transient active-language state.
+
+### `POST /api/stt`
+
+- Require the resource-owned `study_plan_id` alongside the multipart audio.
+- Verify that the plan belongs to the authenticated user, derive its persisted `target_language`, normalize it to ISO 639-1, and pass it explicitly to the configured STT provider.
+- Pronunciation lessons use `lesson.study_plan_id`; flashcard speaking mode captures the current card's `study_plan_id` when recording starts. Missing, invalid, out-of-range, or foreign context is rejected instead of falling back to English.
 
 ### `GET /api/progress/*` and `GET /api/progress/competencies`
 

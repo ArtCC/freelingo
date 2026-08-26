@@ -27,7 +27,7 @@ freelingo/
 │   │       └── pt/              # Portuguese curriculum (A1–C2)
 │   ├── alembic/
 │   │   └── versions/            # DB migrations (50)
-│   └── tests/                   # pytest suite (44 test files, 973 tests)
+│   └── tests/                   # pytest suite (45 test files, 1019 tests)
 │
 ├── frontend/                    # Next.js 16 App Router
 │   ├── src/
@@ -63,7 +63,7 @@ freelingo/
 │   │   ├── lib/                 # Shared API, media, locale, mapping, review, billing, and language utilities (11)
 │   │   ├── i18n/                # next-intl locale resolver
 │   │   └── middleware.ts        # Auth guard + locale detection
-│   ├── tests/                   # Vitest suite (41 test files, 446 tests)
+│   ├── tests/                   # Vitest suite (48 test files, 479 tests)
 │   ├── public/                  # Static assets (flags/, vad/ WASM models)
 │   └── scripts/                 # Postinstall helpers (copy-vad-models.js)
 │
@@ -84,7 +84,7 @@ freelingo/
 ```
 User visits /assessment
     ↓
-Step 1: BeginnerGate ("Have you studied English before?")
+Step 1: BeginnerGate ("Have you studied this language before?")
     ↓ No → skip to A1, create plan directly
     ↓ Yes → continue
     ↓
@@ -135,6 +135,8 @@ MP3 chunks sent back via WebSocket
 Stable turn guard: frontend ignores user speech while the tutor turn is active
 ```
 
+Pronunciation exercises and flashcard speaking mode use the authenticated REST STT flow instead of the conversation WebSocket. `VoiceRecorder` captures the owning lesson or flashcard `study_plan_id` when recording starts, stops microphone streams that resolve after cancellation or unmount, uploads the plan with the WAV, and awaits the resource-specific transcription handler before becoming available again. Browser cancellation propagates through the Next.js proxy to the backend request, and flashcard review controls remain locked until voice-result handling finishes. The backend verifies ownership, resolves the plan's BCP-47 target language, converts it to ISO 639-1, and passes that language explicitly to the configured STT provider. Missing or foreign plan context is rejected, and the service contract has no implicit English fallback.
+
 ## Auth design
 
 - access_token — Type: JWT; Algorithm: HS256; Duration: 15 min; Storage: Zustand store (JS memory)
@@ -179,6 +181,6 @@ Testing infrastructure and strategy are documented in [testing.instructions.md](
 
 **Summary:**
 
-- **Backend**: pytest + pytest-asyncio, 44 test files, 973 tests, 84.79% last measured coverage (target: 70%)
-- **Frontend**: Vitest, 41 test files, 446 tests covering stores, components, hooks, lib, i18n, app pages, dashboard announcements, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, chat stream resets, and middleware; coverage is not configured/reported
+- **Backend**: pytest + pytest-asyncio, 45 test files, 1019 tests, 85.56% last measured coverage (target: 70%)
+- **Frontend**: Vitest, 48 test files, 479 tests covering stores, components, hooks, lib, i18n, app pages, Stripe-aware admin subscription visibility, dashboard announcements, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, chat stream resets, and middleware; coverage is not configured/reported
 - **E2E**: Playwright (planned, not yet implemented)

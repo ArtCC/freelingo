@@ -46,6 +46,7 @@ interface ExerciseItem {
 
 interface LessonData {
   id: number
+  study_plan_id: number
   title: string
   lesson_type: string
   cefr_level: string
@@ -930,8 +931,9 @@ export default function LessonPage() {
                       {exercise.options[0]}
                     </TargetLanguageText>
                   )}
-                  {!isEvaluated && !isReview && (
+                  {!isEvaluated && !isReview && lesson && (
                     <VoiceRecorder
+                      studyPlanId={lesson.study_plan_id}
                       onTranscription={(text) => submitAnswer(text)}
                       maxSeconds={8}
                       disabled={evaluating}

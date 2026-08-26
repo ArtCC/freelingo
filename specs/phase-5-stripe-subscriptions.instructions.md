@@ -9,6 +9,8 @@ applyTo: "backend/**, frontend/**, messages/**, docker-compose.yml, .env.example
 
 Introduce an optional, fully configurable subscription layer backed by Stripe, plus a freemium tier with daily/weekly usage quotas and a 7-day no-card trial. When `STRIPE_ENABLED=false` (the default for self-hosted deployments) the entire billing and freemium system is invisible — no paywall, no pricing page, no billing UI, no quota checks. When `STRIPE_ENABLED=true` users must have an active subscription, be in a freemium trial, or have remaining freemium quota to access AI-powered features.
 
+The same visibility rule applies to administration. With Stripe disabled, the admin overview omits active/trialing metrics and past-due alerts; the user list omits and ignores subscription filtering and hides subscription values; and user detail omits subscription status, details, and override controls. Quota administration remains available independently.
+
 ---
 
 ## Plans

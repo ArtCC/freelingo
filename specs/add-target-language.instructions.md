@@ -207,6 +207,7 @@ Update or verify:
 - `backend/app/services/prompts/common.py`: language overlay and ISO alias.
 - Reading/listening length guidance, especially for character-based scripts.
 - TTS/STT provider compatibility. Kokoro is English-only; non-English languages generally require `TTS_PROVIDER=openai`.
+- STT language propagation: add the BCP-47 → ISO mapping and include the language in the parameterized `/api/stt` plan-context test. Never add a provider-level English default for a new language.
 
 ## Tests
 
@@ -218,14 +219,15 @@ Add or update tests so the new language cannot silently fall back to English:
 - `backend/tests/test_phrasebook.py`: phrasebook endpoint returns language-specific categories.
 - `backend/tests/test_assessment_bank.py`: assessment dispatcher returns a non-empty bank.
 - `backend/tests/test_frontend_data_integrity.py`: grammar slug refs, vocabulary refs, related refs, uniqueness checks.
+- `backend/tests/test_stt.py`: the owned study plan maps the new BCP-47 language to the expected provider ISO code without an English fallback.
 - Prompt tests if language helper or overlay metadata changes.
 
 Minimum targeted validation:
 
 ```bash
 python3 -m compileall app/ alembic/ -q
-ruff check app/data/<iso639> app/data/curriculum.py app/data/grammar.py app/data/vocabulary.py app/data/phrasebook.py app/data/assessment_bank.py tests/test_multi_language.py tests/test_grammar.py tests/test_vocabulary.py tests/test_phrasebook.py tests/test_assessment_bank.py tests/test_frontend_data_integrity.py
-pytest tests/test_multi_language.py tests/test_grammar.py tests/test_vocabulary.py tests/test_phrasebook.py tests/test_assessment_bank.py tests/test_frontend_data_integrity.py -q --no-cov
+ruff check app/data/<iso639> app/data/curriculum.py app/data/grammar.py app/data/vocabulary.py app/data/phrasebook.py app/data/assessment_bank.py tests/test_multi_language.py tests/test_grammar.py tests/test_vocabulary.py tests/test_phrasebook.py tests/test_assessment_bank.py tests/test_frontend_data_integrity.py tests/test_stt.py
+pytest tests/test_multi_language.py tests/test_grammar.py tests/test_vocabulary.py tests/test_phrasebook.py tests/test_assessment_bank.py tests/test_frontend_data_integrity.py tests/test_stt.py -q --no-cov
 ```
 
 Run the full `pre-push` skill before pushing.

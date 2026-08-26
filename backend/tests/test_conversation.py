@@ -139,6 +139,20 @@ async def test_warmup_tts_falls_back_to_synthesis_for_local_service() -> None:
 
 
 @pytest.mark.asyncio
+async def test_warmup_stt_passes_explicit_language() -> None:
+    stt_service = type("STTMock", (object,), {})()
+    stt_service.transcribe = AsyncMock()
+
+    await conversation_router._warmup_stt(stt_service)
+
+    stt_service.transcribe.assert_awaited_once()
+    args = stt_service.transcribe.await_args.args
+    assert args[0].startswith(b"RIFF")
+    assert args[1:] == ("warmup.wav", "audio/wav")
+    assert stt_service.transcribe.await_args.kwargs == {"language": "en"}
+
+
+@pytest.mark.asyncio
 async def test_warmup_allows_valid_assessment_voice_trial(client, test_user, db_session) -> None:
     """Warmup accepts a valid post-assessment voice trial token without subscription."""
     user, headers = test_user
@@ -263,6 +277,52 @@ async def test_patch_me_invalid_inactivity_timeout(client, test_user) -> None:
     assert response.status_code == 422
 
 
+@pytest.mark.asyncio
+async def test_patch_me_speech_pause(client, test_user) -> None:
+    """PATCH /api/auth/me should persist the end-of-turn pause."""
+    _, headers = test_user
+
+    response = await client.patch(
+        "/api/auth/me",
+        headers=headers,
+        json={"conversation_speech_pause": 3000},
+    )
+    assert response.status_code == 200
+    assert response.json()["conversation_speech_pause"] == 3000
+
+
+@pytest.mark.asyncio
+async def test_patch_me_speech_pause_back_to_automatic(client, test_user) -> None:
+    """Zero restores the level-derived end-of-turn pause."""
+    _, headers = test_user
+
+    await client.patch(
+        "/api/auth/me",
+        headers=headers,
+        json={"conversation_speech_pause": 2000},
+    )
+    response = await client.patch(
+        "/api/auth/me",
+        headers=headers,
+        json={"conversation_speech_pause": 0},
+    )
+    assert response.status_code == 200
+    assert response.json()["conversation_speech_pause"] == 0
+
+
+@pytest.mark.asyncio
+async def test_patch_me_invalid_speech_pause(client, test_user) -> None:
+    """PATCH /api/auth/me rejects pause values outside the offered set."""
+    _, headers = test_user
+
+    response = await client.patch(
+        "/api/auth/me",
+        headers=headers,
+        json={"conversation_speech_pause": 1500},
+    )
+    assert response.status_code == 422
+
+
 # ---------------------------------------------------------------------------
 # GET /me — new fields present in response
 # ---------------------------------------------------------------------------
@@ -278,9 +338,11 @@ async def test_get_me_includes_conversation_fields(client, test_user) -> None:
     data = response.json()
     assert "conversation_max_duration" in data
     assert "conversation_inactivity_timeout" in data
+    assert "conversation_speech_pause" in data
     # defaults
     assert data["conversation_max_duration"] == 1800
     assert data["conversation_inactivity_timeout"] == 180
+    assert data["conversation_speech_pause"] == 0
 
 
 # ---------------------------------------------------------------------------

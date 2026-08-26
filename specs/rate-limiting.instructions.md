@@ -136,7 +136,7 @@ Only endpoints with explicit `@limiter.limit()` decorators are listed here. Ever
 - `POST /api/conversation/warmup` — Limit: 20/minute; Access: Subscription or freemium + no maintenance; Rationale: TTS/STT warmup
 - `POST /api/tts` — Limit: 20/minute; Access: Authenticated; Rationale: Audio generation
 - `GET /api/tts/preview/{voice}` — Limit: 60/minute; Access: Authenticated; Rationale: Voice preview
-- `POST /api/stt` — Limit: 20/minute; Access: Authenticated; Rationale: Audio transcription
+- `POST /api/stt` — Limit: 20/minute; Access: Authenticated with a user-owned `study_plan_id`; Rationale: Language-aware audio transcription
 - `GET /api/listening/next` — Limit: 10/minute; Access: Subscription or freemium + no maintenance; Rationale: Listening exercise pool
 - `POST /api/listening/generate` — Limit: 5/minute; Access: Subscription or freemium + no maintenance; Rationale: LLM+TTS exercise generation
 - `GET /api/listening/audio/{exercise_id}` — Limit: 60/minute; Access: Subscription or freemium + no maintenance; Rationale: Exercise audio

@@ -23,7 +23,8 @@ class WhisperSTTService:
         audio_bytes: bytes,
         filename: str = "audio.wav",
         mime_type: str = "audio/wav",
-        language: str = "en",
+        *,
+        language: str,
     ) -> str:
         """Send audio to Whisper ASR and return the transcribed text.
 
@@ -66,7 +67,8 @@ class OpenAISTTService:
         audio_bytes: bytes,
         filename: str = "audio.wav",
         mime_type: str = "audio/wav",
-        language: str = "en",
+        *,
+        language: str,
     ) -> str:
         """Transcribe audio using OpenAI Whisper API."""
         audio_file = (filename, io.BytesIO(audio_bytes), mime_type)
@@ -77,5 +79,10 @@ class OpenAISTTService:
             timeout=60.0,
         )
         text = response.text.strip()
-        logger.info("[stt-openai] Transcribed: %r", text)
+        logger.info(
+            "[stt-openai] Transcribed model=%s lang=%s: %r",
+            self.model,
+            language,
+            text,
+        )
         return text

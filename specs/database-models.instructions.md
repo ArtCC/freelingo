@@ -25,6 +25,7 @@ Registration, authentication, and user preferences.
 - `is_verified` — boolean; `false` until email verification. Existing users were set to `true` on migration.
 - `conversation_max_duration` — integer max voice session duration in seconds. Default comes from `DEFAULT_CONVERSATION_MAX_DURATION` (`1800`).
 - `conversation_inactivity_timeout` — integer seconds of silence before disconnect. Default comes from `DEFAULT_CONVERSATION_INACTIVITY_TIMEOUT` (`180`).
+- `conversation_speech_pause` — integer milliseconds of silence that end a spoken turn in voice conversation. Allowed values are `0`, `1000`, `2000`, and `3000`; `0` (the default) means the window is derived from the learner's CEFR level.
 - `conversation_weekly_sessions` — integer weekly session counter. Default comes from `DEFAULT_CONVERSATION_WEEKLY_SESSIONS` (`0`, unlimited).
 - `conversation_daily_minutes` — integer daily voice limit in minutes. Default comes from `DEFAULT_CONVERSATION_DAILY_MINUTES` (`30`).
 - `conversation_weekly_minutes` — integer weekly voice limit in minutes. Default comes from `DEFAULT_CONVERSATION_WEEKLY_MINUTES` (`90`).
@@ -125,7 +126,7 @@ One lesson per day slot in the study plan.
 - `id` — integer primary key.
 - `study_plan_id` — integer FK to `study_plans`.
 - `title` — lesson title.
-- `lesson_type` — string: `grammar`, `vocabulary`, `reading`, `writing`, `listening`, or `review`.
+- `lesson_type` — string: `grammar`, `vocabulary`, `reading`, `writing`, `listening`, `speaking`, or `review`.
 - `cefr_level` — CEFR level string.
 - `week_number` — integer week in the plan.
 - `day_number` — integer day in the week.
@@ -159,7 +160,7 @@ SM-2 spaced repetition cards, per user per language.
 - user_id — Type: integer; Notes: FK → users
 - study_plan_id — Type: integer; Notes: FK → study_plans (CASCADE), NOT NULL, indexed. Added in Phase 10.
 - word — Type: string; Notes: Target language word/phrase
-- definition — Type: text; Notes: English definition
+- definition — Type: text; Notes: Simple definition in the user's native language
 - example_sentence — Type: text; Notes: Usage example
 - translation — Type: text; Notes: Translation to user's native language
 - source — Type: varchar(20); Notes: Origin of the card: `NULL` (generated), `"from_text"` (saved from reading exercise)

@@ -98,10 +98,12 @@ frontend/
 │   │   ├── progress.ts          # XP, streak, skill scores, dashboard data
 │   │   └── theme.ts             # Dark/light/system theme
 │   │
-│   ├── lib/                     # Utility modules (11)
+│   ├── lib/                     # Utility modules (12)
 │   │   ├── api.ts               # apiFetch: auth interceptor, 401 → silent refresh → retry
+│   │   ├── assessment-answers.ts # Placement answer records, including the declared "I don't know" gap
 │   │   ├── audio.ts             # Audio player, audio queue, gapless playback helpers
 │   │   ├── billing-copy.ts      # Billing CTA copy helpers and shared BillingInterval type
+│   │   ├── conversation-vad.ts  # End-of-turn silence window for voice conversation (user setting + CEFR fallback)
 │   │   ├── conversation-ws.ts   # WebSocket client for voice conversation
 │   │   ├── landing-subscription.ts # Shared landing subscription-status check
 │   │   ├── locales.ts           # Locale utilities for next-intl
@@ -116,7 +118,7 @@ frontend/
 │   │
 │   └── middleware.ts            # Auth guard (redirect to /login) + locale detection
 │
-├── tests/                       # Vitest suite (41 test files, 446 tests; coverage not configured)
+├── tests/                       # Vitest suite (48 test files, 479 tests; coverage not configured)
 │   ├── setup.ts                 # Global mocks: localStorage, next/navigation, next-intl
 │   ├── middleware.test.ts
 │   ├── components/
@@ -200,9 +202,9 @@ frontend/
 - Onboarding Checkout — If a user reloads onboarding after registration and the refresh cookie exists but no access token is in memory, onboarding refreshes `/api/auth/refresh` before creating the Stripe Checkout session for the selected monthly/yearly plan.
 - Landing page — The primary CTA sends anonymous visitors to registration and authenticated visitors to the dashboard. Pricing plan CTAs for hosted subscriptions preserve monthly/yearly intent with `plan=monthly|yearly` through registration and onboarding before Stripe Checkout for anonymous visitors; authenticated unsubscribed visitors start Stripe Checkout directly from the selected monthly/yearly pricing button, refreshing the access token from the session cookie first when needed. The pricing and trial copy separates the free-trial promise from the later paid price, highlights yearly as the best-value option with two months free, labels monthly as the flexible alternative, and repeats no-charge-today/cancel-anytime reassurance only when trial eligibility is unknown or `trial_used=false`; authenticated users with `trial_used=true` see neutral plan-selection and amount-confirmation copy instead. The bottom pricing CTA defaults to yearly intent and starts yearly Checkout directly for authenticated unsubscribed users. `/billing/canceled` uses neutral no-charge-in-this-session copy and sends users back to the dashboard or settings plans without promising future trial availability. The shared paywall detects premium-gated route context for chat, voice conversation, listening, and reading so the upgrade message matches the user's attempted action; its free-path exit remains available but visually secondary. The top navigation includes a Reviews anchor between Features and Pricing when approved public reviews are available; the same conditional link appears in the mobile menu. The Features, Reviews, Pricing, and FAQ anchor targets use `scroll-mt-16` so their content clears the sticky `h-14` navigation bar. Public landing sections for features, reviews, pricing, open source, and FAQ share `max-w-5xl` content width for consistent horizontal rhythm; the hero and footer keep their own composition. The reviews section requests up to 100 approved reviews, shows a compact average-rating and total-review-count badge below the subtitle, uses localized formatting and public-facing copy, and presents the results in an unpaginated carousel. Review cards keep a consistent height and clamp long comments to 6 lines.
 - `/feedback` — Feature requests and bug reports board (community), paginated at 10 entries per page. Entry list metadata, entry detail metadata, and comment headers render the shared gold `AdminAuthorBadge` beside the display name only when the embedded author role is `admin`.
-- `/admin` — Admin overview with aggregated metrics including pending feedback and pending review approvals, operational alerts, quick links to users/feedback/reviews, and a read-only maintenance-mode status whose System Controls action links to `/admin/system` (admin only).
-- `/admin/users` — User management with responsive table/cards, search, filters, invite copy workflow, and a create-user sheet with required email (admin only). The desktop table uses fixed column widths: user 25%, email 25%, role 12.5%, status 12.5%, subscription 15%, actions 10%; subscription badges stay on one line and truncate with an ellipsis when localized labels exceed the available width. Invite and create-user action buttons rely on their icons for the leading action affordance and do not include a duplicate `+` in localized labels.
-- `/admin/users/[id]` — Admin user detail with summary header and tabs for Profile, Languages, Activity, Quotas, and Subscription. Quotas separate current usage from configured limits; email verification and subscription overrides use confirmation dialogs.
+- `/admin` — Admin overview with aggregated metrics including pending feedback and pending review approvals, operational alerts, quick links to users/feedback/reviews, and a read-only maintenance-mode status whose System Controls action links to `/admin/system` (admin only). Active/trialing subscription metrics and past-due alerts render only when Stripe is enabled.
+- `/admin/users` — User management with responsive table/cards, search, filters, invite copy workflow, and a create-user sheet with required email (admin only). When Stripe is enabled, the desktop table uses fixed column widths: user 25%, email 25%, role 12.5%, status 12.5%, subscription 15%, actions 10%; subscription badges stay on one line and truncate with an ellipsis when localized labels exceed the available width. When Stripe is disabled, the subscription filter, desktop column, and mobile badge are hidden, URL subscription parameters are ignored, and the remaining columns expand to use the available width. Invite and create-user action buttons rely on their icons for the leading action affordance and do not include a duplicate `+` in localized labels.
+- `/admin/users/[id]` — Admin user detail with summary header and tabs for Profile, Languages, Activity, Quotas, and, when Stripe is enabled, Subscription. Quotas separate current usage from configured limits; email verification and subscription overrides use confirmation dialogs. Stripe-disabled deployments hide the subscription badge, tab, details, and override controls.
 - `/admin/feedback` — Feedback queue admin panel with 10 entries per page, search, type/status/sort filters, filtered metrics by feedback type, desktop table, mobile cards, status updates, delete confirmation, and the same administrator-author badge used by the community board. Status updates refresh the queue when the updated entry no longer matches the active filter (admin only).
 - `/admin/system` — Dedicated system-controls page. It preserves the explicit `PUT /api/admin/maintenance` flow and also loads `GET /api/admin/dashboard-banner`, lets an admin compose source text in any of the ten UI locales, previews LLM-generated translations, edits each locale, selects active/inactive state, and saves the complete map with `PUT /api/admin/dashboard-banner`. Translation is preview-only until Save, and the editor keeps source content when generation fails.
 
@@ -217,7 +219,7 @@ These are Next.js Route Handlers that proxy requests to the backend:
 
 - `/api/chat` — Method: POST; Purpose: SSE chat streaming proxy
 - `/api/tts` — Method: POST; Purpose: Text-to-speech proxy
-- `/api/stt` — Method: POST; Purpose: Speech-to-text proxy
+- `/api/stt` — Method: POST; Purpose: Multipart speech-to-text proxy preserving the required `audio` and resource-owned `study_plan_id` fields
 
 ## State management (Zustand)
 
@@ -273,7 +275,7 @@ Seven Zustand stores hold all client-side state. No React Context is used for gl
 - **`TargetLanguageText.tsx`** — Reusable wrapper for content in the learner's target language. It applies `lang`, language-aware typography classes from `target-languages.ts`, and optional secondary reading/translation lines for future romanisation/pinyin support.
 - **`LanguageSwitcher.tsx`** — UI locale switcher
 - **`CookieBanner.tsx`** — GDPR cookie consent banner
-- **`ui/`** — shadcn/ui primitives (`button`, `card`, `input`, `progress`, `badge`, `separator`, `sheet`, `tabs`) + custom: `AudioPlayer`, `VoiceRecorder`, `confirm-dialog`
+- **`ui/`** — shadcn/ui primitives (`button`, `card`, `input`, `progress`, `badge`, `separator`, `sheet`, `tabs`) + custom: `AudioPlayer`, `VoiceRecorder`, `confirm-dialog`. `VoiceRecorder` requires a `studyPlanId`, captures that ID and its result handler when recording starts, stops microphone streams that resolve after cancellation or unmount, uploads the immutable plan context with the WAV, awaits asynchronous handlers, and aborts pending work on unmount. The STT Route Handler forwards that cancellation signal to the backend. Lesson pronunciation uses `lesson.study_plan_id`, while flashcard speaking mode uses the current card's exposed `study_plan_id` and serializes review updates until transcription handling completes.
 - **Memory notification** — `useTransientToast` owns one resettable, unmount-safe timer and increments an announcement ID for every confirmed save. `MemorySavedToast` remounts its `role="status"`/`aria-live="polite"` region for consecutive announcements and tells the user the memory can be reviewed in Settings without exposing stored content or presenting a timed action. Failed, skipped, duplicate, or unsupported automatic memory work produces no user-facing message.
 
 ---

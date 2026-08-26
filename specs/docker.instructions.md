@@ -85,7 +85,7 @@ The canonical reference is `.env.example` at the repo root. The categories opera
 - Email / SMTP — Key variables: `EMAIL_ENABLED`, `SMTP_*`, `APP_BASE_URL`; Notes: Required for email verification and password reset
 - Languages — Key variables: `AVAILABLE_TARGET_LANGUAGES`; Notes: Operator-configured target-language list; backend filters unsupported codes
 - Usage quotas — Key variables: `DEFAULT_CONVERSATION_*`, `DEFAULT_MONTHLY_TOKENS_LIMIT`, `ASSESSMENT_VOICE_TRIAL_DURATION_SECONDS`; Notes: Defaults for new/subscribed users and the post-assessment voice demo; quota values of `0` mean unlimited
-- LLM — Key variables: `LLM_PROVIDER`, `OLLAMA_*`, `OPENAI_*`, `ANTHROPIC_*`, `DEEPSEEK_*`; Notes: Provider selected via `LLM_PROVIDER`
+- LLM — Key variables: `LLM_PROVIDER`, `OLLAMA_*`, `OPENAI_*`, `ANTHROPIC_*`, `DEEPSEEK_*`; Notes: Provider selected via `LLM_PROVIDER`; `ANTHROPIC_MAX_TOKENS` defaults to 8192 and must not exceed the selected model's output limit
 - TTS — Key variables: `TTS_PROVIDER`, `TTS_BASE_URL`, `TTS_VOICE`, `OPENAI_TTS_*`; Notes: `local` or `openai`
 - STT — Key variables: `STT_PROVIDER`, `STT_BASE_URL`, `STT_MODEL`, `STT_ENGINE`, `OPENAI_STT_MODEL`; Notes: `local` or `openai`
 - Stripe — Key variables: `STRIPE_ENABLED`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*`; Notes: Optional; disabled by default. Price IDs are configured manually from Stripe Dashboard when enabled
@@ -136,9 +136,9 @@ When using `openai` providers, the corresponding Docker service can be removed f
 The Whisper service (`onerahmet/openai-whisper-asr-webservice`) does **not** implement the OpenAI API format. The correct endpoint is:
 
 ```
-POST /asr?output=json&language=en&task=transcribe
+POST /asr?output=json&language=<iso>&task=transcribe
 Content-Type: multipart/form-data
 Field: audio_file
 ```
 
-The backend's `STTService` calls this endpoint correctly. Do not confuse it with the OpenAI-compatible `/v1/audio/transcriptions` path, which does not exist in this service.
+The backend passes the required ISO 639-1 language derived from the user-owned study plan. Its local STT service calls this endpoint correctly; do not confuse it with the OpenAI-compatible `/v1/audio/transcriptions` path, which does not exist in this service.

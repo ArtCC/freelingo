@@ -62,7 +62,7 @@ Central `Settings` class using pydantic-settings, reading from `.env`. Covers:
 - **JWT**: `SECRET_KEY`, `ACCESS_TOKEN_EXPIRE_MINUTES` (15), `REFRESH_TOKEN_EXPIRE_DAYS` (30)
 - **Registration**: `ALLOW_REGISTRATION`, `FIRST_USER_IS_ADMIN`
 - **LLM**: `LLM_PROVIDER` (ollama/openai/anthropic/deepseek) with per-provider URLs, models, and API keys
-- **TTS/STT**: `TTS_ENABLED`, `STT_ENABLED` (both default false), `STT_MODEL`, `STT_ENGINE`
+- **TTS/STT**: always active, with independent `TTS_PROVIDER` and `STT_PROVIDER` selection plus local/OpenAI provider settings
 - **Rate limiting**: `RATE_LIMIT_ENABLED`, `RATE_LIMIT_STORAGE` (memory/redis)
 - **CORS**: `CORS_ORIGINS`
 - **Logging**: `LOG_LEVEL` (default INFO)
@@ -178,6 +178,13 @@ The LLM is **not** used to evaluate quiz answers. A deterministic algorithm (`ev
 
 The algorithm also computes per-skill scores (grammar, vocabulary, reading) and identifies strengths (>= 0.65) and weaknesses (< 0.45) for the skill profile.
 
+Each question also offers an explicit "I don't know" answer next to the four options, so a learner
+who does not know an item declares the gap instead of guessing — with four options, guessing is right
+about a quarter of the time and pushes the placement level up. Such an answer is submitted as
+`dont_know: true`, never counts as correct whatever else the client sends, steers the adaptive
+question selection like a wrong answer, and marks its skill as a weakness when the learner declared a
+gap on at least half of that skill's questions.
+
 ### Free-write evaluation (LLM)
 
 An optional free-write question at the end of the quiz is evaluated by the LLM. The prompt asks the model to assess vocabulary range, grammar accuracy, and coherence, and may adjust the preliminary CEFR level by ±1 step. Returns a JSON with adjusted_level, writing_score, analysis, strengths, and weaknesses.
@@ -275,12 +282,12 @@ Users can request the LLM to generate N flashcards on a topic. The prompt includ
 - Student's CEFR level
 - Student's native language (for the translation field)
 
-Returns structured JSON with flashcards containing: word, definition (in English), example_sentence, and translation (in user's native language).
+Returns structured JSON with flashcards containing: target-language word, native-language definition, target-language example_sentence, and native-language translation.
 
 ### Frontend flashcard modes
 
-- **Standard mode**: shows English word, user recalls meaning, flips for definition/translation/example, rates quality 0-5
-- **Speaking mode** (Phase 2): shows English word, user pronounces it aloud, STT transcribes, comparison against expected pronunciation
+- **Standard mode**: shows the target-language word, user recalls its meaning, flips for definition/translation/example, and rates quality 0-5
+- **Speaking mode** (Phase 2): hides the target-language word behind native-language help, records the user's pronunciation, and compares the explicit-language STT result with the expected word
 
 ---
 
