@@ -1,5 +1,5 @@
 ---
-description: "Testing strategy for FreeLingo: backend pytest suite (45 test files, 1019 tests, 85.56% last measured coverage, with SQLite in-memory DB and Redis mocking), frontend Vitest suite (47 test files, 474 tests, no configured coverage, covering stores, components, lib, hooks, app pages, i18n, dashboard announcements, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, chat stream resets, and middleware), E2E plan (Playwright, pending), CI integration, and coverage requirements."
+description: "Testing strategy for FreeLingo: backend pytest suite (45 test files, 1019 tests, 85.56% last measured coverage, with SQLite in-memory DB and Redis mocking), frontend Vitest suite (48 test files, 479 tests, no configured coverage, covering stores, components, lib, hooks, app pages, i18n, Stripe-aware admin subscription visibility, dashboard announcements, billing paywall UI, billing success verification, feedback unread labels, SSE parsing, memory toasts, chat stream resets, and middleware), E2E plan (Playwright, pending), CI integration, and coverage requirements."
 applyTo: "**/*.test.*, **/*.spec.*, **/tests/**, **/__tests__/**"
 ---
 
@@ -11,7 +11,7 @@ applyTo: "**/*.test.*, **/*.spec.*, **/tests/**, **/__tests__/**"
 - Frontend unit — Framework: Vitest; Scope: Stores, components, hooks, lib, middleware; Coverage: Not configured; Status: Implemented
 - E2E — Framework: Playwright; Scope: Critical user flows; Coverage: Smoke; Status: Pending
 
-All tests pass on every push. Backend coverage threshold configured at 70%, last measured at 85.56%. Frontend tests cover stores, critical components (VoiceRecorder, AudioPlayer, ProfileSection, UnitCard/UnitDrawer, LanguageSwitcher, TargetLanguageSelector, DashboardAnnouncement, review UI, LanguageBubbles, billing paywall UI, memory toast), the admin announcement editor, billing success verification, app pages, hooks, lib modules, SSE framing and reset handling, i18n, and middleware. Frontend coverage is not currently reported because Vitest coverage is not configured and `@vitest/coverage-v8` is not installed.
+All tests pass on every push. Backend coverage threshold configured at 70%, last measured at 85.56%. Frontend tests cover stores, critical components (VoiceRecorder, AudioPlayer, ProfileSection, UnitCard/UnitDrawer, LanguageSwitcher, TargetLanguageSelector, DashboardAnnouncement, review UI, LanguageBubbles, billing paywall UI, memory toast), Stripe-aware admin subscription visibility, the admin announcement editor, billing success verification, app pages, hooks, lib modules, SSE framing and reset handling, i18n, and middleware. Frontend coverage is not currently reported because Vitest coverage is not configured and `@vitest/coverage-v8` is not installed.
 
 ---
 
@@ -202,8 +202,9 @@ pytest --cov-report=html
 - **`tests/components/ReviewPrompt.test.tsx`** — Tests: 6. What it covers: Review prompt status check, rating validation, rating-only and commented submission, dismissal, duplicate-review suppression, status-check failure guard
 - **`tests/components/LandingReviewsCarousel.test.tsx`** — Tests: 3. What it covers: Landing reviews carousel rendering with comments, rating-only fallback text, empty list behavior
 - **`tests/app/billing-success.test.tsx`** — Tests: 3. What it covers: Billing success page: shows Premium-active copy only after `/me` confirms `active`/`trialing`, refreshes the session when no access token is in memory, and keeps pending-confirmation copy when the subscription is not yet synced.
-- **`tests/app/admin-overview.test.tsx`** — Tests: 2. What it covers: Admin overview rendering and metrics
-- **`tests/app/admin-query-params.test.tsx`** — Tests: 2. What it covers: Admin query param parsing and state handling
+- **`tests/app/admin-overview.test.tsx`** — Tests: 3. What it covers: Admin overview rendering and Stripe-enabled/disabled subscription metrics and alerts
+- **`tests/app/admin-query-params.test.tsx`** — Tests: 4. What it covers: Admin query param parsing, state handling, suppression of hidden subscription filters when Stripe is disabled, and stale-response protection while Stripe configuration hydrates
+- **`tests/app/admin-user-detail.test.tsx`** — Tests: 2. What it covers: Admin user-detail subscription status, tab, and controls in Stripe-enabled and Stripe-disabled modes
 - **`tests/app/admin-reviews.test.tsx`** — Tests: 3. What it covers: Admin review moderation list, approval action, delete confirmation
 - **`tests/app/admin-system-banner.test.tsx`** — Tests: 2. What it covers: admin source composition, ten-locale translation preview, editable translation save, and source preservation after translation failure
 - **`tests/app/chat-memory-stream.test.tsx`** — Tests: 4. What it covers: visible partial-response reset and replacement, confirmed-memory toast timing and survival after later errors, and word-selection disabling during active streaming
@@ -212,7 +213,7 @@ pytest --cov-report=html
 - **`tests/components/DashboardAnnouncement.test.tsx`** — Tests: 3. What it covers: current-locale rendering, successful account-persistent dismissal, compact dismissal error, and suppression of an already-dismissed revision
 - **`tests/i18n/admin-messages.test.ts`** — Tests: 1. What it covers: Admin message bundle integrity
 
-**Total: 474 tests across 47 files. Frontend coverage is not configured/reported.**
+**Total: 479 tests across 48 files. Frontend coverage is not configured/reported.**
 
 ### Running tests
 
@@ -267,7 +268,7 @@ CI runs on GitHub Actions, triggered on pushes and pull requests. The project is
 - Backend tests — Steps: `pytest -v`; Threshold: >= 70% coverage
 - Frontend lint — Steps: `npm run lint`; Threshold: Zero errors
 - Frontend typecheck — Steps: `npx tsc --noEmit`; Threshold: Clean output
-- Frontend tests — Steps: `npm run test:run`; Threshold: All 474 tests pass
+- Frontend tests — Steps: `npm run test:run`; Threshold: All 479 tests pass
 
 **Note**: The backend test job uses SQLite (same as local tests), not PostgreSQL. No Docker services are required for the backend test job.
 

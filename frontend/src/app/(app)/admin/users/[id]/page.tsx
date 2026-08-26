@@ -20,6 +20,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { PageLoading } from '@/components/ui/page-loading'
 import { apiFetch } from '@/lib/api'
 import { getLanguageByCode } from '@/lib/target-languages'
+import { useConfigStore } from '@/store/config'
 import { type QuotaStatus } from '@/types/api'
 
 interface LanguageStats {
@@ -161,6 +162,7 @@ export default function AdminUserStatsPage() {
   const tBilling = useTranslations('billing')
   const params = useParams()
   const userId = params?.id as string
+  const stripeEnabled = useConfigStore((s) => s.stripeEnabled)
 
   const [user, setUser] = useState<AdminUser | null>(null)
   const [stats, setStats] = useState<UserStats | null>(null)
@@ -405,11 +407,13 @@ export default function AdminUserStatsPage() {
           >
             {user.role === 'admin' ? t('roleAdmin') : t('roleUser')}
           </span>
-          <span
-            className={`text-fl-hint border px-2 py-0.5 font-mono tracking-widest uppercase ${subscriptionStatusClass(user.subscription_status)}`}
-          >
-            {subscriptionLabel}
-          </span>
+          {stripeEnabled && (
+            <span
+              className={`text-fl-hint border px-2 py-0.5 font-mono tracking-widest uppercase ${subscriptionStatusClass(user.subscription_status)}`}
+            >
+              {subscriptionLabel}
+            </span>
+          )}
         </div>
       </div>
 
@@ -454,25 +458,27 @@ export default function AdminUserStatsPage() {
       )}
 
       <div className="border-fl-border bg-fl-surface flex gap-1 overflow-x-auto border p-1">
-        {tabs.map((tab) => {
-          const Icon = tab.icon
-          const active = activeTab === tab.key
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveTab(tab.key)}
-              className={`text-fl-label flex min-h-9 shrink-0 items-center gap-2 px-3 py-2 font-mono tracking-widest uppercase transition-colors ${
-                active
-                  ? 'bg-fl-bg text-fl-fg border-fl-accent border-l-2'
-                  : 'text-fl-muted-2 hover:bg-fl-bg hover:text-fl-fg border-l-2 border-transparent'
-              }`}
-            >
-              <Icon className="size-3.5" aria-hidden="true" />
-              {t(tab.labelKey)}
-            </button>
-          )
-        })}
+        {tabs
+          .filter((tab) => stripeEnabled || tab.key !== 'subscription')
+          .map((tab) => {
+            const Icon = tab.icon
+            const active = activeTab === tab.key
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`text-fl-label flex min-h-9 shrink-0 items-center gap-2 px-3 py-2 font-mono tracking-widest uppercase transition-colors ${
+                  active
+                    ? 'bg-fl-bg text-fl-fg border-fl-accent border-l-2'
+                    : 'text-fl-muted-2 hover:bg-fl-bg hover:text-fl-fg border-l-2 border-transparent'
+                }`}
+              >
+                <Icon className="size-3.5" aria-hidden="true" />
+                {t(tab.labelKey)}
+              </button>
+            )
+          })}
       </div>
 
       {activeTab === 'profile' && (
@@ -744,7 +750,7 @@ export default function AdminUserStatsPage() {
         </div>
       )}
 
-      {activeTab === 'subscription' && (
+      {stripeEnabled && activeTab === 'subscription' && (
         <Section title={t('tabSubscription')}>
           <StatRow label={t('fieldSubscription')} value={subscriptionLabel} />
           {user.subscription_ends_at && (
@@ -802,21 +808,23 @@ export default function AdminUserStatsPage() {
         onCancel={() => setVerifyPending(false)}
       />
 
-      <ConfirmDialog
-        open={pendingPlan !== null}
-        title={t('subscriptionConfirmTitle')}
-        message={
-          pendingPlan
-            ? t('subscriptionConfirmMessage', {
-                plan: planLabel(pendingPlan, tBilling),
-              })
-            : ''
-        }
-        confirmLabel={t('subscriptionConfirm')}
-        danger={pendingPlan === 'none'}
-        onConfirm={() => pendingPlan && handleSubscriptionChange(pendingPlan)}
-        onCancel={() => setPendingPlan(null)}
-      />
+      {stripeEnabled && (
+        <ConfirmDialog
+          open={pendingPlan !== null}
+          title={t('subscriptionConfirmTitle')}
+          message={
+            pendingPlan
+              ? t('subscriptionConfirmMessage', {
+                  plan: planLabel(pendingPlan, tBilling),
+                })
+              : ''
+          }
+          confirmLabel={t('subscriptionConfirm')}
+          danger={pendingPlan === 'none'}
+          onConfirm={() => pendingPlan && handleSubscriptionChange(pendingPlan)}
+          onCancel={() => setPendingPlan(null)}
+        />
+      )}
     </div>
   )
 }
