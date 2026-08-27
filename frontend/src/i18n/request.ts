@@ -21,11 +21,11 @@ export default getRequestConfig(async () => {
 
   let messages
   try {
-    messages = (await import(`../../messages/${locale}.json`)).default
+    messages = (await import(`../../../messages/${locale}.json`)).default
   } catch {
     // Fallback to English if locale file is missing
     const defaultLocale = 'en'
-    messages = (await import(`../../messages/${defaultLocale}.json`)).default
+    messages = (await import(`../../../messages/${defaultLocale}.json`)).default
   }
 
   return {
