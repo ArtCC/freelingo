@@ -40,30 +40,27 @@ const notoSansSC = Noto_Sans_SC({
 const themeScript = `(function(){try{var t='system';var s=localStorage.getItem('fl-theme');if(s){var p=JSON.parse(s);t=p&&p.state&&p.state.theme?p.state.theme:t}var l=t==='light'||(t==='system'&&window.matchMedia('(prefers-color-scheme: light)').matches);if(l){document.documentElement.setAttribute('data-theme','light')}else{document.documentElement.removeAttribute('data-theme')}}catch(e){}})();`
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://freelingo.app'),
+  metadataBase: new URL('https://jubalisan.com'),
   title: {
-    default: 'FreeLingo',
-    template: '%s | FreeLingo',
+    default: 'JUBA LISAN',
+    template: '%s | JUBA LISAN',
   },
   description:
-    'FreeLingo is a self-hosted AI-powered language learning platform with voice conversation, flashcards, grammar lessons, and a personal AI tutor.',
+    'JUBA LISAN is a modern AI-powered language learning platform for speaking, listening, reading, vocabulary, grammar, and measurable progress.',
   keywords: [
-    'English learning',
+    'JUBA LISAN',
+    'AI language learning',
     'AI language tutor',
-    'self-hosted',
+    'learn languages',
     'voice conversation',
-    'flashcards',
+    'speaking practice',
     'CEFR',
-    'language learning app',
-    'learn English online',
+    'language learning platform',
+    'vocabulary',
+    'grammar',
   ],
-  authors: [
-    {
-      name: 'Arturo Carretero Calvo',
-      url: 'https://www.arturocarreterocalvo.com',
-    },
-  ],
-  creator: 'Arturo Carretero Calvo',
+  applicationName: 'JUBA LISAN',
+  category: 'education',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -74,26 +71,26 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://freelingo.app',
-    siteName: 'FreeLingo',
-    title: 'FreeLingo: AI-powered language learning',
+    url: 'https://jubalisan.com',
+    siteName: 'JUBA LISAN',
+    title: 'JUBA LISAN — Learn languages naturally with AI',
     description:
-      'Learn languages with an AI tutor, voice conversations, flashcards, and structured lessons. Self-hosted and privacy-friendly.',
+      'Practice real conversations, build vocabulary, master grammar, and follow a personalized path to fluency with JUBA LISAN.',
     images: [
       {
         url: '/og-image-v2.png',
         width: 1200,
         height: 630,
-        alt: 'FreeLingo: AI-powered language learning',
+        alt: 'JUBA LISAN — AI-powered language learning',
       },
     ],
   },
   twitter: {
-    card: 'summary',
-    title: 'FreeLingo: AI-powered language learning',
+    card: 'summary_large_image',
+    title: 'JUBA LISAN — AI-powered language learning',
     description:
-      'Learn languages with an AI tutor, voice conversations, flashcards, and structured lessons.',
-    images: ['/logo.png'],
+      'Practice speaking, listening, reading, vocabulary, and grammar with your personal AI tutor.',
+    images: ['/og-image-v2.png'],
   },
 }
 
@@ -112,6 +109,8 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${notoSansJP.variable} ${notoSansKR.variable} ${notoSansSC.variable} h-full antialiased`}
     >
       <head>
+        <meta name="theme-color" content="#ffffff" />
+        <meta name="color-scheme" content="light dark" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script
           dangerouslySetInnerHTML={{
