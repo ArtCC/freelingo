@@ -75,6 +75,7 @@
     "resendVerification": "Reinvia e-mail di verifica",
     "saveWord": "Salva",
     "wordSaved": "Salvato",
+    "wordAlreadySaved": "Già salvato",
     "wordSaveError": "Si è verificato un problema",
     "selectWordHint": "Seleziona una parola per salvarla nel tuo vocabolario",
     "noActivePlan": "Nessun piano di studio attivo trovato",

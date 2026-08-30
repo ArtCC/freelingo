@@ -63,6 +63,10 @@ class FlashcardResponse(BaseModel):
         return v.isoformat()
 
 
+class FlashcardFromWordResponse(FlashcardResponse):
+    already_saved: bool = False
+
+
 class FlashcardListResponse(BaseModel):
     due: list[FlashcardResponse]
     total: int

@@ -7,7 +7,7 @@ import { apiFetch } from '@/lib/api'
 // Types
 // ---------------------------------------------------------------------------
 
-export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+export type SaveState = 'idle' | 'saving' | 'saved' | 'exists' | 'error'
 
 export interface TooltipPos {
   x: number
@@ -31,7 +31,12 @@ export function WordTooltip({
   saveState: SaveState
   onSave: () => void
   onDismiss: () => void
-  labels: { saveWord: string; wordSaved: string; wordSaveError: string }
+  labels: {
+    saveWord: string
+    wordSaved: string
+    wordAlreadySaved: string
+    wordSaveError: string
+  }
 }) {
   return (
     <div
@@ -56,6 +61,11 @@ export function WordTooltip({
         {saveState === 'saved' && (
           <span className="tracking-widest text-green-400 uppercase">
             ✓ {labels.wordSaved}
+          </span>
+        )}
+        {saveState === 'exists' && (
+          <span className="text-fl-muted-2 tracking-widest uppercase">
+            ✓ {labels.wordAlreadySaved}
           </span>
         )}
         {saveState === 'error' && (
@@ -132,7 +142,8 @@ export function useWordSave() {
         }),
       })
       if (!res.ok) throw new Error()
-      setSaveState('saved')
+      const data = await res.json()
+      setSaveState(data.already_saved ? 'exists' : 'saved')
       setTimeout(() => dismissTooltip(), 1500)
     } catch {
       setSaveState('error')

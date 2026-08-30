@@ -11,6 +11,7 @@ interface Props {
   userAvatar?: string | null
   userInitial?: string
   languageCode?: string | null
+  onPointerUp?: () => void
 }
 
 export default function TranscriptBubble({
@@ -21,6 +22,7 @@ export default function TranscriptBubble({
   userAvatar,
   userInitial,
   languageCode,
+  onPointerUp,
 }: Props) {
   const t = useTranslations('conversation')
   const isUser = role === 'user'
@@ -82,10 +84,13 @@ export default function TranscriptBubble({
           as="div"
           languageCode={languageCode}
           className={`border px-4 py-3 ${
+            onPointerUp ? 'word-selectable cursor-text select-text' : ''
+          } ${
             isUser
               ? 'bg-fl-accent text-fl-accent-fg border-fl-accent'
               : 'bg-fl-surface text-fl-fg border-fl-border'
           }`}
+          onPointerUp={onPointerUp}
         >
           {text}
           {streaming && (

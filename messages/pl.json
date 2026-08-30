@@ -75,6 +75,7 @@
     "resendVerification": "Wyślij ponownie e-mail weryfikacyjny",
     "saveWord": "Zapisz",
     "wordSaved": "Zapisano",
+    "wordAlreadySaved": "Już zapisano",
     "wordSaveError": "Wystąpił problem",
     "selectWordHint": "Zaznacz słowo, aby zapisać je w swoim słowniku",
     "noActivePlan": "Nie znaleziono aktywnego planu nauki",

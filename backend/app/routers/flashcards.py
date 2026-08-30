@@ -15,6 +15,7 @@ from app.schemas.flashcards import (
     FlashcardBulkResponse,
     FlashcardCreate,
     FlashcardFromWordRequest,
+    FlashcardFromWordResponse,
     FlashcardGenerateRequest,
     FlashcardGenerateResponse,
     FlashcardListResponse,
@@ -36,6 +37,24 @@ router = APIRouter(prefix="/api/flashcards", tags=["flashcards"])
 
 def _normalize_flashcard_word(value: str) -> str:
     return re.sub(r"\s+", " ", value.strip().lower())
+
+
+async def _index_existing_words_by_id(
+    db: AsyncSession, user_id: int, study_plan_id: int
+) -> dict[str, int]:
+    """Map normalized word -> flashcard id for a user's plan (first wins)."""
+    existing = await db.execute(
+        select(Flashcard.id, Flashcard.word).where(
+            Flashcard.user_id == user_id,
+            Flashcard.study_plan_id == study_plan_id,
+        )
+    )
+    index: dict[str, int] = {}
+    for card_id, word in existing.all():
+        normalized = _normalize_flashcard_word(word)
+        if normalized not in index:
+            index[normalized] = card_id
+    return index
 
 
 async def _get_active_plan_or_404(db: AsyncSession, user_id: int) -> StudyPlan:
@@ -271,7 +290,7 @@ async def generate_flashcards_endpoint(
         )
 
 
-@router.post("/from-word", response_model=FlashcardResponse)
+@router.post("/from-word", response_model=FlashcardFromWordResponse)
 @limiter.limit("30/minute")
 async def create_flashcard_from_word(
     request: Request,
@@ -280,6 +299,15 @@ async def create_flashcard_from_word(
     db: AsyncSession = Depends(get_db),
 ):
     plan = await _get_active_plan_or_404(db, current_user.id)
+    existing_by_word = await _index_existing_words_by_id(db, current_user.id, plan.id)
+
+    normalized_input = _normalize_flashcard_word(data.word)
+    if normalized_input in existing_by_word:
+        card = await db.get(Flashcard, existing_by_word[normalized_input])
+        resp = FlashcardFromWordResponse.model_validate(card)
+        resp.already_saved = True
+        return resp
+
     try:
         card_data = await lookup_word(
             word=data.word.strip(),
@@ -304,6 +332,16 @@ async def create_flashcard_from_word(
             detail="ai_service_error",
         )
 
+    # Re-query fresh to narrow the race window opened by the LLM call above:
+    # another request may have saved this word while we were waiting.
+    existing_by_word = await _index_existing_words_by_id(db, current_user.id, plan.id)
+    normalized_result = _normalize_flashcard_word(card_data.word)
+    if normalized_result in existing_by_word:
+        card = await db.get(Flashcard, existing_by_word[normalized_result])
+        resp = FlashcardFromWordResponse.model_validate(card)
+        resp.already_saved = True
+        return resp
+
     card = Flashcard(
         user_id=current_user.id,
         study_plan_id=plan.id,
@@ -316,7 +354,7 @@ async def create_flashcard_from_word(
     db.add(card)
     await db.commit()
     await db.refresh(card)
-    return card
+    return FlashcardFromWordResponse.model_validate(card)
 
 
 @router.get("/vocabulary", response_model=VocabularyListResponse)

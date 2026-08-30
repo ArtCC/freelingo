@@ -75,6 +75,7 @@
     "resendVerification": "Bestätigungs-E-Mail erneut senden",
     "saveWord": "Speichern",
     "wordSaved": "Gespeichert",
+    "wordAlreadySaved": "Bereits gespeichert",
     "wordSaveError": "Es ist ein Problem aufgetreten",
     "selectWordHint": "Wähle ein Wort aus, um es in dein Vokabular zu speichern",
     "noActivePlan": "Kein aktiver Lernplan gefunden",

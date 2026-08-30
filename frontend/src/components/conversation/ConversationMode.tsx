@@ -21,6 +21,7 @@ import StatusIndicator, { type ConvStatus } from './StatusIndicator'
 import TranscriptBubble from './TranscriptBubble'
 import SessionTimeoutBanner from './SessionTimeoutBanner'
 import MicButton from './MicButton'
+import { WordTooltip, useWordSave } from '@/components/ui/WordTooltip'
 import { type QuotaStatus } from '@/types/api'
 import {
   ReviewPrompt,
@@ -301,6 +302,14 @@ export default function ConversationMode({
   } = useTransientToast()
   const [quota, setQuota] = useState<QuotaStatus | null>(null)
   const [reviewPromptOpen, setReviewPromptOpen] = useState(false)
+  const {
+    selectedWord,
+    tooltipPos,
+    saveState,
+    handleTextSelection,
+    handleSaveWord,
+    dismissTooltip,
+  } = useWordSave()
 
   // 6 random starters picked once per component mount, shown alphabetically
   const visibleStarters = useMemo(
@@ -1059,6 +1068,12 @@ export default function ConversationMode({
               userAvatar={user?.avatar}
               userInitial={(user?.displayName || user?.username || '?')[0]}
               languageCode={targetLanguage}
+              onPointerUp={
+                entry.role === 'assistant'
+                  ? () =>
+                      handleTextSelection(entry.text, cefrLevel ?? undefined)
+                  : undefined
+              }
             />
           ))
         })()}
@@ -1158,6 +1173,23 @@ export default function ConversationMode({
         onClose={() => setReviewPromptOpen(false)}
         onSubmitted={() => setReviewPromptOpen(false)}
       />
+
+      {/* Word-save tooltip */}
+      {selectedWord && (
+        <WordTooltip
+          word={selectedWord}
+          pos={tooltipPos}
+          saveState={saveState}
+          onSave={() => handleSaveWord()}
+          onDismiss={dismissTooltip}
+          labels={{
+            saveWord: tCommon('saveWord'),
+            wordSaved: tCommon('wordSaved'),
+            wordAlreadySaved: tCommon('wordAlreadySaved'),
+            wordSaveError: tCommon('wordSaveError'),
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -10,7 +10,7 @@ Administrative subscription UI follows the public Stripe runtime flag. When Stri
 
 Pronunciation exercises and flashcard speaking mode capture their resource-owned `study_plan_id` when recording starts and include it in every STT upload. The frontend stops late microphone streams, propagates request cancellation through its STT proxy, and serializes flashcard reviews while voice-result handling is pending. The backend verifies plan ownership, derives the target language from that plan, converts it to the provider's ISO code, and requires every STT service call to declare a language explicitly; there is no implicit English fallback. Generated flashcards likewise derive their target language from the active persisted plan rather than client state, and reviews credit progress to the persisted card plan rather than whichever language is currently active.
 
-Active Reading and Listening exercises let users select and save one word from question prompts through the shared flashcard lookup flow; answer options are not selectable vocabulary surfaces.
+Active Reading and Listening exercises, lesson exercise questions, and voice-conversation transcript tutor turns let users select and save one word from their text through the shared flashcard lookup flow; answer options are not selectable vocabulary surfaces.
 
 My Plan unit drawers offer Start for the current lesson, Resume for skipped pending lessons, and read-only Review for completed lessons without awarding progress again. Drawer actions share the solid primary button treatment used by the plan overview.
 
