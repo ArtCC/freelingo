@@ -167,7 +167,7 @@ Lesson viewing and exercise answering use `get_current_user` (always free). Only
 - **POST `/exercises/{id}/native-explanation`** — Rate limit: 10/min. Auth: get_current_user. Generates and caches a concise native-language clarification for an exercise whose target-language `explanation` exists but whose generated JSON lacks `native_explanation`. If already present, returns the cached exercise-level explanation idempotently.
 - **POST `/exercises/{id}/native-hint`** — Rate limit: 10/min. Auth: get_current_user. Generates and caches a concise pre-answer native-language hint for an exercise whose generated JSON lacks `native_hint`. Hints must help without revealing the correct answer. If already present, returns the cached hint idempotently.
 - **POST `/exercises/{id}/regenerate`** — Rate limit: 5/hour. Auth: get_current_user. Regenerates one unanswered, technically invalid exercise on demand while preserving the rest of the lesson. Rejects completed lessons, answered exercises, and exercises that pass validation.
-- **POST `/exercises/{id}/answer`** — Rate limit: 20/min. Auth: get_current_user. Submits an answer, evaluates multiple choice, fill, free-write, or pronunciation exercises, and returns score plus feedback.
+- **POST `/exercises/{id}/answer`** — Rate limit: 20/min. Auth: get_current_user. Submits an answer, evaluates multiple choice, fill, free-write, or pronunciation exercises, and returns score plus feedback. For free-write exercises the response also carries `corrections` (objects with `original`, `corrected`, `explanation`), which are persisted on the exercise and included in `GET /{lesson_id}` exercise payloads.
 
 ---
 

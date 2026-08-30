@@ -26,6 +26,10 @@ import {
 import { shouldShowUnitReviewPrompt } from '@/lib/review-prompt-triggers'
 import { cn } from '@/lib/utils'
 import {
+  annotateAnswer,
+  type FreeWriteCorrection,
+} from '@/lib/free-write-corrections'
+import {
   formatLanguageName,
   getTargetLanguageTextClass,
 } from '@/lib/target-languages'
@@ -41,6 +45,7 @@ interface ExerciseItem {
   user_answer: string | null
   score: number | null
   feedback: string | null
+  corrections: FreeWriteCorrection[] | null
   native_hint: string | null
 }
 
@@ -323,6 +328,7 @@ export default function LessonPage() {
           ...copy[currentExercise],
           score: result.score,
           feedback: result.feedback,
+          corrections: result.corrections ?? null,
           user_answer: finalAnswer,
         }
         return copy
@@ -497,6 +503,22 @@ export default function LessonPage() {
   const exercise = exercises[currentExercise]
   const isEvaluated = exercise?.score !== null
   const isAnswerCorrect = (exercise?.score ?? 0) >= 1
+  const isPartiallyCorrect =
+    exercise?.exercise_type === 'free_write' &&
+    isEvaluated &&
+    !isAnswerCorrect &&
+    (exercise?.score ?? 0) > 0
+  const exerciseCorrections = (exercise?.corrections ?? []).filter(
+    (c) => c.original || c.corrected
+  )
+  const answerSegments =
+    exercise?.exercise_type === 'free_write' &&
+    isEvaluated &&
+    exercise?.user_answer &&
+    exerciseCorrections.length > 0
+      ? annotateAnswer(exercise.user_answer, exerciseCorrections)
+      : null
+  const showAnnotatedAnswer = !!answerSegments?.some((s) => s.type === 'fix')
   const isNativeHintOpen = exercise ? openNativeHintIds.has(exercise.id) : false
   const hasMultipleChoiceOptions =
     exercise?.exercise_type === 'multiple_choice' &&
@@ -947,28 +969,63 @@ export default function LessonPage() {
                 </div>
               ) : (
                 <div className="relative">
-                  <textarea
-                    className={cn(
-                      getTargetLanguageTextClass(targetLanguageCode),
-                      'bg-fl-bg border-fl-border text-fl-fg placeholder:text-fl-muted-4 focus:border-fl-border-2 min-h-[90px] w-full resize-y border px-4 py-3 transition-colors focus:outline-none disabled:opacity-100',
-                      isEvaluated && 'pr-10',
-                      isEvaluated &&
-                        (isAnswerCorrect
+                  {showAnnotatedAnswer && answerSegments ? (
+                    <div
+                      className={cn(
+                        getTargetLanguageTextClass(targetLanguageCode),
+                        'bg-fl-bg text-fl-fg min-h-[90px] w-full border px-4 py-3 pr-10 whitespace-pre-wrap',
+                        isAnswerCorrect
                           ? 'border-green-500/40'
-                          : 'border-red-500/40')
-                    )}
-                    placeholder={t('yourAnswer')}
-                    value={answer}
-                    onChange={(e) => setAnswer(e.target.value)}
-                    disabled={isEvaluated || isReview}
-                  />
+                          : isPartiallyCorrect
+                            ? 'border-amber-500/40'
+                            : 'border-red-500/40'
+                      )}
+                    >
+                      {answerSegments.map((segment, index) =>
+                        segment.type === 'plain' ? (
+                          <span key={index}>{segment.text}</span>
+                        ) : (
+                          <span key={index}>
+                            <del className="text-red-400 line-through decoration-red-400/70">
+                              {segment.original}
+                            </del>{' '}
+                            <ins className="font-semibold text-green-400 decoration-green-400/70">
+                              {segment.corrected}
+                            </ins>
+                          </span>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <textarea
+                      className={cn(
+                        getTargetLanguageTextClass(targetLanguageCode),
+                        'bg-fl-bg border-fl-border text-fl-fg placeholder:text-fl-muted-4 focus:border-fl-border-2 min-h-[90px] w-full resize-y border px-4 py-3 transition-colors focus:outline-none disabled:opacity-100',
+                        isEvaluated && 'pr-10',
+                        isEvaluated &&
+                          (isAnswerCorrect
+                            ? 'border-green-500/40'
+                            : isPartiallyCorrect
+                              ? 'border-amber-500/40'
+                              : 'border-red-500/40')
+                      )}
+                      placeholder={t('yourAnswer')}
+                      value={answer}
+                      onChange={(e) => setAnswer(e.target.value)}
+                      disabled={isEvaluated || isReview}
+                    />
+                  )}
                   {isEvaluated && (
                     <span
                       className={`absolute top-3 right-3 font-mono text-xs ${
-                        isAnswerCorrect ? 'text-green-400' : 'text-red-400'
+                        isAnswerCorrect
+                          ? 'text-green-400'
+                          : isPartiallyCorrect
+                            ? 'text-amber-400'
+                            : 'text-red-400'
                       }`}
                     >
-                      {isAnswerCorrect ? '✓' : '✕'}
+                      {isAnswerCorrect ? '✓' : isPartiallyCorrect ? '±' : '✕'}
                     </span>
                   )}
                 </div>
@@ -1005,6 +1062,38 @@ export default function LessonPage() {
                       >
                         {exercise.feedback}
                       </TargetLanguageText>
+                    </div>
+                  )}
+                  {exerciseCorrections.length > 0 && (
+                    <div className="border-fl-border border px-4 py-4">
+                      <p className="text-fl-label text-fl-muted-2 mb-2 font-mono tracking-widest uppercase">
+                        {t('corrections')}
+                      </p>
+                      <ul className="space-y-3">
+                        {exerciseCorrections.map((correction, index) => (
+                          <li key={index}>
+                            <p
+                              className={cn(
+                                getTargetLanguageTextClass(targetLanguageCode),
+                                'text-sm'
+                              )}
+                            >
+                              <del className="text-red-400 line-through decoration-red-400/70">
+                                {correction.original}
+                              </del>
+                              <span className="text-fl-muted-3"> → </span>
+                              <ins className="font-semibold text-green-400 decoration-green-400/70">
+                                {correction.corrected}
+                              </ins>
+                            </p>
+                            {correction.explanation && (
+                              <p className="text-fl-muted-2 mt-1 text-sm">
+                                {correction.explanation}
+                              </p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                   {exercise.explanation && (

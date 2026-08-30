@@ -148,6 +148,7 @@ Exercises belong to a lesson (1 lesson → many exercises).
 - user_answer — Type: text (nullable); Notes: User's submitted answer
 - score — Type: float (nullable); Notes: 0.0 – 1.0
 - feedback — Type: text (nullable); Notes: LLM-generated feedback
+- corrections — Type: JSON (nullable); Notes: Free-write correction objects (`original`, `corrected`, `explanation`)
 - answered_at — Type: datetime; Notes: —
 
 Exercise rows do not have a dedicated native-language explanation column. New lesson-generation output may include per-exercise `native_explanation` values inside `lessons.content.exercises[*]`; `GET /api/lessons/{id}` merges that optional JSON text into each exercise response by exercise order. The on-demand endpoint `POST /api/lessons/exercises/{id}/native-explanation` writes missing exercise-level native explanations back into the same JSON array.

@@ -88,6 +88,7 @@ class ExerciseResponse(BaseModel):
     user_answer: str | None = None
     score: float | None = None
     feedback: str | None = None
+    corrections: list[FreeWriteCorrection] | None = None
     explanation: str | None = None
     native_explanation: str | None = None
     native_hint: str | None = None
@@ -109,17 +110,24 @@ class ExerciseAnswerRequest(BaseModel):
     answer: str
 
 
+class FreeWriteCorrection(BaseModel):
+    original: str = ""
+    corrected: str = ""
+    explanation: str = ""
+
+
 class ExerciseAnswerResponse(BaseModel):
     id: int
     score: float
     feedback: str
     correct_answer: str
+    corrections: list[FreeWriteCorrection] | None = None
 
 
 class FreeWriteEvaluation(BaseModel):
     score: float
     feedback: str
-    corrections: list[dict]
+    corrections: list[FreeWriteCorrection]
 
 
 class FillBlankEvaluation(BaseModel):

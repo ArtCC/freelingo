@@ -100,6 +100,7 @@ Exercises belong to a lesson (1:N). Generated alongside the lesson and stored in
 - user_answer — Type: text (nullable); Notes: User's submitted answer
 - score — Type: float (nullable); Notes: 0.0 – 1.0
 - feedback — Type: text (nullable); Notes: Evaluation feedback (LLM or deterministic)
+- corrections — Type: JSON (nullable); Notes: Free-write correction objects (`original`, `corrected`, `explanation`)
 - answered_at — Type: datetime (nullable); Notes: Set when the user submits an answer
 
 ---

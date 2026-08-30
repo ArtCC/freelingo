@@ -12,6 +12,7 @@ import pytest
 
 from app.schemas.lessons import (
     FillBlankEvaluation,
+    FreeWriteCorrection,
     FreeWriteEvaluation,
     NativeExerciseHintResponse,
     NativeExplanationResponse,
@@ -1015,7 +1016,58 @@ async def test_answer_free_write_with_llm(client, test_user, db_session):
     data = response.json()
     assert data["score"] == 0.8
     assert data["feedback"] == "Good grammar."
+    assert data["corrections"] is None
     assert mock_eval.await_args.kwargs["native_language"] == "es"
+
+
+@pytest.mark.asyncio
+async def test_answer_free_write_returns_and_persists_corrections(client, test_user, db_session):
+    """Free-write corrections are returned in the answer and lesson detail responses."""
+    user, headers = test_user
+    lesson, exercise = await _create_lesson_with_exercise(
+        db_session,
+        user.id,
+        exercise_type="free_write",
+        question="Describe your last trip.",
+        options=["grammar"],
+        correct_answer="Sample answer.",
+    )
+
+    mock_eval = AsyncMock(
+        return_value=FreeWriteEvaluation(
+            score=0.8,
+            feedback="Good.",
+            corrections=[
+                FreeWriteCorrection(
+                    original="mit auto",
+                    corrected="mit dem Auto",
+                    explanation="Dative article after 'mit'.",
+                )
+            ],
+        )
+    )
+
+    with patch("app.routers.lessons.evaluate_free_write", mock_eval):
+        response = await client.post(
+            f"/api/lessons/exercises/{exercise.id}/answer",
+            headers=headers,
+            json={"answer": "Ich bin mit auto gefahren."},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["corrections"] == [
+        {
+            "original": "mit auto",
+            "corrected": "mit dem Auto",
+            "explanation": "Dative article after 'mit'.",
+        }
+    ]
+
+    detail = await client.get(f"/api/lessons/{lesson.id}", headers=headers)
+    assert detail.status_code == 200
+    detail_exercise = detail.json()["exercises"][0]
+    assert detail_exercise["corrections"] == data["corrections"]
 
 
 @pytest.mark.asyncio
@@ -1075,6 +1127,7 @@ async def test_answer_free_write_llm_fallback(client, test_user, db_session):
     data = response.json()
     assert data["score"] == 0.5
     assert "No se pudo evaluar" in data["feedback"]
+    assert data["corrections"] is None
 
 
 # ── pronunciation exercises (LLM mocked) ────────────────────────────────────

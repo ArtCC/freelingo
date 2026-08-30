@@ -65,5 +65,6 @@ class Exercise(Base):
     user_answer: Mapped[str | None] = mapped_column(Text, nullable=True)
     score: Mapped[float | None] = mapped_column(Float, nullable=True)
     feedback: Mapped[str | None] = mapped_column(Text, nullable=True)
+    corrections: Mapped[list | None] = mapped_column(JSON, nullable=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
     answered_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

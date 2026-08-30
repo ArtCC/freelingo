@@ -251,7 +251,7 @@ class TestEvaluateFreeWrite:
 
         assert result.score == 0.85
         assert len(result.corrections) == 1
-        assert result.corrections[0]["corrected"] == "I go"
+        assert result.corrections[0].corrected == "I go"
 
 
 class TestEvaluatePronunciation:
