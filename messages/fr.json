@@ -1427,7 +1427,7 @@
     "openSourceCta": "Voir sur GitHub",
     "planFreeBadge": "Gratuit pour toujours",
     "priceAmount": "{amount}€",
-    "pricePerPeriod": "€/{period}",
+    "pricePerPeriod": "/ {period}",
     "priceOriginal": "{price}€ / {period}",
     "planFreeDesc": "Essai complet de 7 jours, puis gratuit avec des limites quotidiennes et hebdomadaires",
     "planFreeCta": "Commencer",
@@ -1446,21 +1446,9 @@
   },
   "whatsNew": {
     "title": "Nouveautés",
-    "version": "v1.8.45",
+    "version": "v1.8.50",
     "cta": "Compris",
     "entry1": {
-      "label": "Des souvenirs qui vous suivent",
-      "desc": "Lingu peut désormais retenir des détails utiles dans toutes les langues que vous apprenez, par chat comme à l'oral."
-    },
-    "entry2": {
-      "label": "Vous gardez le contrôle",
-      "desc": "Ajoutez vos propres souvenirs, consultez-les, supprimez-les ou effacez-les à tout moment dans les Paramètres. Supprimer une langue conserve vos souvenirs."
-    },
-    "entry3": {
-      "label": "Vos leçons, toujours accessibles",
-      "desc": "Dans Mon plan, commencez votre leçon actuelle, reprenez les leçons ignorées ou révisez les leçons terminées avec vos réponses et commentaires enregistrés."
-    },
-    "entry4": {
       "label": "Une expérience plus fluide",
       "desc": "Des corrections de bugs et de petites améliorations rendent FreeLingo plus fiable et agréable à utiliser."
     }

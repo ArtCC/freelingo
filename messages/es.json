@@ -1427,7 +1427,7 @@
     "openSourceCta": "Ver en GitHub",
     "planFreeBadge": "Gratis para siempre",
     "priceAmount": "{amount} €",
-    "pricePerPeriod": " €/{period}",
+    "pricePerPeriod": "/ {period}",
     "priceOriginal": "{price} € / {period}",
     "planFreeDesc": "Prueba completa de 7 días, luego gratis con límites diarios y semanales",
     "planFreeCta": "Empieza",
@@ -1446,21 +1446,9 @@
   },
   "whatsNew": {
     "title": "Novedades",
-    "version": "v1.8.45",
+    "version": "v1.8.50",
     "cta": "Entendido",
     "entry1": {
-      "label": "Memorias que te acompañan",
-      "desc": "Lingu ahora puede recordar detalles útiles en todos los idiomas que estudias, tanto en el chat como por voz."
-    },
-    "entry2": {
-      "label": "Tú tienes el control",
-      "desc": "Añade tus propias memorias o revísalas, elimínalas y bórralas todas cuando quieras desde Ajustes. Eliminar un idioma conserva tus memorias."
-    },
-    "entry3": {
-      "label": "Tus lecciones, siempre accesibles",
-      "desc": "En Mi plan puedes comenzar la lección actual, continuar las que saltaste o revisar las completadas con tus respuestas y comentarios guardados."
-    },
-    "entry4": {
       "label": "Una experiencia más fluida",
       "desc": "Hemos corregido errores y añadido pequeñas mejoras para que FreeLingo sea más estable y agradable de usar."
     }

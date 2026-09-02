@@ -1427,7 +1427,7 @@
     "openSourceCta": "Vezi pe GitHub",
     "planFreeBadge": "Gratuit pentru totdeauna",
     "priceAmount": "{amount} lei",
-    "pricePerPeriod": " lei/{period}",
+    "pricePerPeriod": "/ {period}",
     "priceOriginal": "{price} lei / {period}",
     "planFreeDesc": "Probă completă de 7 zile, apoi gratuit cu limite zilnice și săptămânale",
     "planFreeCta": "Începe",
@@ -1446,21 +1446,9 @@
   },
   "whatsNew": {
     "title": "Noutăți",
-    "version": "v1.8.45",
+    "version": "v1.8.50",
     "cta": "Am înțeles",
     "entry1": {
-      "label": "Amintiri care te însoțesc",
-      "desc": "Lingu poate acum să rețină detalii utile în toate limbile pe care le studiezi, atât în chat, cât și în conversațiile vocale."
-    },
-    "entry2": {
-      "label": "Tu deții controlul",
-      "desc": "Adaugă propriile amintiri sau consultă-le, șterge-le și golește-le oricând din Setări. Eliminarea unei limbi îți păstrează amintirile."
-    },
-    "entry3": {
-      "label": "Lecțiile tale, mereu accesibile",
-      "desc": "În Planul meu poți începe lecția curentă, continua lecțiile omise sau revizui lecțiile finalizate cu răspunsurile și feedbackul salvate."
-    },
-    "entry4": {
       "label": "O experiență mai fluidă",
       "desc": "Remedierile de erori și micile îmbunătățiri fac FreeLingo mai stabil și mai plăcut de utilizat."
     }
