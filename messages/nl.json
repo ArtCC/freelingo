@@ -1428,7 +1428,7 @@
     "openSourceCta": "Bekijk op GitHub",
     "planFreeBadge": "Voor altijd gratis",
     "priceAmount": "€{amount}",
-    "pricePerPeriod": "€ / {period}",
+    "pricePerPeriod": "/ {period}",
     "priceOriginal": "€{price} / {period}",
     "planFreeDesc": "7 dagen volledige proefperiode, daarna gratis met dagelijkse en wekelijkse limieten",
     "planFreeCta": "Beginnen",
@@ -1447,21 +1447,9 @@
   },
   "whatsNew": {
     "title": "Nieuw",
-    "version": "v1.8.45",
+    "version": "v1.8.50",
     "cta": "Begrepen",
     "entry1": {
-      "label": "Herinneringen die met je meegaan",
-      "desc": "Lingu kan nu nuttige details onthouden in alle talen die je leert, zowel in chat als in spraakgesprekken."
-    },
-    "entry2": {
-      "label": "Jij houdt de controle",
-      "desc": "Voeg zelf herinneringen toe of bekijk, verwijder en wis ze wanneer je wilt in Instellingen. Als je een leertaal verwijdert, blijven je herinneringen behouden."
-    },
-    "entry3": {
-      "label": "Je lessen, altijd toegankelijk",
-      "desc": "In Mijn plan kun je je huidige les starten, overgeslagen lessen voortzetten of voltooide lessen bekijken met je opgeslagen antwoorden en feedback."
-    },
-    "entry4": {
       "label": "Een soepelere ervaring",
       "desc": "Bugfixes en kleine verbeteringen maken FreeLingo betrouwbaarder en prettiger in gebruik."
     }

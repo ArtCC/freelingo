@@ -1428,7 +1428,7 @@
     "openSourceCta": "Auf GitHub ansehen",
     "planFreeBadge": "Für immer kostenlos",
     "priceAmount": "{amount}€",
-    "pricePerPeriod": "€/{period}",
+    "pricePerPeriod": "/ {period}",
     "priceOriginal": "{price}€ / {period}",
     "planFreeDesc": "7 Tage volle Testphase, dann kostenlos mit täglichen und wöchentlichen Limits",
     "planFreeCta": "Starten",
@@ -1447,21 +1447,9 @@
   },
   "whatsNew": {
     "title": "Neuigkeiten",
-    "version": "v1.8.45",
+    "version": "v1.8.50",
     "cta": "Verstanden",
     "entry1": {
-      "label": "Erinnerungen, die dich begleiten",
-      "desc": "Lingu kann sich jetzt im Chat und in Sprachgesprächen über alle deine Lernsprachen hinweg an nützliche Details erinnern."
-    },
-    "entry2": {
-      "label": "Du hast die Kontrolle",
-      "desc": "Füge eigene Erinnerungen hinzu oder prüfe, lösche und leere sie jederzeit in den Einstellungen. Beim Entfernen einer Lernsprache bleiben deine Erinnerungen erhalten."
-    },
-    "entry3": {
-      "label": "Deine Lektionen, immer verfügbar",
-      "desc": "In Mein Plan kannst du deine aktuelle Lektion starten, übersprungene Lektionen fortsetzen oder abgeschlossene Lektionen mit deinen gespeicherten Antworten und Rückmeldungen ansehen."
-    },
-    "entry4": {
       "label": "Ein flüssigeres Erlebnis",
       "desc": "Fehlerbehebungen und kleine Verbesserungen machen FreeLingo zuverlässiger und angenehmer in der Nutzung."
     }
