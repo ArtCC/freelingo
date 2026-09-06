@@ -588,14 +588,17 @@ export default function ConversationMode({
         audioCtxRef.current = null
       }
       setSessionActive(false)
+      dismissTooltip()
     },
-    [vad]
+    [vad, dismissTooltip]
   )
 
-  // Auto-scroll transcript to bottom
+  // Auto-scroll transcript to bottom. Any transcript mutation moves the bubbles,
+  // so a word tooltip anchored to old viewport coordinates is dropped with it.
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [transcript, streamingText])
+    dismissTooltip()
+  }, [transcript, streamingText, dismissTooltip])
 
   // ─── Auto-start when opened as overlay from chat ────────────────────────
   const pendingAutoStartRef = useRef(false)
@@ -871,6 +874,7 @@ export default function ConversationMode({
     setAssistantSpeaking(false)
     setTranscript([])
     setStreamingText(null)
+    dismissTooltip()
     setWarningSeconds(null)
     setErrorMsg(null)
     setUserSpeaking(false)

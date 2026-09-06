@@ -183,6 +183,126 @@ describe('useWordSave', () => {
     expect(result.current.saveState).toBe('idle')
   })
 
+  it('ignores the response for a previous selection when B is selected while A is pending', async () => {
+    vi.useFakeTimers()
+    mockSelection('perro')
+    const { result } = renderHook(() => useWordSave())
+
+    act(() => {
+      result.current.handleTextSelection('El perro corre')
+    })
+    act(() => {
+      vi.advanceTimersByTime(0)
+    })
+    expect(result.current.selectedWord).toBe('perro')
+
+    let resolveA: (value: unknown) => void = () => {}
+    mockApiFetch.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveA = resolve
+      })
+    )
+    let savePromise: Promise<void>
+    act(() => {
+      savePromise = result.current.handleSaveWord()
+    })
+    expect(result.current.saveState).toBe('saving')
+
+    // Select B while A is still in flight
+    mockSelection('gato')
+    act(() => {
+      result.current.handleTextSelection('El gato duerme')
+    })
+    act(() => {
+      vi.advanceTimersByTime(0)
+    })
+    expect(result.current.selectedWord).toBe('gato')
+    expect(result.current.saveState).toBe('idle')
+
+    // A resolves late: it must not touch B
+    await act(async () => {
+      resolveA({ ok: true, json: async () => ({ already_saved: true }) })
+      await savePromise
+    })
+    expect(result.current.selectedWord).toBe('gato')
+    expect(result.current.saveState).toBe('idle')
+
+    // ...and A's auto-dismiss timer must not close B either
+    act(() => {
+      vi.advanceTimersByTime(1500)
+    })
+    expect(result.current.selectedWord).toBe('gato')
+  })
+
+  it('ignores a pending response after the tooltip was dismissed', async () => {
+    mockSelection('perro')
+    const { result } = renderHook(() => useWordSave())
+
+    await act(async () => {
+      result.current.handleTextSelection('El perro corre')
+      await new Promise((r) => setTimeout(r, 0))
+    })
+
+    let resolveA: (value: unknown) => void = () => {}
+    mockApiFetch.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveA = resolve
+      })
+    )
+    let savePromise: Promise<void>
+    act(() => {
+      savePromise = result.current.handleSaveWord()
+    })
+    act(() => {
+      result.current.dismissTooltip()
+    })
+
+    await act(async () => {
+      resolveA({ ok: true, json: async () => ({ already_saved: false }) })
+      await savePromise
+    })
+    expect(result.current.selectedWord).toBeNull()
+    expect(result.current.saveState).toBe('idle')
+  })
+
+  it('clears the pending auto-dismiss timer when a new word is selected', async () => {
+    vi.useFakeTimers()
+    mockSelection('perro')
+    const { result } = renderHook(() => useWordSave())
+
+    act(() => {
+      result.current.handleTextSelection('El perro corre')
+    })
+    act(() => {
+      vi.advanceTimersByTime(0)
+    })
+
+    mockApiFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ already_saved: false }),
+    })
+    await act(async () => {
+      await result.current.handleSaveWord()
+    })
+    expect(result.current.saveState).toBe('saved')
+
+    // New selection before the 1500ms dismiss fires
+    mockSelection('gato')
+    act(() => {
+      result.current.handleTextSelection('El gato duerme')
+    })
+    act(() => {
+      vi.advanceTimersByTime(0)
+    })
+    expect(result.current.selectedWord).toBe('gato')
+
+    act(() => {
+      vi.advanceTimersByTime(1500)
+    })
+    expect(result.current.selectedWord).toBe('gato')
+    expect(result.current.saveState).toBe('idle')
+  })
+
   it('sets saveState to error when the request fails', async () => {
     mockSelection('perro')
     const { result } = renderHook(() => useWordSave())

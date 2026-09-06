@@ -39,22 +39,48 @@ def _normalize_flashcard_word(value: str) -> str:
     return re.sub(r"\s+", " ", value.strip().lower())
 
 
-async def _index_existing_words_by_id(
-    db: AsyncSession, user_id: int, study_plan_id: int
-) -> dict[str, int]:
-    """Map normalized word -> flashcard id for a user's plan (first wins)."""
-    existing = await db.execute(
-        select(Flashcard.id, Flashcard.word).where(
+async def _find_existing_flashcard(
+    db: AsyncSession, user_id: int, study_plan_id: int, word: str
+) -> Flashcard | None:
+    """Return the oldest card in the plan whose word matches `word` case-insensitively.
+
+    Matching is done in SQL (`lower(trim(word))`) so a save never materializes the
+    whole plan. Ordering by id makes the winner deterministic when duplicates already
+    exist.
+    """
+    normalized = _normalize_flashcard_word(word)
+    if not normalized:
+        return None
+    result = await db.execute(
+        select(Flashcard)
+        .where(
             Flashcard.user_id == user_id,
             Flashcard.study_plan_id == study_plan_id,
+            func.lower(func.trim(Flashcard.word)) == normalized,
         )
+        .order_by(Flashcard.id)
+        .limit(1)
     )
-    index: dict[str, int] = {}
-    for card_id, word in existing.all():
-        normalized = _normalize_flashcard_word(word)
-        if normalized not in index:
-            index[normalized] = card_id
-    return index
+    return result.scalar_one_or_none()
+
+
+async def _respond_with_existing_flashcard(
+    db: AsyncSession, card: Flashcard
+) -> FlashcardFromWordResponse:
+    """Build the from-word response for a card that already exists in the plan.
+
+    `already_saved` means "already visible in My Vocabulary" (source == from_text).
+    A generated or imported card is promoted to from_text instead of duplicated, so
+    the word shows up in the vocabulary list and the UI reports a fresh save.
+    """
+    already_saved = card.source == "from_text"
+    if not already_saved:
+        card.source = "from_text"
+        await db.commit()
+        await db.refresh(card)
+    resp = FlashcardFromWordResponse.model_validate(card)
+    resp.already_saved = already_saved
+    return resp
 
 
 async def _get_active_plan_or_404(db: AsyncSession, user_id: int) -> StudyPlan:
@@ -299,14 +325,9 @@ async def create_flashcard_from_word(
     db: AsyncSession = Depends(get_db),
 ):
     plan = await _get_active_plan_or_404(db, current_user.id)
-    existing_by_word = await _index_existing_words_by_id(db, current_user.id, plan.id)
-
-    normalized_input = _normalize_flashcard_word(data.word)
-    if normalized_input in existing_by_word:
-        card = await db.get(Flashcard, existing_by_word[normalized_input])
-        resp = FlashcardFromWordResponse.model_validate(card)
-        resp.already_saved = True
-        return resp
+    existing = await _find_existing_flashcard(db, current_user.id, plan.id, data.word)
+    if existing is not None:
+        return await _respond_with_existing_flashcard(db, existing)
 
     try:
         card_data = await lookup_word(
@@ -332,15 +353,13 @@ async def create_flashcard_from_word(
             detail="ai_service_error",
         )
 
-    # Re-query fresh to narrow the race window opened by the LLM call above:
-    # another request may have saved this word while we were waiting.
-    existing_by_word = await _index_existing_words_by_id(db, current_user.id, plan.id)
-    normalized_result = _normalize_flashcard_word(card_data.word)
-    if normalized_result in existing_by_word:
-        card = await db.get(Flashcard, existing_by_word[normalized_result])
-        resp = FlashcardFromWordResponse.model_validate(card)
-        resp.already_saved = True
-        return resp
+    # Re-check with the canonical form returned by the LLM (it may differ from the
+    # selected surface form), which also narrows the race window opened by the LLM
+    # call. Deduplication stays best-effort: two concurrent inserts can still both
+    # pass this check.
+    existing = await _find_existing_flashcard(db, current_user.id, plan.id, card_data.word)
+    if existing is not None:
+        return await _respond_with_existing_flashcard(db, existing)
 
     card = Flashcard(
         user_id=current_user.id,
