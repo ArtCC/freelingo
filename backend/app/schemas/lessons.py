@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Self
 
-from pydantic import BaseModel, field_serializer, model_validator
+from pydantic import BaseModel, field_serializer, field_validator, model_validator
 
 
 class ExerciseContent(BaseModel):
@@ -88,6 +88,7 @@ class ExerciseResponse(BaseModel):
     user_answer: str | None = None
     score: float | None = None
     feedback: str | None = None
+    corrections: list[FreeWriteCorrection] | None = None
     explanation: str | None = None
     native_explanation: str | None = None
     native_hint: str | None = None
@@ -109,17 +110,52 @@ class ExerciseAnswerRequest(BaseModel):
     answer: str
 
 
+class FreeWriteCorrection(BaseModel):
+    original: str
+    corrected: str
+    explanation: str = ""
+
+
 class ExerciseAnswerResponse(BaseModel):
     id: int
     score: float
     feedback: str
     correct_answer: str
+    corrections: list[FreeWriteCorrection] | None = None
+
+
+def _is_usable_correction(item: object) -> bool:
+    if isinstance(item, FreeWriteCorrection):
+        return bool(item.original.strip()) and bool(item.corrected.strip())
+    if not isinstance(item, dict):
+        return False
+    original = item.get("original")
+    corrected = item.get("corrected")
+    return (
+        isinstance(original, str)
+        and bool(original.strip())
+        and isinstance(corrected, str)
+        and bool(corrected.strip())
+    )
 
 
 class FreeWriteEvaluation(BaseModel):
     score: float
     feedback: str
-    corrections: list[dict]
+    corrections: list[FreeWriteCorrection]
+
+    @field_validator("corrections", mode="before")
+    @classmethod
+    def drop_unusable_corrections(cls, value: object) -> object:
+        """Discard LLM correction objects without a nonblank original/corrected pair.
+
+        The prompt is answered in plain JSON mode, so a malformed entry is only
+        detected here; dropping it keeps the rest of the evaluation usable instead
+        of failing the whole response and falling back to an unevaluated score.
+        """
+        if not isinstance(value, list):
+            return value
+        return [item for item in value if _is_usable_correction(item)]
 
 
 class FillBlankEvaluation(BaseModel):

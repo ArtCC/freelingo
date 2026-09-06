@@ -22,6 +22,7 @@ from app.schemas.lessons import (
     ExerciseAnswerRequest,
     ExerciseAnswerResponse,
     ExerciseResponse,
+    FreeWriteCorrection,
     LessonDetailResponse,
     LessonResponse,
     NativeExerciseExplanationResponse,
@@ -251,6 +252,7 @@ async def get_lesson(
                 user_answer=ex.user_answer,
                 score=ex.score,
                 feedback=ex.feedback,
+                corrections=ex.corrections,
                 explanation=exp,
                 native_explanation=native_exp if isinstance(native_exp, str) else None,
                 native_hint=native_hint if isinstance(native_hint, str) else None,
@@ -392,8 +394,17 @@ async def answer_exercise(
                 if hasattr(eval_result, "feedback")
                 else eval_result["feedback"]
             )
+            corr = (
+                eval_result.corrections
+                if hasattr(eval_result, "corrections")
+                else eval_result.get("corrections") or []
+            )
             exercise.score = sco
             exercise.feedback = fb
+            exercise.corrections = [
+                item.model_dump() if isinstance(item, FreeWriteCorrection) else item
+                for item in corr
+            ] or None
         except LLMTimeoutError, LLMUnavailableError, LLMError:
             exercise.score = 0.5
             exercise.feedback = _answer_feedback(
@@ -499,6 +510,7 @@ async def answer_exercise(
         score=exercise.score,
         feedback=exercise.feedback,
         correct_answer=exercise.correct_answer,
+        corrections=exercise.corrections,
     )
 
 
