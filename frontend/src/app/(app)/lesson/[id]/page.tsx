@@ -301,6 +301,13 @@ export default function LessonPage() {
     setRegenerateError(null)
   }, [currentExercise, exercises])
 
+  // Drop the word tooltip only when navigating between exercises. Answering,
+  // regenerating, or loading a hint replaces items in `exercises` without
+  // changing the active question, and must not close a tooltip mid-save.
+  useEffect(() => {
+    dismissTooltip()
+  }, [currentExercise, dismissTooltip])
+
   async function submitAnswer(overrideAnswer?: string) {
     if (isReview) return
     const finalAnswer = overrideAnswer ?? answer
@@ -827,7 +834,13 @@ export default function LessonPage() {
               <TargetLanguageText
                 as="p"
                 languageCode={targetLanguageCode}
-                className="text-fl-fg"
+                className="text-fl-fg word-selectable cursor-text select-text"
+                onPointerUp={() =>
+                  handleTextSelection(
+                    exercise.question,
+                    lesson?.cefr_level ?? 'B1'
+                  )
+                }
               >
                 {exercise.question}
               </TargetLanguageText>
@@ -1216,6 +1229,7 @@ export default function LessonPage() {
           labels={{
             saveWord: tCommon('saveWord'),
             wordSaved: tCommon('wordSaved'),
+            wordAlreadySaved: tCommon('wordAlreadySaved'),
             wordSaveError: tCommon('wordSaveError'),
           }}
         />

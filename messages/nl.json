@@ -75,6 +75,7 @@
     "resendVerification": "Verificatie-e-mail opnieuw verzenden",
     "saveWord": "Opslaan",
     "wordSaved": "Opgeslagen",
+    "wordAlreadySaved": "Al opgeslagen",
     "wordSaveError": "Er is een probleem opgetreden",
     "selectWordHint": "Selecteer een woord om het op te slaan in je woordenschat",
     "noActivePlan": "Geen actief studieplan gevonden",

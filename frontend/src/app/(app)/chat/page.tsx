@@ -613,6 +613,7 @@ export default function ChatPage() {
             labels={{
               saveWord: tCommon('saveWord'),
               wordSaved: tCommon('wordSaved'),
+              wordAlreadySaved: tCommon('wordAlreadySaved'),
               wordSaveError: tCommon('wordSaveError'),
             }}
           />

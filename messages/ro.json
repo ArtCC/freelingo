@@ -75,6 +75,7 @@
     "resendVerification": "Retrimite e-mail de verificare",
     "saveWord": "Salvează",
     "wordSaved": "Salvat",
+    "wordAlreadySaved": "Deja salvat",
     "wordSaveError": "A apărut o problemă",
     "selectWordHint": "Selectează un cuvânt pentru a-l salva în vocabularul tău",
     "noActivePlan": "Nu a fost găsit niciun plan de studiu activ",

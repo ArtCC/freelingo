@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { apiFetch } from '@/lib/api'
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+export type SaveState = 'idle' | 'saving' | 'saved' | 'exists' | 'error'
 
 export interface TooltipPos {
   x: number
@@ -31,7 +31,12 @@ export function WordTooltip({
   saveState: SaveState
   onSave: () => void
   onDismiss: () => void
-  labels: { saveWord: string; wordSaved: string; wordSaveError: string }
+  labels: {
+    saveWord: string
+    wordSaved: string
+    wordAlreadySaved: string
+    wordSaveError: string
+  }
 }) {
   return (
     <div
@@ -56,6 +61,11 @@ export function WordTooltip({
         {saveState === 'saved' && (
           <span className="tracking-widest text-green-400 uppercase">
             ✓ {labels.wordSaved}
+          </span>
+        )}
+        {saveState === 'exists' && (
+          <span className="text-fl-muted-2 tracking-widest uppercase">
+            ✓ {labels.wordAlreadySaved}
           </span>
         )}
         {saveState === 'error' && (
@@ -87,12 +97,35 @@ export function useWordSave() {
   const [selectedCefrLevel, setSelectedCefrLevel] = useState('B1')
   const [tooltipPos, setTooltipPos] = useState<TooltipPos>({ x: 0, y: 0 })
   const [saveState, setSaveState] = useState<SaveState>('idle')
+  // Every new selection (or dismissal) bumps this id. A save request captures the
+  // id it started with and ignores its response if the selection changed meanwhile,
+  // so a slow save for word A can never mark word B as saved.
+  const selectionIdRef = useRef(0)
+  const dismissTimerRef = useRef<number | null>(null)
+  // True while a tooltip is open. dismissTooltip() is also called from effects
+  // that fire on unrelated updates (e.g. streaming tokens), so the browser
+  // selection is only cleared when it was ours to begin with.
+  const hasSelectionRef = useRef(false)
+
+  const clearDismissTimer = useCallback(() => {
+    if (dismissTimerRef.current !== null) {
+      window.clearTimeout(dismissTimerRef.current)
+      dismissTimerRef.current = null
+    }
+  }, [])
 
   const dismissTooltip = useCallback(() => {
+    selectionIdRef.current++
+    clearDismissTimer()
     setSelectedWord(null)
     setSaveState('idle')
-    window.getSelection()?.removeAllRanges()
-  }, [])
+    if (hasSelectionRef.current) {
+      hasSelectionRef.current = false
+      window.getSelection()?.removeAllRanges()
+    }
+  }, [clearDismissTimer])
+
+  useEffect(() => clearDismissTimer, [clearDismissTimer])
 
   function handleTextSelection(context: string, cefrLevel = 'B1') {
     window.setTimeout(() => {
@@ -107,6 +140,9 @@ export function useWordSave() {
 
       const range = selection.getRangeAt(0)
       const rect = range.getBoundingClientRect()
+      selectionIdRef.current++
+      clearDismissTimer()
+      hasSelectionRef.current = true
       setSelectedContext(context)
       setSelectedCefrLevel(cefrLevel)
       setSelectedWord(raw)
@@ -120,6 +156,7 @@ export function useWordSave() {
 
   async function handleSaveWord() {
     if (!selectedWord) return
+    const selectionId = selectionIdRef.current
     setSaveState('saving')
     try {
       const res = await apiFetch('/api/flashcards/from-word', {
@@ -132,9 +169,16 @@ export function useWordSave() {
         }),
       })
       if (!res.ok) throw new Error()
-      setSaveState('saved')
-      setTimeout(() => dismissTooltip(), 1500)
+      const data = await res.json()
+      if (selectionId !== selectionIdRef.current) return
+      setSaveState(data.already_saved ? 'exists' : 'saved')
+      clearDismissTimer()
+      dismissTimerRef.current = window.setTimeout(() => {
+        dismissTimerRef.current = null
+        if (selectionId === selectionIdRef.current) dismissTooltip()
+      }, 1500)
     } catch {
+      if (selectionId !== selectionIdRef.current) return
       setSaveState('error')
     }
   }

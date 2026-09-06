@@ -679,6 +679,7 @@ function ReadingPage() {
               labels={{
                 saveWord: tCommon('saveWord'),
                 wordSaved: tCommon('wordSaved'),
+                wordAlreadySaved: tCommon('wordAlreadySaved'),
                 wordSaveError: tCommon('wordSaveError'),
               }}
             />

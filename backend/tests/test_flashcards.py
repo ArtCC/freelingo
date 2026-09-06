@@ -358,3 +358,360 @@ async def test_create_flashcard_from_word(client, test_user, db_session, monkeyp
     assert data["word"] == "fleeting"
     assert data["source"] == "from_text"
     assert data["definition"] == "lasting a very short time"
+    assert data["already_saved"] is False
+
+
+@pytest.mark.asyncio
+async def test_create_flashcard_from_word_existing_input_word_skips_llm(
+    client, test_user, db_session, monkeypatch
+):
+    user, headers = test_user
+    plan = await _seed_plan(db_session, user.id)
+
+    from app.models.flashcard import Flashcard
+
+    existing = Flashcard(
+        user_id=user.id,
+        study_plan_id=plan.id,
+        word="Fleeting ",
+        definition="lasting a very short time",
+        example_sentence="The fame was fleeting.",
+        translation="efímero",
+        source="from_text",
+    )
+    db_session.add(existing)
+    await db_session.commit()
+    await db_session.refresh(existing)
+
+    async def mock_lookup_word(**kwargs):  # noqa: ANN002
+        raise AssertionError("lookup_word should not be called")
+
+    import app.routers.flashcards as fc_router
+
+    monkeypatch.setattr(fc_router, "lookup_word", mock_lookup_word)
+
+    response = await client.post(
+        "/api/flashcards/from-word",
+        headers=headers,
+        json={"word": "fleeting", "context": "", "cefr_level": "B1"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["already_saved"] is True
+    assert data["id"] == existing.id
+
+    from sqlalchemy import func, select
+
+    count_result = await db_session.execute(
+        select(func.count(Flashcard.id)).where(Flashcard.user_id == user.id)
+    )
+    assert count_result.scalar() == 1
+
+
+@pytest.mark.asyncio
+async def test_create_flashcard_from_word_lemma_collision_skips_insert(
+    client, test_user, db_session, monkeypatch
+):
+    user, headers = test_user
+    plan = await _seed_plan(db_session, user.id)
+
+    from app.models.flashcard import Flashcard
+
+    existing = Flashcard(
+        user_id=user.id,
+        study_plan_id=plan.id,
+        word="run",
+        definition="to move fast",
+        example_sentence="I run every day.",
+        translation="correr",
+        source="from_text",
+    )
+    db_session.add(existing)
+    await db_session.commit()
+    await db_session.refresh(existing)
+
+    from app.schemas.flashcards import FlashcardCreate
+
+    async def mock_lookup_word(**kwargs):  # noqa: ANN002
+        return FlashcardCreate(
+            word="run",
+            definition="to move fast",
+            example_sentence="I was running.",
+            translation="correr",
+        )
+
+    import app.routers.flashcards as fc_router
+
+    monkeypatch.setattr(fc_router, "lookup_word", mock_lookup_word)
+
+    response = await client.post(
+        "/api/flashcards/from-word",
+        headers=headers,
+        json={"word": "running", "context": "I was running.", "cefr_level": "B1"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["already_saved"] is True
+    assert data["id"] == existing.id
+    assert data["word"] == "run"
+
+    from sqlalchemy import func, select
+
+    count_result = await db_session.execute(
+        select(func.count(Flashcard.id)).where(Flashcard.user_id == user.id)
+    )
+    assert count_result.scalar() == 1
+
+
+@pytest.mark.asyncio
+async def test_create_flashcard_from_word_other_plan_does_not_suppress_save(
+    client, test_user, db_session, monkeypatch
+):
+    user, headers = test_user
+    await _seed_plan(db_session, user.id)
+    other_plan = await _seed_plan(db_session, user.id, target_language="it-IT", is_active=False)
+
+    from app.models.flashcard import Flashcard
+
+    other_plan_card = Flashcard(
+        user_id=user.id,
+        study_plan_id=other_plan.id,
+        word="fleeting",
+        definition="lasting a very short time",
+        example_sentence="The fame was fleeting.",
+        translation="fugace",
+        source="from_text",
+    )
+    db_session.add(other_plan_card)
+    await db_session.commit()
+
+    from app.schemas.flashcards import FlashcardCreate
+
+    async def mock_lookup_word(**kwargs):  # noqa: ANN002
+        return FlashcardCreate(
+            word=kwargs["word"],
+            definition="lasting a very short time",
+            example_sentence="The fame was fleeting.",
+            translation="efímero",
+        )
+
+    import app.routers.flashcards as fc_router
+
+    monkeypatch.setattr(fc_router, "lookup_word", mock_lookup_word)
+
+    response = await client.post(
+        "/api/flashcards/from-word",
+        headers=headers,
+        json={"word": "fleeting", "context": "", "cefr_level": "B1"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["already_saved"] is False
+
+    from sqlalchemy import func, select
+
+    count_result = await db_session.execute(
+        select(func.count(Flashcard.id)).where(Flashcard.user_id == user.id)
+    )
+    assert count_result.scalar() == 2
+
+
+@pytest.mark.asyncio
+async def test_create_flashcard_from_word_fresh_word_inserts(
+    client, test_user, db_session, monkeypatch
+):
+    user, headers = test_user
+    await _seed_plan(db_session, user.id)
+
+    from app.schemas.flashcards import FlashcardCreate
+
+    async def mock_lookup_word(**kwargs):  # noqa: ANN002
+        return FlashcardCreate(
+            word=kwargs["word"],
+            definition="a state of being alone",
+            example_sentence="She enjoyed the solitude.",
+            translation="soledad",
+        )
+
+    import app.routers.flashcards as fc_router
+
+    monkeypatch.setattr(fc_router, "lookup_word", mock_lookup_word)
+
+    response = await client.post(
+        "/api/flashcards/from-word",
+        headers=headers,
+        json={"word": "solitude", "context": "", "cefr_level": "B1"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["already_saved"] is False
+    assert data["word"] == "solitude"
+
+    from sqlalchemy import func, select
+
+    from app.models.flashcard import Flashcard
+
+    count_result = await db_session.execute(
+        select(func.count(Flashcard.id)).where(Flashcard.user_id == user.id)
+    )
+    assert count_result.scalar() == 1
+
+
+@pytest.mark.asyncio
+async def test_create_flashcard_from_word_generated_card_collision_promotes_source(
+    client, test_user, db_session, monkeypatch
+):
+    """A generated/imported card (source=None) is not in My Vocabulary yet: saving the
+    same word promotes it to from_text instead of duplicating it or reporting it as
+    already saved."""
+    user, headers = test_user
+    plan = await _seed_plan(db_session, user.id)
+
+    from app.models.flashcard import Flashcard
+
+    generated = Flashcard(
+        user_id=user.id,
+        study_plan_id=plan.id,
+        word="Harbor",
+        definition="a sheltered port",
+        example_sentence="The ship entered the harbor.",
+        translation="puerto",
+        source=None,
+    )
+    db_session.add(generated)
+    await db_session.commit()
+    await db_session.refresh(generated)
+
+    async def mock_lookup_word(**kwargs):  # noqa: ANN002
+        raise AssertionError("lookup_word should not be called")
+
+    import app.routers.flashcards as fc_router
+
+    monkeypatch.setattr(fc_router, "lookup_word", mock_lookup_word)
+
+    before = await client.get("/api/flashcards/vocabulary", headers=headers)
+    assert before.json()["total"] == 0
+
+    response = await client.post(
+        "/api/flashcards/from-word",
+        headers=headers,
+        json={"word": "harbor", "context": "", "cefr_level": "B1"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == generated.id
+    assert data["already_saved"] is False
+    assert data["source"] == "from_text"
+
+    after = await client.get("/api/flashcards/vocabulary", headers=headers)
+    assert [item["id"] for item in after.json()["items"]] == [generated.id]
+
+    from sqlalchemy import func, select
+
+    count_result = await db_session.execute(
+        select(func.count(Flashcard.id)).where(Flashcard.user_id == user.id)
+    )
+    assert count_result.scalar() == 1
+
+
+@pytest.mark.asyncio
+async def test_create_flashcard_from_word_lemma_collision_with_generated_card_promotes(
+    client, test_user, db_session, monkeypatch
+):
+    """The post-LLM check follows the same promotion rule as the pre-LLM one."""
+    user, headers = test_user
+    plan = await _seed_plan(db_session, user.id)
+
+    from app.models.flashcard import Flashcard
+
+    generated = Flashcard(
+        user_id=user.id,
+        study_plan_id=plan.id,
+        word="run",
+        definition="to move fast",
+        example_sentence="I run every day.",
+        translation="correr",
+        source=None,
+    )
+    db_session.add(generated)
+    await db_session.commit()
+    await db_session.refresh(generated)
+
+    from app.schemas.flashcards import FlashcardCreate
+
+    async def mock_lookup_word(**kwargs):  # noqa: ANN002
+        return FlashcardCreate(
+            word="run",
+            definition="to move fast",
+            example_sentence="I was running.",
+            translation="correr",
+        )
+
+    import app.routers.flashcards as fc_router
+
+    monkeypatch.setattr(fc_router, "lookup_word", mock_lookup_word)
+
+    response = await client.post(
+        "/api/flashcards/from-word",
+        headers=headers,
+        json={"word": "running", "context": "I was running.", "cefr_level": "B1"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == generated.id
+    assert data["already_saved"] is False
+    assert data["source"] == "from_text"
+
+    from sqlalchemy import func, select
+
+    count_result = await db_session.execute(
+        select(func.count(Flashcard.id)).where(Flashcard.user_id == user.id)
+    )
+    assert count_result.scalar() == 1
+
+
+@pytest.mark.asyncio
+async def test_create_flashcard_from_word_existing_duplicates_return_oldest(
+    client, test_user, db_session, monkeypatch
+):
+    """When duplicates already exist in the plan, the lowest id wins deterministically."""
+    user, headers = test_user
+    plan = await _seed_plan(db_session, user.id)
+
+    from app.models.flashcard import Flashcard
+
+    cards = [
+        Flashcard(
+            user_id=user.id,
+            study_plan_id=plan.id,
+            word=word,
+            definition="a sheltered port",
+            example_sentence="The ship entered the harbor.",
+            translation="puerto",
+            source="from_text",
+        )
+        for word in ("harbor", "Harbor", " HARBOR ")
+    ]
+    db_session.add_all(cards)
+    await db_session.commit()
+    for card in cards:
+        await db_session.refresh(card)
+    oldest_id = min(card.id for card in cards)
+
+    async def mock_lookup_word(**kwargs):  # noqa: ANN002
+        raise AssertionError("lookup_word should not be called")
+
+    import app.routers.flashcards as fc_router
+
+    monkeypatch.setattr(fc_router, "lookup_word", mock_lookup_word)
+
+    for _ in range(3):
+        response = await client.post(
+            "/api/flashcards/from-word",
+            headers=headers,
+            json={"word": "harbor", "context": "", "cefr_level": "B1"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == oldest_id
+        assert data["already_saved"] is True
