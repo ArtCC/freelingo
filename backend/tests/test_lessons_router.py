@@ -9,6 +9,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from pydantic import ValidationError
 
 from app.schemas.lessons import (
     FillBlankEvaluation,
@@ -1068,6 +1069,77 @@ async def test_answer_free_write_returns_and_persists_corrections(client, test_u
     assert detail.status_code == 200
     detail_exercise = detail.json()["exercises"][0]
     assert detail_exercise["corrections"] == data["corrections"]
+
+
+def test_free_write_evaluation_drops_unusable_corrections():
+    """Malformed correction objects from the LLM are discarded, not persisted."""
+    evaluation = FreeWriteEvaluation.model_validate(
+        {
+            "score": 0.7,
+            "feedback": "Almost.",
+            "corrections": [
+                {},
+                {"original": "foo"},
+                {"original": "   ", "corrected": "bar"},
+                {"original": "foo", "corrected": None},
+                "not an object",
+                {"original": "mit auto", "corrected": "mit dem Auto"},
+            ],
+        }
+    )
+
+    assert [c.model_dump() for c in evaluation.corrections] == [
+        {"original": "mit auto", "corrected": "mit dem Auto", "explanation": ""}
+    ]
+
+
+def test_free_write_correction_requires_original_and_corrected():
+    """A correction cannot be built without both text fields."""
+    with pytest.raises(ValidationError):
+        FreeWriteCorrection(original="foo")
+    with pytest.raises(ValidationError):
+        FreeWriteCorrection(corrected="bar")
+
+
+@pytest.mark.asyncio
+async def test_answer_free_write_persists_only_usable_corrections(client, test_user, db_session):
+    """Incomplete correction objects never reach the response or the database."""
+    user, headers = test_user
+    lesson, exercise = await _create_lesson_with_exercise(
+        db_session,
+        user.id,
+        exercise_type="free_write",
+        question="Describe your last trip.",
+        options=["grammar"],
+        correct_answer="Sample answer.",
+    )
+
+    mock_eval = AsyncMock(
+        return_value=FreeWriteEvaluation(
+            score=0.8,
+            feedback="Good.",
+            corrections=[
+                {"original": "abenteuer"},
+                {"original": "", "corrected": "Abenteuer"},
+                {"original": "mit auto", "corrected": "mit dem Auto"},
+            ],
+        )
+    )
+
+    with patch("app.routers.lessons.evaluate_free_write", mock_eval):
+        response = await client.post(
+            f"/api/lessons/exercises/{exercise.id}/answer",
+            headers=headers,
+            json={"answer": "Ich bin mit auto gefahren."},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["corrections"] == [
+        {"original": "mit auto", "corrected": "mit dem Auto", "explanation": ""}
+    ]
+
+    detail = await client.get(f"/api/lessons/{lesson.id}", headers=headers)
+    assert detail.json()["exercises"][0]["corrections"] == response.json()["corrections"]
 
 
 @pytest.mark.asyncio

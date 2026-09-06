@@ -503,14 +503,17 @@ export default function LessonPage() {
   const exercise = exercises[currentExercise]
   const isEvaluated = exercise?.score !== null
   const isAnswerCorrect = (exercise?.score ?? 0) >= 1
+  const exerciseCorrections = (exercise?.corrections ?? []).filter(
+    (c) => c.original && c.corrected
+  )
+  // Amber only when the evaluator returned corrections with a partial score.
+  // The LLM-unavailable fallback (score 0.5, no corrections) stays red/✕.
   const isPartiallyCorrect =
     exercise?.exercise_type === 'free_write' &&
     isEvaluated &&
     !isAnswerCorrect &&
-    (exercise?.score ?? 0) > 0
-  const exerciseCorrections = (exercise?.corrections ?? []).filter(
-    (c) => c.original || c.corrected
-  )
+    (exercise?.score ?? 0) > 0 &&
+    exerciseCorrections.length > 0
   const answerSegments =
     exercise?.exercise_type === 'free_write' &&
     isEvaluated &&
