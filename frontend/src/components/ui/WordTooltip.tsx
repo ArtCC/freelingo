@@ -102,6 +102,10 @@ export function useWordSave() {
   // so a slow save for word A can never mark word B as saved.
   const selectionIdRef = useRef(0)
   const dismissTimerRef = useRef<number | null>(null)
+  // True while a tooltip is open. dismissTooltip() is also called from effects
+  // that fire on unrelated updates (e.g. streaming tokens), so the browser
+  // selection is only cleared when it was ours to begin with.
+  const hasSelectionRef = useRef(false)
 
   const clearDismissTimer = useCallback(() => {
     if (dismissTimerRef.current !== null) {
@@ -115,7 +119,10 @@ export function useWordSave() {
     clearDismissTimer()
     setSelectedWord(null)
     setSaveState('idle')
-    window.getSelection()?.removeAllRanges()
+    if (hasSelectionRef.current) {
+      hasSelectionRef.current = false
+      window.getSelection()?.removeAllRanges()
+    }
   }, [clearDismissTimer])
 
   useEffect(() => clearDismissTimer, [clearDismissTimer])
@@ -135,6 +142,7 @@ export function useWordSave() {
       const rect = range.getBoundingClientRect()
       selectionIdRef.current++
       clearDismissTimer()
+      hasSelectionRef.current = true
       setSelectedContext(context)
       setSelectedCefrLevel(cefrLevel)
       setSelectedWord(raw)
